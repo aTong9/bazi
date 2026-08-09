@@ -1,0 +1,97 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            web/package-lock.json
+
+      - name: Validate Pages API URL
+        env:
+          PAGES_API_BASE_URL: ${{ vars.PAGES_API_BASE_URL }}
+        run: |
+          if [ -z "$PAGES_API_BASE_URL" ]; then
+            echo "::error::Set the repository variable PAGES_API_BASE_URL to the public HTTPS origin that serves /api/chart, /api/places and /api/narrative."
+            exit 1
+          fi
+          case "$PAGES_API_BASE_URL" in
+            https://*) ;;
+            *) echo "::error::PAGES_API_BASE_URL must start with https://"; exit 1 ;;
+          esac
+
+      - name: Install core dependencies
+        run: npm ci
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Check core
+        run: npm run check && npm test
+
+      - name: Lint web
+        working-directory: web
+        run: npm run lint
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build static site
+        working-directory: web
+        env:
+          GITHUB_PAGES: "true"
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.PAGES_API_BASE_URL }}
+          NEXT_PUBLIC_SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: npm run build
+
+      - name: Verify static export
+        working-directory: web
+        run: |
+          test -f dist/client/index.html
+          test -d "dist/client/${GITHUB_REPOSITORY#*/}/_next/static"
+          grep -q "/${GITHUB_REPOSITORY#*/}/_next/static" dist/client/index.html
+
+      - name: Disable Jekyll processing
+        run: touch web/dist/client/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/dist/client
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

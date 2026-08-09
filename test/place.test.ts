@@ -11,7 +11,7 @@ describe("NominatimPlaceResolver", () => {
             display_name: "上海市, 中国",
             lat: "31.2304",
             lon: "121.4737",
-            address: { country_code: "cn" },
+            address: { country_code: "cn", state: "上海市", city: "上海市", city_district: "黄浦区" },
           },
         ]),
         { status: 200, headers: { "Content-Type": "application/json" } },
@@ -29,6 +29,9 @@ describe("NominatimPlaceResolver", () => {
       longitude: 121.4737,
       timeZone: "Asia/Shanghai",
       countryCode: "CN",
+      province: "上海市",
+      city: "上海市",
+      district: "黄浦区",
     });
     expect(fetchImpl).toHaveBeenCalledOnce();
     const calledUrl = fetchImpl.mock.calls[0]?.[0];

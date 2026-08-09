@@ -101,3 +101,19 @@ console.log(chart.trace);
 - 情感规则引擎已覆盖 roadmap 的 16 个主题登记；17 条不依赖争议算法的草案规则可执行，其余规则保持 `review_required`，等待身强弱、喜忌、制化口径和人工审核。
 - 公开名人案例只用于站内命盘回放；匿名真人事件标签和独立命理师盲评仍未建立。
 - `lunar-typescript` 是当前历法适配器，不应在业务层直接调用；未来可通过 golden tests 替换或校验。
+
+## GitHub Pages 部署
+
+仓库包含 `.github/workflows/deploy-pages.yml`，推送到 `master` 或手动运行
+workflow 时会检查、测试、静态构建并部署 `web/dist/client`。在仓库
+**Settings → Secrets and variables → Actions → Variables** 新建：
+
+- `PAGES_API_BASE_URL`：公开 HTTPS API 域名，不带末尾 `/`；该服务需要提供
+  `/api/chart`、`/api/places` 和 `/api/narrative`，并允许 GitHub Pages 站点跨域访问。
+
+然后在 **Settings → Pages → Build and deployment → Source** 选择
+**GitHub Actions**。项目站点会自动使用仓库名作为路径前缀，例如本仓库为
+`/bazi`；`<owner>.github.io` 用户站点则使用根路径。
+
+GitHub Pages 只托管静态文件，不能运行本仓库的 Node API route。因此 workflow
+会在未配置 `PAGES_API_BASE_URL` 时明确失败，而不是发布一个无法排盘的页面。

@@ -3,6 +3,7 @@ export * from "./domain.js";
 export * from "./four-pillars.js";
 export * from "./place.js";
 export * from "./relations.js";
+export * from "./relation-presentation.js";
 export * from "./time.js";
 export * from "./annual-luck.js";
 export * from "./major-luck.js";

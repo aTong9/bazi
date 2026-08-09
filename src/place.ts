@@ -5,6 +5,9 @@ export interface ResolvedPlace {
   query: string;
   displayName: string;
   countryCode: string | null;
+  province?: string;
+  city?: string;
+  district?: string;
   latitude: number;
   longitude: number;
   timeZone: string;
@@ -20,7 +23,18 @@ interface NominatimResult {
   display_name: string;
   lat: string;
   lon: string;
-  address?: { country_code?: string };
+  address?: {
+    country_code?: string;
+    state?: string;
+    province?: string;
+    city?: string;
+    municipality?: string;
+    town?: string;
+    county?: string;
+    city_district?: string;
+    district?: string;
+    suburb?: string;
+  };
 }
 
 export interface NominatimPlaceResolverOptions {
@@ -86,6 +100,9 @@ export class NominatimPlaceResolver implements PlaceResolver {
         query: normalized,
         displayName: item.display_name,
         countryCode: item.address?.country_code?.toUpperCase() ?? null,
+        province: item.address?.state ?? item.address?.province ?? "",
+        city: item.address?.city ?? item.address?.municipality ?? item.address?.town ?? item.address?.county ?? "",
+        district: item.address?.city_district ?? item.address?.district ?? item.address?.suburb ?? "",
         latitude,
         longitude,
         timeZone: tzLookup(latitude, longitude),

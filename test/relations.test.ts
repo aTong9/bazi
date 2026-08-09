@@ -5,6 +5,7 @@ import {
   analyzeChartRelations,
   analyzeStemPair,
   createFourPillarsChart,
+  presentNatalRelations,
 } from "../src/index.js";
 
 describe("ganzhi relations", () => {
@@ -55,5 +56,20 @@ describe("ganzhi relations", () => {
     expect(relations.length).toBeGreaterThan(0);
     expect(relations.every((relation) => relation.participants.length >= 2)).toBe(true);
     expect(relations.every((relation) => relation.algorithmVersion === "mainstream-ganzhi-v1")).toBe(true);
+  });
+
+  it("presents combinations as review-required candidates instead of confirmed transformations", () => {
+    const relations = analyzeStemPair(
+      { source: "year:stem", value: "甲" },
+      { source: "month:stem", value: "己" },
+    );
+    const presented = presentNatalRelations(relations);
+    expect(presented[0]).toEqual(expect.objectContaining({
+      group: "combination",
+      label: "天干五合",
+      positions: "年柱 · 月柱",
+      judgment: "transformation_review_required",
+    }));
+    expect(presented[0]?.note).toContain("当前不自动判定");
   });
 });
