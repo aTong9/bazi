@@ -18,12 +18,10 @@
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
-    "lunar-typescript": "1.8.6",
-    "tz-lookup": "6.1.25"
+    "lunar-typescript": "1.8.6"
   },
   "devDependencies": {
     "@types/node": "24.2.1",
-    "@types/tz-lookup": "6.1.2",
     "typescript": "5.9.2",
     "vitest": "3.2.7"
   }

@@ -1,0 +1,10 @@
+{
+  "version": "local-narrative-v1",
+  "title": "四柱关系观察报告",
+  "intro": "以下内容由本地规则与已审核语句组合生成，所有计算均在当前浏览器完成。",
+  "positiveLabel": "可观察的优势",
+  "riskLabel": "需要留意",
+  "adviceLabel": "可实践建议",
+  "emptyText": "当前规则证据不足，暂不扩展判断。",
+  "disclaimer": "内容用于传统文化研究与自我观察，不构成科学预测或专业建议。"
+}
