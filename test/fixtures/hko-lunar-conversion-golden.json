@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "hko-lunar-conversion-golden-v1",
+  "provenance": {
+    "publisher": "香港天文台",
+    "retrievedAt": "2026-08-09",
+    "sources": [
+      "https://www.hko.gov.hk/tc/gts/time/calendar/pdf/files/2023.pdf",
+      "https://www.hko.gov.hk/tc/gts/time/calendar/pdf/files/2024.pdf"
+    ],
+    "scope": "公历—农历日期转换；不验证八字节气秒数或排盘流派"
+  },
+  "cases": [
+    { "lunarYear": 2024, "lunarMonth": 1, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-02-10" },
+    { "lunarYear": 2024, "lunarMonth": 2, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-03-10" },
+    { "lunarYear": 2024, "lunarMonth": 3, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-04-09" },
+    { "lunarYear": 2024, "lunarMonth": 4, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-05-08" },
+    { "lunarYear": 2024, "lunarMonth": 5, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-06-06" },
+    { "lunarYear": 2024, "lunarMonth": 6, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-07-06" },
+    { "lunarYear": 2024, "lunarMonth": 7, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-08-04" },
+    { "lunarYear": 2024, "lunarMonth": 8, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-09-03" },
+    { "lunarYear": 2024, "lunarMonth": 9, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-10-03" },
+    { "lunarYear": 2024, "lunarMonth": 10, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-11-01" },
+    { "lunarYear": 2024, "lunarMonth": 11, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-12-01" },
+    { "lunarYear": 2024, "lunarMonth": 12, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2024-12-31" },
+    { "lunarYear": 2023, "lunarMonth": 2, "lunarDay": 1, "isLeapMonth": false, "gregorianDate": "2023-02-20" },
+    { "lunarYear": 2023, "lunarMonth": 2, "lunarDay": 1, "isLeapMonth": true, "gregorianDate": "2023-03-22" }
+  ]
+}

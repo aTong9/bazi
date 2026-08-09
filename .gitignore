@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+review/wenzhen-observations.json
+review/rule-approvals.json
+review/anonymous-case-labels.json
+review/screenshots/
+review/api-evidence/

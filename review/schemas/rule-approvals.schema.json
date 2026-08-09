@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Relationship rule approvals","type":"object","required":["schemaVersion","metadata","rules"],"properties":{"schemaVersion":{"const":"rule-review-v1"},"metadata":{"type":"object"},"rules":{"type":"array","items":{"type":"object","required":["ruleId","sourceStatus","decision","reviewerId","notes"]}}}}

@@ -1,0 +1,83 @@
+[
+  {
+    "id": "lichun-2024-before",
+    "purpose": "立春交节前",
+    "input": { "localDate": "2024-02-04", "localTime": "16:20:00" },
+    "dayBoundary": "midnight_00",
+    "expectedBaZi": "癸卯 乙丑 戊戌 庚申",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  },
+  {
+    "id": "lichun-2024-after",
+    "purpose": "立春交节后",
+    "input": { "localDate": "2024-02-04", "localTime": "16:30:00" },
+    "dayBoundary": "midnight_00",
+    "expectedBaZi": "甲辰 丙寅 戊戌 庚申",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  },
+  {
+    "id": "zi-2024-before",
+    "purpose": "子时边界前",
+    "input": { "localDate": "2024-02-04", "localTime": "22:59:00" },
+    "dayBoundary": "midnight_00",
+    "expectedBaZi": "甲辰 丙寅 戊戌 癸亥",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  },
+  {
+    "id": "zi-2024-midnight-sect",
+    "purpose": "23点后仍按午夜换日",
+    "input": { "localDate": "2024-02-04", "localTime": "23:00:00" },
+    "dayBoundary": "midnight_00",
+    "expectedBaZi": "甲辰 丙寅 戊戌 甲子",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  },
+  {
+    "id": "zi-2024-initial-sect",
+    "purpose": "23点子初换日",
+    "input": { "localDate": "2024-02-04", "localTime": "23:00:00" },
+    "dayBoundary": "zi_initial_23",
+    "expectedBaZi": "甲辰 丙寅 己亥 甲子",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  },
+  {
+    "id": "chen-si-before",
+    "purpose": "辰巳时边界前",
+    "input": { "localDate": "2024-06-01", "localTime": "08:59:00" },
+    "dayBoundary": "midnight_00",
+    "expectedBaZi": "甲辰 己巳 丙申 壬辰",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  },
+  {
+    "id": "chen-si-after",
+    "purpose": "辰巳时边界后",
+    "input": { "localDate": "2024-06-01", "localTime": "09:00:00" },
+    "dayBoundary": "midnight_00",
+    "expectedBaZi": "甲辰 己巳 丙申 癸巳",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  },
+  {
+    "id": "daxue-2024-before",
+    "purpose": "大雪换月前",
+    "input": { "localDate": "2024-12-06", "localTime": "22:00:00" },
+    "dayBoundary": "midnight_00",
+    "expectedBaZi": "甲辰 乙亥 甲辰 乙亥",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  },
+  {
+    "id": "daxue-2024-after",
+    "purpose": "大雪换月后",
+    "input": { "localDate": "2024-12-07", "localTime": "00:00:00" },
+    "dayBoundary": "midnight_00",
+    "expectedBaZi": "甲辰 丙子 乙巳 丙子",
+    "wenzhenObserved": null,
+    "verification": "pending_wenzhen_manual_capture"
+  }
+]
