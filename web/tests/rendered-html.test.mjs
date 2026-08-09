@@ -23,6 +23,10 @@ test("static export contains the complete local workbench", async () => {
   assert.match(html, /排盘口径/);
   assert.match(html, /真太阳时（推荐）/);
   assert.match(html, /零点换日（推荐）/);
+  assert.match(html, /class="time-control"/);
+  assert.match(html, /class="basis-options"/);
+  assert.match(html, /中国标准时间（UTC\+8）/);
+  assert.doesNotMatch(html, />Asia\/Shanghai</);
   assert.match(html, /排盘和文案均在当前浏览器本地完成/);
   assert.doesNotMatch(html, /react-loading-skeleton|Your site is taking shape/);
 });

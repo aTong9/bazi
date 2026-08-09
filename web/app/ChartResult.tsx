@@ -1,6 +1,7 @@
 "use client";
 
 import { presentNatalRelations } from "@bazi/core";
+import { formatTimeZoneLabel } from "./time-zone-label";
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- Dense presentation helpers traverse several versioned core result types. */
 
@@ -40,7 +41,7 @@ export function ChartResult({ result, personName, genderLabel, calendarLabel, pl
         <div className="info-label">姓名</div><div className="info-value">{personName}</div><div className="info-label">性别</div><div className="info-value">{genderLabel}</div>
         <div className="info-label">出生历法</div><div className="info-value">{calendarLabel}</div><div className="info-label">出生地区</div><div className="info-value">{place.displayName}</div>
         <div className="info-label">民用时间</div><div className="info-value mono">{chart.time.originalLocalDateTime}</div><div className="info-label">真太阳时</div><div className="info-value mono accent">{chart.time.trueSolarDateTime}</div>
-        <div className="info-label">地方平太阳时</div><div className="info-value mono">{chart.time.localMeanSolarDateTime}</div><div className="info-label">历史时区</div><div className="info-value">{place.timeZone}</div>
+        <div className="info-label">地方平太阳时</div><div className="info-value mono">{chart.time.localMeanSolarDateTime}</div><div className="info-label">法定时区</div><div className="info-value">{formatTimeZoneLabel(place.timeZone, place.countryCode)}</div>
         <div className="info-label">坐标</div><div className="info-value">{place.latitude.toFixed(4)}°, {place.longitude.toFixed(4)}°</div><div className="info-label">时间修正</div><div className="info-value">{chart.time.totalSolarCorrectionMinutes.toFixed(2)} 分钟</div>
         <div className="info-label">日主</div><div className="info-value accent">{chart.dayMaster} · {derivedFacts.stems.day.element}</div><div className="info-label">空亡</div><div className="info-value">{voidText}</div>
         <div className="info-label">起运</div><div className="info-value mono">{chart.luck.startsAt}</div><div className="info-label">大运方向</div><div className="info-value">{chart.luck.direction === "forward" ? "顺排" : "逆排"}</div>
