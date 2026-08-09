@@ -53,14 +53,14 @@ jobs:
         env:
           GITHUB_PAGES: "true"
           NEXT_PUBLIC_SITE_URL: ${{ steps.pages.outputs.base_url }}
-        run: npm run build
+        run: npm run build:pages
 
       - name: Verify static export
         working-directory: web
         run: |
           node --test tests/rendered-html.test.mjs
           test -f dist/client/index.html
-          test -d "dist/client/${GITHUB_REPOSITORY#*/}/_next/static"
+          test -d "dist/client/_next/static"
           grep -q "/${GITHUB_REPOSITORY#*/}/_next/static" dist/client/index.html
           if grep -R -E '/api/(chart|places|narrative)' dist/client; then
             echo "::error::Static bundle still references a removed HTTP API."

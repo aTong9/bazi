@@ -27,6 +27,22 @@ test("static export contains the complete local workbench", async () => {
   assert.doesNotMatch(html, /react-loading-skeleton|Your site is taking shape/);
 });
 
+test("every rendered CSS and JavaScript URL maps to an uploaded artifact file", async () => {
+  const html = await readFile(new URL("index.html", clientRoot), "utf8");
+  const pagesBasePath = process.env.GITHUB_PAGES === "true" && process.env.GITHUB_REPOSITORY
+    ? `/${process.env.GITHUB_REPOSITORY.split("/")[1]}`
+    : "";
+  const assetUrls = [...html.matchAll(/(?:href|src)="([^"]+\.(?:css|js))"/g)].map(match => match[1]);
+  assert.ok(assetUrls.length > 0);
+  for (const assetUrl of assetUrls) {
+    const artifactPath = pagesBasePath && assetUrl.startsWith(`${pagesBasePath}/`)
+      ? assetUrl.slice(pagesBasePath.length + 1)
+      : assetUrl.replace(/^\//, "");
+    const file = new URL(artifactPath, clientRoot);
+    await assert.doesNotReject(() => readFile(file), `${assetUrl} must resolve inside the Pages artifact`);
+  }
+});
+
 test("client artifact has local datasets and no removed API dependency", async () => {
   const files = await filesBelow(clientRoot.pathname);
   const scripts = files.filter(file => file.endsWith(".js"));
