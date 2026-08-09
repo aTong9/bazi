@@ -1,5 +1,7 @@
 # 八字情感分析网站
 
+[![Deploy GitHub Pages](https://github.com/aTong9/bazi/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/aTong9/bazi/actions/workflows/deploy-pages.yml)
+
 当前版本包含确定性排盘核心、纯本地交互式网页、结构化情感报告、流年与干支作用关系，以及隔离的小红书草稿引擎。网页不依赖 HTTP API：排盘、地点搜索和文案组合都在浏览器完成。
 
 完整规划见 [`roadmap.md`](./roadmap.md)。
@@ -106,3 +108,7 @@ workflow 时会检查、测试、静态构建并部署 `web/dist/client`。不�
 API 地址或密钥。在 **Settings → Pages → Build and deployment → Source** 选择
 **GitHub Actions**。项目站点会自动使用仓库名作为路径前缀，例如本仓库为
 `/bazi`；`<owner>.github.io` 用户站点则使用根路径。
+
+Pages 必须由仓库管理员进行上述一次性启用。未启用时 GitHub 的
+`configure-pages` 会返回 404；这是仓库设置问题，不是项目构建失败。启用后，
+每次推送 `master` 都会自动取消旧的在途部署，并发布最新版本。
