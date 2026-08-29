@@ -29,6 +29,15 @@ export interface CalibrationStore {
   close(): void;
 }
 
+export function readCalibrationReadiness(databasePath: string): Readonly<{ M4: CalibrationReadiness; M5: CalibrationReadiness }> {
+  const db = new DatabaseSync(databasePath, { readOnly: true });
+  try {
+    return Object.freeze({ M4: queryReadiness(db, "M4"), M5: queryReadiness(db, "M5") });
+  } finally {
+    db.close();
+  }
+}
+
 export function openCalibrationStore(input: { databasePath: string; anonymizationSalt: string }): CalibrationStore {
   if (input.anonymizationSalt.length < 16) throw new Error("anonymization salt must contain at least 16 characters");
   const db = new DatabaseSync(input.databasePath);
@@ -104,13 +113,7 @@ export function openCalibrationStore(input: { databasePath: string; anonymizatio
       audit.run("rule_change_proposed", value.changeId, value.reviewer, now());
     },
     readiness(model): CalibrationReadiness {
-      const counts = db.prepare(`SELECT COUNT(*) total, SUM(set_split='development') development, SUM(set_split='holdout') holdout, SUM(prediction_frozen) frozen, SUM(feedback_complete) feedback, SUM(safety_miss) safety FROM calibration_cases WHERE model = ?`).get(model) as { total: number; development: number | null; holdout: number | null; frozen: number | null; feedback: number | null; safety: number | null };
-      const reviewed = db.prepare("SELECT COUNT(*) count FROM calibration_cases c WHERE c.model = ? AND EXISTS (SELECT 1 FROM reviews r WHERE r.case_id=c.case_id AND r.round=2)").get(model) as { count: number };
-      const total = counts.total; const development = counts.development ?? 0; const holdout = counts.holdout ?? 0; const frozen = counts.frozen ?? 0; const feedback = counts.feedback ?? 0; const safety = counts.safety ?? 0;
-      const cycle = total >= 120 ? "C5" : total >= 80 ? "C4" : total >= 40 ? "C3" : total >= 20 && development >= 14 && holdout >= 6 ? "C2" : total >= 5 ? "C1" : "C0";
-      const requiredTotal = model === "M4" ? 80 : 120;
-      const blockers = [...(total < requiredTotal ? [`REAL_CASES_${total}_OF_${requiredTotal}`] : []), ...(frozen !== total ? ["PREDICTIONS_NOT_ALL_FROZEN"] : []), ...(feedback !== total ? ["FEEDBACK_INCOMPLETE"] : []), ...(reviewed.count !== total ? ["DOUBLE_REVIEW_INCOMPLETE"] : []), ...(safety > 0 ? [`SAFETY_MISSES_${safety}`] : []), ...(holdout === 0 ? ["HOLDOUT_SET_EMPTY"] : [])];
-      return Object.freeze({ model, totalCases: total, developmentCases: development, holdoutCases: holdout, frozenPredictions: frozen, completedFeedback: feedback, doubleReviewedCases: reviewed.count, safetyMisses: safety, currentCycle: cycle, releaseCandidateReady: blockers.length === 0, blockers: Object.freeze(blockers) });
+      return queryReadiness(db, model);
     },
     auditEvents(): readonly { action: string; caseId: string; actor: string }[] { return Object.freeze((db.prepare("SELECT action, case_id, actor FROM access_audit ORDER BY audit_id").all() as Array<{ action: string; case_id: string; actor: string }>).map((row) => Object.freeze({ action: row.action, caseId: row.case_id, actor: row.actor }))); },
     close(): void { db.close(); },
@@ -119,3 +122,13 @@ export function openCalibrationStore(input: { databasePath: string; anonymizatio
 
 function requireCase(statement: ReturnType<DatabaseSync["prepare"]>, caseId: string): unknown { const row = statement.get(caseId); if (!row) throw new Error(`unknown calibration case ${caseId}`); return row; }
 function now(): string { return new Date().toISOString(); }
+
+function queryReadiness(db: DatabaseSync, model: CalibrationModel): CalibrationReadiness {
+  const counts = db.prepare(`SELECT COUNT(*) total, SUM(set_split='development') development, SUM(set_split='holdout') holdout, SUM(prediction_frozen) frozen, SUM(feedback_complete) feedback, SUM(safety_miss) safety FROM calibration_cases WHERE model = ?`).get(model) as { total: number; development: number | null; holdout: number | null; frozen: number | null; feedback: number | null; safety: number | null };
+  const reviewed = db.prepare("SELECT COUNT(*) count FROM calibration_cases c WHERE c.model = ? AND EXISTS (SELECT 1 FROM reviews r WHERE r.case_id=c.case_id AND r.round=2)").get(model) as { count: number };
+  const total = counts.total; const development = counts.development ?? 0; const holdout = counts.holdout ?? 0; const frozen = counts.frozen ?? 0; const feedback = counts.feedback ?? 0; const safety = counts.safety ?? 0;
+  const cycle = total >= 120 ? "C5" : total >= 80 ? "C4" : total >= 40 ? "C3" : total >= 20 && development >= 14 && holdout >= 6 ? "C2" : total >= 5 ? "C1" : "C0";
+  const requiredTotal = model === "M4" ? 80 : 120;
+  const blockers = [...(total < requiredTotal ? [`REAL_CASES_${total}_OF_${requiredTotal}`] : []), ...(frozen !== total ? ["PREDICTIONS_NOT_ALL_FROZEN"] : []), ...(feedback !== total ? ["FEEDBACK_INCOMPLETE"] : []), ...(reviewed.count !== total ? ["DOUBLE_REVIEW_INCOMPLETE"] : []), ...(safety > 0 ? [`SAFETY_MISSES_${safety}`] : []), ...(holdout === 0 ? ["HOLDOUT_SET_EMPTY"] : [])];
+  return Object.freeze({ model, totalCases: total, developmentCases: development, holdoutCases: holdout, frozenPredictions: frozen, completedFeedback: feedback, doubleReviewedCases: reviewed.count, safetyMisses: safety, currentCycle: cycle, releaseCandidateReady: blockers.length === 0, blockers: Object.freeze(blockers) });
+}

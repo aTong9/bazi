@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { openCalibrationStore } from "../../packages/calibration/src/store.js";
+import { openCalibrationStore, readCalibrationReadiness } from "../../packages/calibration/src/store.js";
 import { CURRENT_RULE_HIT_HEADERS, parseCurrentRuleHitCsv, serializeCurrentRuleHitCsv } from "../../packages/calibration/src/template-adapter.js";
 
 test("calibration requires consent, freeze-before-feedback, independent review, and separate readiness", async () => {
@@ -32,4 +32,20 @@ test("current 15-column rule-hit template round-trips and legacy 17-column input
   const row = Object.fromEntries(CURRENT_RULE_HIT_HEADERS.map((header) => [header, header === "备注" ? "含,逗号" : `${header}-value`]));
   const csv = serializeCurrentRuleHitCsv([row]); const parsed = parseCurrentRuleHitCsv(csv); assert.equal(parsed.length, 1); assert.deepEqual(parsed[0], row);
   assert.throws(() => parseCurrentRuleHitCsv(`${Array.from({ length: 17 }, (_, index) => `h${index}`).join(",")}\n${Array(17).fill("v").join(",")}\n`), /legacy 17-column/u);
+});
+
+test("release readiness can be inspected without opening the calibration database for writes", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "bazi-calibration-readiness-"));
+  const databasePath = path.join(root, "calibration.sqlite");
+  const store = openCalibrationStore({ databasePath, anonymizationSalt: "test-only-salt-value" });
+  store.close();
+  try {
+    const readiness = readCalibrationReadiness(databasePath);
+    assert.equal(readiness.M4.releaseCandidateReady, false);
+    assert.deepEqual(readiness.M4.blockers, ["REAL_CASES_0_OF_80", "HOLDOUT_SET_EMPTY"]);
+    assert.equal(readiness.M5.releaseCandidateReady, false);
+    assert.deepEqual(readiness.M5.blockers, ["REAL_CASES_0_OF_120", "HOLDOUT_SET_EMPTY"]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
