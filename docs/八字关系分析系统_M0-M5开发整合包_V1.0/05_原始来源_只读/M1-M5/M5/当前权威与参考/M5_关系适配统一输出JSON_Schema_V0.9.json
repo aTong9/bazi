@@ -1,0 +1,1136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bazi:m5:relationship-fit:0.9",
+  "title": "M5 关系适配统一输出结构 V0.9",
+  "description": "模型五总合成输出契约。FG、AF与置信度不是婚姻成功概率，也不替代安全、法律、医疗或现实关系决定。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_status",
+    "safety_status",
+    "fit_grade",
+    "final_fit_state",
+    "needs_profile",
+    "partner_profile",
+    "exchange_profile",
+    "boundary_profile",
+    "repair_profile",
+    "rhythm_profile",
+    "gap_profile",
+    "reality_gates",
+    "decision_support",
+    "evidence",
+    "provenance",
+    "report_sections",
+    "boundary_note"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.9"
+    },
+    "report_status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "limited",
+        "stop"
+      ]
+    },
+    "safety_status": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "safety_stop",
+        "insufficient_data",
+        "core_gate_stop"
+      ]
+    },
+    "fit_grade": {
+      "type": "string",
+      "enum": [
+        "FG0",
+        "FG1",
+        "FG2",
+        "FG3",
+        "FG4"
+      ]
+    },
+    "final_fit_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "title",
+        "summary"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "AF01",
+            "AF02",
+            "AF03",
+            "AF04",
+            "AF05",
+            "AF06",
+            "AF07",
+            "AF08",
+            "AF09"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "failure_points": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "residual_risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bridge_level": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "FB0",
+                "FB1",
+                "FB2",
+                "FB3",
+                "FB4",
+                "FB5"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "needs_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "universal_floor",
+        "primary_need"
+      ],
+      "properties": {
+        "universal_floor": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "primary_need": {
+          "$ref": "#/$defs/need"
+        },
+        "secondary_need": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/need"
+            }
+          ]
+        },
+        "flexible_preferences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "matching_mode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "partner_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence_level"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "unknown",
+            "candidate",
+            "supported",
+            "conditional",
+            "stopped"
+          ]
+        },
+        "primary_function": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/functionProfile"
+            }
+          ]
+        },
+        "secondary_function": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/functionProfile"
+            }
+          ]
+        },
+        "expression_state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_level": {
+          "type": "string",
+          "enum": [
+            "PV0",
+            "PV1",
+            "PV2",
+            "PV3",
+            "PV4",
+            "PV5",
+            "PV6",
+            "PV7"
+          ]
+        },
+        "required_behaviors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "observation_dimensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pseudo_fit_warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "exchange_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence_level"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "unknown",
+            "candidate",
+            "supported",
+            "conditional",
+            "stopped"
+          ]
+        },
+        "primary_channel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_level": {
+          "type": "string",
+          "enum": [
+            "XV0",
+            "XV1",
+            "XV2",
+            "XV3",
+            "XV4",
+            "XV5",
+            "XV6",
+            "XV7"
+          ]
+        },
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "boundary_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence_level"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "unknown",
+            "candidate",
+            "supported",
+            "conditional",
+            "stopped"
+          ]
+        },
+        "primary_channel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_level": {
+          "type": "string",
+          "enum": [
+            "BV0",
+            "BV1",
+            "BV2",
+            "BV3",
+            "BV4",
+            "BV5",
+            "BV6",
+            "BV7"
+          ]
+        },
+        "decision_governance": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "consent_summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "repair_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence_level"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "unknown",
+            "candidate",
+            "supported",
+            "conditional",
+            "stopped"
+          ]
+        },
+        "primary_channel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "protocol": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_level": {
+          "type": "string",
+          "enum": [
+            "FV0",
+            "FV1",
+            "FV2",
+            "FV3",
+            "FV4",
+            "FV5",
+            "FV6",
+            "FV7"
+          ]
+        },
+        "event_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "completion_gates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "feedback_received",
+            "sustained_followthrough"
+          ],
+          "properties": {
+            "feedback_received": {
+              "type": "boolean"
+            },
+            "sustained_followthrough": {
+              "type": "boolean"
+            }
+          }
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rhythm_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence_level"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "unknown",
+            "candidate",
+            "supported",
+            "conditional",
+            "stopped"
+          ]
+        },
+        "primary_channel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_level": {
+          "type": "string",
+          "enum": [
+            "HV0",
+            "HV1",
+            "HV2",
+            "HV3",
+            "HV4",
+            "HV5",
+            "HV6",
+            "HV7"
+          ]
+        },
+        "relationship_phase": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "clocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "gap_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "evidence_level"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "unknown",
+            "candidate",
+            "supported",
+            "conditional",
+            "stopped"
+          ]
+        },
+        "primary_gap": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "secondary_gap": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gap_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gap_state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_level": {
+          "type": "string",
+          "enum": [
+            "GE0",
+            "GE1",
+            "GE2",
+            "GE3",
+            "GE4",
+            "GE5",
+            "GE6",
+            "GE7"
+          ]
+        },
+        "bridge_plan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "bridge_level": {
+          "type": "string",
+          "enum": [
+            "FB0",
+            "FB1",
+            "FB2",
+            "FB3",
+            "FB4",
+            "FB5"
+          ]
+        }
+      }
+    },
+    "reality_gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "overall_status",
+        "items",
+        "hard_failures",
+        "unknown_core_gates"
+      ],
+      "properties": {
+        "overall_status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "conditional",
+            "core_mismatch",
+            "safety_stop",
+            "insufficient_data"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "title",
+              "status",
+              "summary"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "RG01",
+                  "RG02",
+                  "RG03",
+                  "RG04",
+                  "RG05",
+                  "RG06",
+                  "RG07",
+                  "RG08"
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "conditional",
+                  "fail",
+                  "unknown",
+                  "not_assessed"
+                ]
+              },
+              "summary": {
+                "type": "string"
+              },
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "failure_point": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "evidence_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              }
+            }
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "hard_failures": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unknown_core_gates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "decision_support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_matches",
+        "open_questions",
+        "observation_plan",
+        "stop_conditions",
+        "not_a_directive"
+      ],
+      "properties": {
+        "core_matches": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "open_questions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "observation_plan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3
+        },
+        "stop_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "not_a_directive": {
+          "const": true
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "levels",
+        "overall_confidence",
+        "field_confidence",
+        "independent_source_count",
+        "event_count",
+        "counterevidence"
+      ],
+      "properties": {
+        "levels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "PV",
+            "XV",
+            "BV",
+            "FV",
+            "HV",
+            "GE"
+          ],
+          "properties": {
+            "PV": {
+              "type": "string",
+              "enum": [
+                "PV0",
+                "PV1",
+                "PV2",
+                "PV3",
+                "PV4",
+                "PV5",
+                "PV6",
+                "PV7"
+              ]
+            },
+            "XV": {
+              "type": "string",
+              "enum": [
+                "XV0",
+                "XV1",
+                "XV2",
+                "XV3",
+                "XV4",
+                "XV5",
+                "XV6",
+                "XV7"
+              ]
+            },
+            "BV": {
+              "type": "string",
+              "enum": [
+                "BV0",
+                "BV1",
+                "BV2",
+                "BV3",
+                "BV4",
+                "BV5",
+                "BV6",
+                "BV7"
+              ]
+            },
+            "FV": {
+              "type": "string",
+              "enum": [
+                "FV0",
+                "FV1",
+                "FV2",
+                "FV3",
+                "FV4",
+                "FV5",
+                "FV6",
+                "FV7"
+              ]
+            },
+            "HV": {
+              "type": "string",
+              "enum": [
+                "HV0",
+                "HV1",
+                "HV2",
+                "HV3",
+                "HV4",
+                "HV5",
+                "HV6",
+                "HV7"
+              ]
+            },
+            "GE": {
+              "type": "string",
+              "enum": [
+                "GE0",
+                "GE1",
+                "GE2",
+                "GE3",
+                "GE4",
+                "GE5",
+                "GE6",
+                "GE7"
+              ]
+            }
+          }
+        },
+        "overall_confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium_high",
+            "medium",
+            "medium_low",
+            "low",
+            "not_applicable"
+          ]
+        },
+        "field_confidence": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium_high",
+              "medium",
+              "medium_low",
+              "low",
+              "unknown"
+            ]
+          }
+        },
+        "independent_source_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "event_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cross_scenario_evidence": {
+          "type": "boolean"
+        },
+        "pressure_cost_evidence": {
+          "type": "boolean"
+        },
+        "repair_recovery_evidence": {
+          "type": "boolean"
+        },
+        "transition_evidence": {
+          "type": "boolean"
+        },
+        "counterevidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_ids",
+        "source_ids",
+        "event_ids",
+        "dedup_log",
+        "conflict_log",
+        "discard_log",
+        "dependency_flags"
+      ],
+      "properties": {
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "dedup_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "conflict_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "discard_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dependency_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "report_sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "one_sentence_summary",
+        "core_need",
+        "partner_behaviors",
+        "interaction_structure",
+        "reality_gate_summary",
+        "main_gap",
+        "observation_plan",
+        "evidence_boundary"
+      ],
+      "properties": {
+        "one_sentence_summary": {
+          "type": "string"
+        },
+        "core_need": {
+          "type": "string"
+        },
+        "partner_behaviors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3
+        },
+        "interaction_structure": {
+          "type": "string"
+        },
+        "reality_gate_summary": {
+          "type": "string"
+        },
+        "main_gap": {
+          "type": "string"
+        },
+        "observation_plan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3
+        },
+        "evidence_boundary": {
+          "type": "string"
+        }
+      }
+    },
+    "boundary_note": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "need": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "title",
+        "priority",
+        "summary",
+        "function_family"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "PR0",
+            "PR1",
+            "PR2",
+            "PR3",
+            "PR4"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "function_family": {
+          "type": "string",
+          "enum": [
+            "FAM01",
+            "FAM02",
+            "FAM03",
+            "FAM04",
+            "FAM05",
+            "FAM06",
+            "FAM07",
+            "FAM08",
+            "FAM09",
+            "FAM10"
+          ]
+        },
+        "source_rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "functionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "title",
+        "function_family",
+        "summary"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "function_family": {
+          "type": "string",
+          "enum": [
+            "FAM01",
+            "FAM02",
+            "FAM03",
+            "FAM04",
+            "FAM05",
+            "FAM06",
+            "FAM07",
+            "FAM08",
+            "FAM09",
+            "FAM10"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

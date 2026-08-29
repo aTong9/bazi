@@ -1,0 +1,1 @@
+﻿eval_id,case_id,set_split,module,output_slot,field_name,predicted_value,predicted_evidence_num,predicted_confidence,gold_value,gold_evidence_num,match_level,error_direction,error_type,severity,evidence_overreach,safety_miss,event_ids,first_reviewer,second_reviewer,included,notes

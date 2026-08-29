@@ -1,0 +1,1479 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bazi:relationship-analysis:m0-m5:1.0",
+  "title": "八字关系分析系统 M0-M5 统一输出结构 V1.0",
+  "description": "整合M0原局结构引擎与M1-M5关系模型。结构结论、现实证据、适配状态与置信度分层；不输出唯一正缘、具体婚期、医学诊断或关系指令。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "system_version",
+    "request_context",
+    "subjects",
+    "m0",
+    "m1",
+    "m2",
+    "m3",
+    "m4",
+    "m5",
+    "evidence",
+    "provenance",
+    "decision_log",
+    "report",
+    "boundaries"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "system_version": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "M0",
+        "M1",
+        "M2",
+        "M3",
+        "M4",
+        "M5",
+        "integration"
+      ],
+      "properties": {
+        "M0": {
+          "const": "1.9"
+        },
+        "M1": {
+          "const": "0.2"
+        },
+        "M2": {
+          "const": "0.8"
+        },
+        "M3": {
+          "const": "0.6-partial"
+        },
+        "M4": {
+          "const": "0.9"
+        },
+        "M5": {
+          "const": "0.9"
+        },
+        "integration": {
+          "const": "1.0"
+        }
+      }
+    },
+    "request_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "analysis_mode",
+        "language",
+        "generated_at",
+        "traditional_spouse_star_policy"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "analysis_mode": {
+          "type": "string",
+          "enum": [
+            "single_chart_structure",
+            "single_chart_relationship_profile",
+            "specific_partner_with_reality_data",
+            "two_chart_supplementary",
+            "calibration_case",
+            "test"
+          ]
+        },
+        "language": {
+          "type": "string",
+          "default": "zh-CN"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "traditional_spouse_star_policy": {
+          "type": "string",
+          "enum": [
+            "enabled",
+            "disabled",
+            "custom"
+          ]
+        },
+        "requested_sections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "privacy_mode": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "anonymous",
+            "calibration_anonymous"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "subjects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_a"
+      ],
+      "properties": {
+        "subject_a": {
+          "$ref": "#/$defs/birthSubject"
+        },
+        "subject_b": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/birthSubject"
+            }
+          ]
+        },
+        "relationship_context": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "m0": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "version",
+        "report_fields",
+        "rule_trace",
+        "disputes",
+        "dependency_flags"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/moduleStatus"
+        },
+        "version": {
+          "const": "1.9"
+        },
+        "report_fields": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "input_validation",
+            "scope_boundary",
+            "overall_confidence",
+            "day_master_and_season",
+            "pillar_element_ten_god_map",
+            "roots_and_exposure",
+            "natal_structure_summary",
+            "identified_relations",
+            "relation_effects",
+            "pending_or_rejected_relations",
+            "element_effective_strength_matrix",
+            "element_strength_ranking",
+            "strength_adjustment_reasons",
+            "day_master_strength",
+            "support_side_evidence",
+            "load_side_evidence",
+            "adjacent_grade_exclusion",
+            "ten_god_status_matrix",
+            "dominant_ten_gods",
+            "constrained_or_overused_ten_gods",
+            "ten_god_purity",
+            "established_ten_god_combinations",
+            "weak_or_rejected_combinations",
+            "dominant_function_chain",
+            "main_flow_path",
+            "primary_flow_block",
+            "secondary_blocks_and_alternatives",
+            "bridge_candidates_and_side_effects",
+            "temperature_state",
+            "moisture_state",
+            "climate_problem_and_urgency",
+            "climate_candidates_and_conflicts",
+            "pattern_candidates",
+            "final_pattern",
+            "pattern_evidence_and_level",
+            "pattern_failure_factors",
+            "pattern_rescue_and_alternatives",
+            "root_disease",
+            "secondary_diseases",
+            "primary_and_auxiliary_medicine",
+            "medicine_risks",
+            "five_element_use_matrix",
+            "primary_and_auxiliary_use",
+            "favorable_unfavorable_roles",
+            "final_structure_summary"
+          ],
+          "properties": {
+            "input_validation": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "输入完整度与交节核验｜记录出生日期、时刻、时区、历法转换、节气交界及四柱输入是否足以支撑后续判断。｜来源：M02/M03｜Field_ID：M19-META-0001-V1.0"
+            },
+            "scope_boundary": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "分析适用范围与模型边界｜说明本报告只处理原局静态结构，并界定不包含岁运、具体事件、医学诊断和生活化补救。｜来源：M00/M16/M17/M18｜Field_ID：M19-META-0002-V1.0"
+            },
+            "overall_confidence": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "总体置信度与待核查项｜汇总M02—M18的低置信度、待定、流派争议和输入风险，给出总体置信等级。｜来源：M02-M18｜Field_ID：M19-META-0003-V1.0"
+            },
+            "day_master_and_season": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "日主与月令｜输出日主天干、阴阳五行、出生月令及月令的季节基础倾向。｜来源：M02/M03/M09｜Field_ID：M19-BASE-0004-V1.0"
+            },
+            "pillar_element_ten_god_map": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "四柱五行与十神映射｜逐柱记录天干、地支、藏干、阴阳五行及相对日主的十神映射。｜来源：M02/M10｜Field_ID：M19-BASE-0005-V1.0"
+            },
+            "roots_and_exposure": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "主要根气与透干｜汇总日主及关键五行/格神的根气位置、层级、透干和有效性。｜来源：M03/M07/M08｜Field_ID：M19-BASE-0006-V1.0"
+            },
+            "natal_structure_summary": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "原局结构总览｜用3—5条概括原局的主势、核心关系、主要功能轴和最显著矛盾。｜来源：M02-M08/M10-M13｜Field_ID：M19-BASE-0007-V1.0"
+            },
+            "identified_relations": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "已成立关系清单｜列出原局天干地支中客观成立的合、冲、刑、害、破、三合、三会等关系及参与柱位。｜来源：M04/M05｜Field_ID：M19-REL-0008-V1.0"
+            },
+            "relation_effects": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "关系实际效应｜将已成立关系转化为逐对象的合动、合绊、冲动、冲弱、冲散、刑动、改性及流通影响。｜来源：M06/M08/M12｜Field_ID：M19-REL-0009-V1.0"
+            },
+            "pending_or_rejected_relations": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "未成立与待定关系｜记录看似存在但未达到合化、成局、冲散、开库等严格条件的候选及否决原因。｜来源：M04/M05/M06｜Field_ID：M19-REL-0010-V1.0"
+            },
+            "element_effective_strength_matrix": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "五行有效旺衰矩阵｜分别输出木火土金水经月令、根气、透干、生源、合冲刑害、寒燥和流通修正后的有效旺衰。｜来源：M08｜Field_ID：M19-ELEM-0011-V1.0"
+            },
+            "element_strength_ranking": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "五行旺衰排序与主导气势｜给出五行有效力量的相对排序，并判断是否成势、聚势或存在两强对战。｜来源：M08/M12｜Field_ID：M19-ELEM-0012-V1.0"
+            },
+            "strength_adjustment_reasons": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "关键力量修正原因｜说明五行从原始旺衰到有效旺衰发生变化的关键原因。｜来源：M06/M07/M08｜Field_ID：M19-ELEM-0013-V1.0"
+            },
+            "day_master_strength": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "日主旺衰等级｜输出M09综合裁定的七级日主旺衰结论。｜来源：M09｜Field_ID：M19-DM-0014-V1.0"
+            },
+            "support_side_evidence": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "扶身侧核心证据｜汇总日主得令、得地、得势、得生和有效印比等主要正向证据。｜来源：M03/M08/M09｜Field_ID：M19-DM-0015-V1.0"
+            },
+            "load_side_evidence": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "负荷侧核心证据｜汇总官杀制身、食伤泄身、财星耗身及根损等主要负向证据。｜来源：M08/M09/M10｜Field_ID：M19-DM-0016-V1.0"
+            },
+            "adjacent_grade_exclusion": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "相邻等级排除与结论置信度｜说明为什么未判为相邻的更旺或更弱等级，并记录反向证据和置信度。｜来源：M09/M18｜Field_ID：M19-DM-0017-V1.0"
+            },
+            "ten_god_status_matrix": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "十神状态总表｜按比劫、印星、食伤、财星、官杀分组输出存在方式、有效力量、清纯度和功能状态。｜来源：M10｜Field_ID：M19-TEN-0018-V1.0"
+            },
+            "dominant_ten_gods": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "主要有力十神及其功能｜列出对全局作用最明显的1—3个十神，说明其有效功能和作用对象。｜来源：M10/M14/M15｜Field_ID：M19-TEN-0019-V1.0"
+            },
+            "constrained_or_overused_ten_gods": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "受限、失效或过度十神｜记录力量虽存在但功能受限、转化、失效、过度或制化失衡的十神。｜来源：M10/M11/M16｜Field_ID：M19-TEN-0020-V1.0"
+            },
+            "ten_god_purity": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "十神清纯度与混杂｜判断官杀、食伤、印枭、正偏财等是否清纯、有杂、混杂及主从关系。｜来源：M10/M11/M15｜Field_ID：M19-TEN-0021-V1.0"
+            },
+            "established_ten_god_combinations": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "已成立十神组合｜输出达到弱成立以上的生化、制化、平衡承载或冲突组合及成立等级。｜来源：M11｜Field_ID：M19-COMBO-0022-V1.0"
+            },
+            "weak_or_rejected_combinations": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "弱成立、不成立与被否决组合｜记录表面十神齐全但因力量、位置、承载、破坏或救应不足而降级的组合。｜来源：M11｜Field_ID：M19-COMBO-0023-V1.0"
+            },
+            "dominant_function_chain": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "主导生化、制化与承载功能｜从全部组合中提取覆盖全局最广、对格局和病药最关键的主导功能轴。｜来源：M11/M12/M15/M16｜Field_ID：M19-COMBO-0024-V1.0"
+            },
+            "main_flow_path": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "主流通路径｜输出覆盖核心五行、十神组合和格局功能的1—3条主要起点—桥梁—终点路径。｜来源：M12｜Field_ID：M19-FLOW-0025-V1.0"
+            },
+            "primary_flow_block": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "主卡点｜指出对全局影响最大、阻断主路径或核心组合的首要卡点及根因。｜来源：M12/M16｜Field_ID：M19-FLOW-0026-V1.0"
+            },
+            "secondary_blocks_and_alternatives": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "次级卡点与替代路径｜记录1—3个次级卡点、它们与主卡点的关系及可用替代路径。｜来源：M12/M16/M18｜Field_ID：M19-FLOW-0027-V1.0"
+            },
+            "bridge_candidates_and_side_effects": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "通关候选、有效性与副作用｜列出通关五行、双向作用条件、实际药力、适用边界及可能的格局调候副作用。｜来源：M12/M13/M16/M17/M18｜Field_ID：M19-FLOW-0028-V1.0"
+            },
+            "temperature_state": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "温度状态｜输出经月令和全局火水有效力量修正后的温度轴等级。｜来源：M13｜Field_ID：M19-CLIMATE-0029-V1.0"
+            },
+            "moisture_state": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "湿度状态｜输出经水势、湿土、燥土、火势和木疏土作用修正后的湿度轴等级。｜来源：M13｜Field_ID：M19-CLIMATE-0030-V1.0"
+            },
+            "climate_problem_and_urgency": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "主要气候问题与调候紧急度｜判断寒凝、火炎、湿滞、燥枯是否已形成实际功能障碍及其优先级。｜来源：M13/M16｜Field_ID：M19-CLIMATE-0031-V1.0"
+            },
+            "climate_candidates_and_conflicts": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "调候候选、有效性与跨模块冲突｜输出调候五行的存在性、有效性、主辅关系及其与扶抑、格局、通关的冲突。｜来源：M13/M17/M18｜Field_ID：M19-CLIMATE-0032-V1.0"
+            },
+            "pattern_candidates": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "格局候选清单与排序｜输出M14生成的1—3个核心候选、类别、月令依据、候选状态和排序理由。｜来源：M14｜Field_ID：M19-PATTERN-0033-V1.0"
+            },
+            "final_pattern": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "最终格局与格局状态｜输出M15最终确定的格局名称及不成立、基本成立、成立但有破、有破有救、清纯成立或特殊格局严格成立状态。｜来源：M15｜Field_ID：M19-PATTERN-0034-V1.0"
+            },
+            "pattern_evidence_and_level": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "成格证据、清纯度与层次｜说明格局成立的关键证据、清纯程度及运行质量层次。｜来源：M15｜Field_ID：M19-PATTERN-0035-V1.0"
+            },
+            "pattern_failure_factors": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "破格因素与破格等级｜输出直接影响格神或核心结构的破格因素、作用对象和轻微至根本破格等级。｜来源：M15/M16｜Field_ID：M19-PATTERN-0036-V1.0"
+            },
+            "pattern_rescue_and_alternatives": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "救应、有效性与替代候选说明｜记录救应力量、直接修复对象、有效程度，并解释为何其他候选未成为最终格局。｜来源：M15/M18｜Field_ID：M19-PATTERN-0037-V1.0"
+            },
+            "root_disease": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "根本主病｜输出一个能够解释最多跨模块问题的根本病位、病性、根因、表层表现和严重度。｜来源：M16｜Field_ID：M19-MED-0038-V1.0"
+            },
+            "secondary_diseases": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "次级病及其与主病的关系｜输出1—3个次级病，并说明是由主病引发、独立存在还是主病修复后才会显现。｜来源：M16｜Field_ID：M19-MED-0039-V1.0"
+            },
+            "primary_and_auxiliary_medicine": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "主药、辅助药与药理｜输出直接修复根本病的主药、服务主药或次病的辅助药、作用路径和主辅顺位。｜来源：M16/M17/M18｜Field_ID：M19-MED-0040-V1.0"
+            },
+            "medicine_risks": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "药力不足、过量、伤格与新病风险｜记录主辅药的有效性、药力不足后果、过量转性、是否伤格及可能产生的新病。｜来源：M16/M18｜Field_ID：M19-MED-0041-V1.0"
+            },
+            "five_element_use_matrix": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "木火土金水五维用神矩阵｜按扶抑、格局、通关、调候、病药五维记录五行收益、副作用、条件和M18裁决。｜来源：M17/M18｜Field_ID：M19-USE-0042-V1.0"
+            },
+            "primary_and_auxiliary_use": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "主用神与辅助用神｜输出经过M18无硬否决审查后的主用神、辅助用神、解决对象、主次顺位和成立条件。｜来源：M17/M18｜Field_ID：M19-USE-0043-V1.0"
+            },
+            "favorable_unfavorable_roles": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "喜神、条件性喜神、中性、忌神与仇神｜完整输出除主辅用神外的五行定位、转性条件、伤害对象及间接有害链。｜来源：M17/M18｜Field_ID：M19-USE-0044-V1.0"
+            },
+            "final_structure_summary": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/resultItem"
+                }
+              ],
+              "description": "最终结构摘要、条件边界与下游接口｜用5—8句总结原局主势、日主、主组合、流通、调候、格局、病药和用神，并输出供上层模型调用的结构化标签。｜来源：M02-M18｜Field_ID：M19-USE-0045-V1.0"
+            }
+          }
+        },
+        "rule_trace": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ruleTrace"
+          }
+        },
+        "disputes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/disputeRecord"
+          }
+        },
+        "dependency_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "m1": {
+      "$ref": "#/$defs/moduleEnvelope"
+    },
+    "m2": {
+      "$ref": "#/$defs/moduleEnvelope"
+    },
+    "m3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/moduleEnvelope"
+        }
+      ],
+      "description": "当前为V0.6部分完成；M3-REPAIR、M3-STATE、M3-SYNTH待补。"
+    },
+    "m4": {
+      "$ref": "#/$defs/moduleEnvelope"
+    },
+    "m5": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "version",
+        "outputs",
+        "synth",
+        "rule_ids",
+        "dependency_flags"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/moduleStatus"
+        },
+        "version": {
+          "type": "string"
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/resultItem"
+          }
+        },
+        "synth": {
+          "$ref": "#/$defs/fitSynthesis"
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "dependency_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_records",
+        "event_records",
+        "module_levels",
+        "field_confidence",
+        "counterevidence"
+      ],
+      "properties": {
+        "source_records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sourceRecord"
+          }
+        },
+        "event_records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/eventRecord"
+          }
+        },
+        "module_levels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "field_confidence": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/confidence"
+          }
+        },
+        "counterevidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unknown_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_ids",
+        "source_ids",
+        "event_ids",
+        "dedup_log",
+        "conflict_log",
+        "discard_log",
+        "version_manifest"
+      ],
+      "properties": {
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "dedup_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "conflict_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "discard_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "version_manifest": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "decision_log": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decisionRecord"
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "report_status",
+        "one_sentence_summary",
+        "sections",
+        "observation_plan",
+        "boundary_note"
+      ],
+      "properties": {
+        "report_status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "limited",
+            "stop"
+          ]
+        },
+        "one_sentence_summary": {
+          "type": "string"
+        },
+        "sections": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "array",
+              "object",
+              "null"
+            ]
+          }
+        },
+        "observation_plan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5
+        },
+        "technical_appendix": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "boundary_note": {
+          "type": "string"
+        }
+      }
+    },
+    "boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "static_natal_only",
+        "no_specific_event_timing",
+        "no_medical_diagnosis",
+        "not_a_relationship_directive",
+        "unknown_is_not_negative"
+      ],
+      "properties": {
+        "static_natal_only": {
+          "const": true
+        },
+        "no_specific_event_timing": {
+          "const": true
+        },
+        "no_medical_diagnosis": {
+          "const": true
+        },
+        "not_a_relationship_directive": {
+          "const": true
+        },
+        "unknown_is_not_negative": {
+          "const": true
+        },
+        "dynamic_model_required_for_timing": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "legacy_payloads": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium_high",
+        "medium",
+        "medium_low",
+        "low",
+        "not_applicable",
+        "unknown"
+      ]
+    },
+    "moduleStatus": {
+      "type": "string",
+      "enum": [
+        "not_run",
+        "partial",
+        "complete",
+        "limited",
+        "stopped",
+        "dependency_pending"
+      ]
+    },
+    "birthSubject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_id",
+        "birth_date",
+        "birth_time_status",
+        "timezone",
+        "calendar",
+        "data_quality"
+      ],
+      "properties": {
+        "subject_id": {
+          "type": "string"
+        },
+        "birth_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "birth_time": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d)?$"
+        },
+        "birth_time_status": {
+          "type": "string",
+          "enum": [
+            "exact",
+            "approximate",
+            "unknown"
+          ]
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "calendar": {
+          "type": "string",
+          "enum": [
+            "gregorian",
+            "lunar_converted",
+            "four_pillars_provided"
+          ]
+        },
+        "birth_location": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gender_policy_value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "four_pillars": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "data_quality": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium_high",
+            "medium",
+            "medium_low",
+            "low"
+          ]
+        },
+        "input_notes": {
+          "type": "string"
+        }
+      }
+    },
+    "resultItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "value",
+        "confidence",
+        "rule_ids",
+        "source_ids",
+        "event_ids"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "unknown",
+            "candidate",
+            "supported",
+            "conditional",
+            "contradicted",
+            "stopped"
+          ]
+        },
+        "value": {},
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "evidence_level": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 7
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "counterevidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "moduleEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "version",
+        "outputs",
+        "rule_ids",
+        "dependency_flags"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/moduleStatus"
+        },
+        "version": {
+          "type": "string"
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/resultItem"
+          }
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "dependency_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "realityGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "status",
+        "summary",
+        "evidence_ids"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "RG01",
+            "RG02",
+            "RG03",
+            "RG04",
+            "RG05",
+            "RG06",
+            "RG07",
+            "RG08"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "conditional",
+            "fail",
+            "unknown",
+            "not_assessed"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "failure_point": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "fitSynthesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "report_status",
+        "safety_status",
+        "fit_grade",
+        "final_fit_state",
+        "reality_gates",
+        "observation_plan",
+        "not_a_directive"
+      ],
+      "properties": {
+        "report_status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "limited",
+            "stop"
+          ]
+        },
+        "safety_status": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "safety_stop",
+            "insufficient_data",
+            "core_gate_stop"
+          ]
+        },
+        "fit_grade": {
+          "type": "string",
+          "enum": [
+            "FG0",
+            "FG1",
+            "FG2",
+            "FG3",
+            "FG4"
+          ]
+        },
+        "final_fit_state": {
+          "type": "string",
+          "enum": [
+            "AF01",
+            "AF02",
+            "AF03",
+            "AF04",
+            "AF05",
+            "AF06",
+            "AF07",
+            "AF08",
+            "AF09"
+          ]
+        },
+        "reality_gates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/realityGate"
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "primary_need": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "secondary_need": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "primary_gap": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bridge_level": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "FB0",
+            "FB1",
+            "FB2",
+            "FB3",
+            "FB4",
+            "FB5"
+          ]
+        },
+        "residual_risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "observation_plan": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3
+        },
+        "not_a_directive": {
+          "const": true
+        }
+      }
+    },
+    "ruleTrace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_id",
+        "module_id",
+        "status"
+      ],
+      "properties": {
+        "rule_id": {
+          "type": "string"
+        },
+        "module_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "matched",
+            "rejected",
+            "conditional",
+            "not_applicable",
+            "stopped"
+          ]
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "sourceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_type",
+        "quality"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string"
+        },
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "birth_input",
+            "chart_fact",
+            "user_statement",
+            "partner_statement",
+            "behavior_event",
+            "document",
+            "test_fixture"
+          ]
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium_high",
+            "medium",
+            "medium_low",
+            "low"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      }
+    },
+    "eventRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_type",
+        "summary",
+        "quality"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "event_type": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium_high",
+            "medium",
+            "medium_low",
+            "low"
+          ]
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "phase": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "counterexample": {
+          "type": "boolean"
+        }
+      }
+    },
+    "decisionRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "field",
+        "decision",
+        "authority",
+        "reason"
+      ],
+      "properties": {
+        "decision_id": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "decision": {
+          "type": "string"
+        },
+        "authority": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "accepted_rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "rejected_rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "disputeRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "change_id",
+        "status",
+        "topic"
+      ],
+      "properties": {
+        "change_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "effective",
+            "provisional",
+            "pending",
+            "deprecated"
+          ]
+        },
+        "topic": {
+          "type": "string"
+        },
+        "adopted_rule": {
+          "type": "string"
+        },
+        "counterevidence": {
+          "type": "string"
+        },
+        "affected_modules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

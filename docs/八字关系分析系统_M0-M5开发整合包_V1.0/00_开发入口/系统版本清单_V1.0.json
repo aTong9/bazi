@@ -1,0 +1,72 @@
+{
+  "package_name": "八字关系分析系统_M0-M5开发整合包",
+  "package_version": "1.0",
+  "generated_date": "2026-08-29",
+  "models": {
+    "M0": {
+      "version": "1.9",
+      "formal_records": 1745,
+      "runtime_records": 1545,
+      "terms": 621
+    },
+    "M1": {
+      "version": "0.2",
+      "rules": 94,
+      "status": "CORE only; provisional"
+    },
+    "M2": {
+      "version": "0.8",
+      "rules": 1109,
+      "status": "synthesis complete; provisional"
+    },
+    "M3": {
+      "version": "0.6-partial",
+      "rules": 1202,
+      "status": "REPAIR/STATE/SYNTH pending"
+    },
+    "M4": {
+      "version": "0.9",
+      "rules": 3040,
+      "calibration": "0.10"
+    },
+    "M5": {
+      "version": "0.9",
+      "rules": 3928,
+      "calibration": "0.10"
+    },
+    "integration": {
+      "version": "1.0",
+      "records": 11118,
+      "runtime_records": 10918
+    }
+  },
+  "runtime_authoritative_files": [
+    "02_运行时核心/M0_标准化记录_V1.0.csv",
+    "02_运行时核心/M1-M5_原子规则总表_V1.0.csv",
+    "02_运行时核心/统一模块注册表_V1.0.csv",
+    "02_运行时核心/M0_术语编码_V1.0.csv",
+    "02_运行时核心/M0_M19输出字段_V1.0.csv",
+    "02_运行时核心/八字关系分析系统_M0-M5统一JSON_Schema_V1.0.json"
+  ],
+  "development_gaps": [
+    "M3-REPAIR pending",
+    "M3-STATE pending",
+    "M3-SYNTH pending",
+    "M1-SYNTH/JSON/calibration pending",
+    "D0 dynamic timing model not built",
+    "M0-M5 real-case calibration incomplete"
+  ],
+  "hard_boundaries": [
+    "No unique destined partner claims",
+    "No specific marriage/event timing from M0-M5",
+    "No medical diagnosis from disease-medicine metaphors",
+    "No relationship directive based on fit grade",
+    "Safety and consent override structural scores",
+    "Unknown is not negative evidence"
+  ],
+  "source_archive": {
+    "M0_complete": "05_原始来源_只读/M0/完整归档",
+    "M1_M5": "05_原始来源_只读/M1-M5",
+    "historical": "06_历史归档"
+  }
+}

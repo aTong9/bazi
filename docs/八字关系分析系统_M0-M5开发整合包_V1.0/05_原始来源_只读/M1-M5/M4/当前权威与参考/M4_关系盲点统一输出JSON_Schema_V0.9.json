@@ -1,0 +1,781 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:bazi:m4:relationship-blindspot:0.9",
+  "title": "M4 关系盲点统一输出结构 V0.9",
+  "description": "模型四总合成输出契约。证据等级和置信度用于知识库内部表达，不是统计概率或事件预测。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_status",
+    "safety_status",
+    "primary_blindspot",
+    "trigger_profile",
+    "loop_profile",
+    "repair_profile",
+    "buffer_profile",
+    "residual_state",
+    "evidence",
+    "provenance",
+    "report_sections",
+    "boundary_note"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.9"
+    },
+    "report_status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "limited",
+        "stop"
+      ]
+    },
+    "safety_status": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "safety_stop",
+        "insufficient_data"
+      ]
+    },
+    "primary_blindspot": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "title",
+            "functional_origin",
+            "imbalance_mechanism",
+            "summary"
+          ],
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "functional_origin": {
+              "type": "string"
+            },
+            "misread_pattern": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "imbalance_mechanism": {
+              "type": "string"
+            },
+            "missing_function": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "substitute_function": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sequence_pattern": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "competition_pattern": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "summary": {
+              "type": "string"
+            },
+            "rule_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      ]
+    },
+    "secondary_blindspot": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/blindspot"
+        }
+      ]
+    },
+    "trigger_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_applicable",
+            "unknown",
+            "candidate",
+            "supported"
+          ]
+        },
+        "domain_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "domain_title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "form_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "threshold_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state_shift_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "loop_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "none",
+            "single_party_sequence",
+            "E3_candidate",
+            "E4_verified",
+            "stopped"
+          ]
+        },
+        "code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "partner_feedback": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reinforcement": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "recurrence_evidence": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "exit_condition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "repair_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_assessed",
+            "stopped",
+            "problem_open",
+            "problem_closed",
+            "repair_started",
+            "partial_repair",
+            "closure_candidate",
+            "sustained_repair"
+          ]
+        },
+        "issue_type_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "breakpoint_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "blindspot_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "failure_mechanism_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "missing_nodes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "buffer_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "level_code"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "none",
+            "potential",
+            "conditional",
+            "activated",
+            "effective_once",
+            "stable",
+            "verified",
+            "stopped"
+          ]
+        },
+        "primary_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "primary_title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "secondary_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "level_code": {
+          "type": "string",
+          "enum": [
+            "BL0",
+            "BL1",
+            "BL2",
+            "BL3",
+            "BL4",
+            "BL5",
+            "BL6",
+            "BL7"
+          ]
+        },
+        "pseudo_buffer_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "external_support_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "residual_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "title",
+        "summary"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "RP01",
+            "RP02",
+            "RP03",
+            "RP04",
+            "RP05",
+            "RP06",
+            "RP07",
+            "RP08"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grade",
+        "confidence_score",
+        "confidence_level",
+        "independent_source_count",
+        "event_count"
+      ],
+      "properties": {
+        "grade": {
+          "type": "string",
+          "enum": [
+            "E0",
+            "E1",
+            "E2",
+            "E3",
+            "E4"
+          ]
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "confidence_level": {
+          "type": "string",
+          "enum": [
+            "停止",
+            "低",
+            "中低",
+            "中",
+            "中高",
+            "高"
+          ]
+        },
+        "independent_source_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "event_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "partner_feedback_verified": {
+          "type": "boolean"
+        },
+        "counterevidence_reviewed": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule_ids",
+        "source_ids",
+        "event_ids",
+        "dedup_log",
+        "conflict_log"
+      ],
+      "properties": {
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "dedup_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "conflict_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "discard_log": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "counterevidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "report_sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary",
+        "normal_function",
+        "blindspot_mechanism",
+        "buffer_and_residual"
+      ],
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "normal_function": {
+          "type": "string"
+        },
+        "blindspot_mechanism": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "loop": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "repair": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "buffer_and_residual": {
+          "type": "string"
+        },
+        "professional_basis": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "boundary_note": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "blindspot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "title",
+        "functional_origin",
+        "imbalance_mechanism",
+        "summary"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "functional_origin": {
+          "type": "string"
+        },
+        "misread_pattern": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "imbalance_mechanism": {
+          "type": "string"
+        },
+        "missing_function": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "substitute_function": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sequence_pattern": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "competition_pattern": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "0.9",
+      "report_status": "complete",
+      "safety_status": "standard",
+      "primary_blindspot": {
+        "code": "LP02",
+        "title": "解释升级循环候选",
+        "functional_origin": "伤官的分析澄清功能",
+        "misread_pattern": "J09 解释理解等同现实改变",
+        "imbalance_mechanism": "K03 单通道替代",
+        "missing_function": "正印的倾听与内部复核",
+        "substitute_function": "分析解释替代接收反馈",
+        "sequence_pattern": null,
+        "competition_pattern": null,
+        "summary": "感到没有被理解时，容易继续增加解释，而反馈进入得较晚。",
+        "rule_ids": [
+          "M4-OVERUSE-xxx",
+          "M4-LOOP-xxx",
+          "M4-SYNTH-xxx"
+        ]
+      },
+      "secondary_blindspot": null,
+      "trigger_profile": {
+        "status": "supported",
+        "domain_code": "TR01",
+        "domain_title": "关系不确定与信息含糊",
+        "form_code": "TF02",
+        "threshold_code": "HT02",
+        "state_shift_code": "ST1",
+        "summary": "信息含糊持续存在时，分析澄清功能更容易加速。"
+      },
+      "loop_profile": {
+        "status": "E3_candidate",
+        "code": "LP02",
+        "title": "解释升级循环",
+        "nodes": [
+          "LN01",
+          "LN02",
+          "LN03",
+          "LN04",
+          "LN05",
+          "LN08"
+        ],
+        "partner_feedback": "对方减少回应或转为简短回应",
+        "reinforcement": "将减少回应理解为仍未说明清楚",
+        "recurrence_evidence": "两个独立事件出现相似顺序",
+        "exit_condition": "先复述实际理解，再决定是否继续解释",
+        "summary": "解释增加与回应减少相互强化。"
+      },
+      "repair_profile": {
+        "status": "partial_repair",
+        "issue_type_code": "RI01",
+        "breakpoint_code": "RN07",
+        "blindspot_code": "RB02",
+        "failure_mechanism_code": "RF05",
+        "missing_nodes": [
+          "RN07",
+          "RN08"
+        ],
+        "summary": "事实已经说清，但接收反馈和后续回访不足。"
+      },
+      "buffer_profile": {
+        "status": "effective_once",
+        "primary_code": "BF04",
+        "primary_title": "倾听与内部复核",
+        "secondary_code": "BF05",
+        "target_id": "LP02",
+        "level_code": "BL5",
+        "pseudo_buffer_codes": [],
+        "external_support_codes": [
+          "OS04"
+        ],
+        "summary": "一次事件中，复述理解和书面确认确实中断了加码解释。"
+      },
+      "residual_state": {
+        "code": "RP05",
+        "title": "单次链条已被改变",
+        "summary": "循环候选仍保留，但已有一次真实有效的中断经验。"
+      },
+      "evidence": {
+        "grade": "E3",
+        "confidence_score": 82,
+        "confidence_level": "中高",
+        "independent_source_count": 4,
+        "event_count": 2,
+        "partner_feedback_verified": true,
+        "counterevidence_reviewed": true,
+        "notes": [
+          "当前保护尚未达到跨情境稳定。"
+        ]
+      },
+      "provenance": {
+        "rule_ids": [
+          "M4-OVERUSE-xxx",
+          "M4-TRIGGER-xxx",
+          "M4-LOOP-xxx",
+          "M4-REPAIR-xxx",
+          "M4-BUFFER-xxx",
+          "M4-SYNTH-xxx"
+        ],
+        "source_ids": [
+          "chart:expr:shangguan",
+          "event:001",
+          "event:002",
+          "buffer:reflection"
+        ],
+        "event_ids": [
+          "event:001",
+          "event:002"
+        ],
+        "dedup_log": [
+          "同一伤官事实只计一次基础权重。"
+        ],
+        "conflict_log": [],
+        "discard_log": [],
+        "counterevidence": [
+          "在时间充足且对方主动复述时，不出现解释加码。"
+        ]
+      },
+      "report_sections": {
+        "summary": "你擅长把问题分析清楚；在信息含糊且反馈不足时，解释可能不断加码。",
+        "normal_function": "分析和澄清本来能够帮助双方理解问题。",
+        "blindspot_mechanism": "卡点不是不会表达，而是表达没有及时转成倾听、复述和接收反馈。",
+        "trigger": "当关系信息长期含糊时，这个顺序更容易启动。",
+        "loop": "现实中已出现解释增加—回应减少—继续解释的重复顺序。",
+        "repair": "目前修复常停在事实说清，接收反馈和后续回访仍需补足。",
+        "buffer_and_residual": "倾听复核已在一次事件中改变链条，目前属于RP05。",
+        "professional_basis": "E3循环候选；BF04为BL5。"
+      },
+      "boundary_note": "这是基于现有两次现实事件的循环候选，不用于推断对方动机或关系结局。"
+    }
+  ]
+}
