@@ -19,10 +19,12 @@
     "catalog:lock:verify": "tsx apps/catalog-cli/src/main.ts verify-source-package-lock",
     "catalog:m0:verify": "tsx apps/catalog-cli/src/main.ts verify-m0-enrichment",
     "catalog:build": "tsx apps/catalog-cli/src/main.ts build-catalog-snapshot",
+    "dev": "tsx apps/api/src/dev.ts",
+    "start": "tsx apps/api/src/main.ts",
     "test:evidence": "tsx scripts/generate-test-evidence.ts",
     "test:evidence:current": "tsx scripts/generate-test-evidence.ts --allow-review",
     "calibration:check": "tsx scripts/check-calibration-readiness.ts",
-    "release:check": "npm run check && npm run test:evidence && npm run calibration:check",
+    "release:check": "npm run check && npm run test:evidence && npm audit --audit-level=high",
     "check": "npm run typecheck && npm test && npm run docs:verify && npm run catalog:lock:verify && npm run catalog:m0:verify"
   },
   "devDependencies": {

@@ -13,7 +13,7 @@ npm ci
 npm run check
 ```
 
-正式发布还必须执行 `npm run release:check -- --database=/absolute/path/calibration.sqlite`。当前真实案例与治理复核未闭合，因此严格发布门禁应当失败；详见完成度审计。
+正式发布执行 `npm run release:check`。真实案例校准保留为可选能力，不再作为工程发布前置条件。
 
 `npm run check` 会执行严格类型检查、测试、161 文件文档包的清单/哈希/JSON/CSV/ZIP CRC 校验，以及权威来源锁校验。原始整合包只读；所有勘误通过 `data/overlays/` 的版本化覆盖层表达。关键契约位于：
 

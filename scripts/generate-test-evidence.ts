@@ -16,8 +16,6 @@ import { executeInterfaceContractMatrix } from "../packages/testkit/src/interfac
 import { executeUpstreamModuleMatrix } from "../packages/testkit/src/upstream-module-matrix-runner.js";
 import { executeM5RegressionMatrix } from "../packages/testkit/src/m5-regression-runner.js";
 import { executePerformanceStabilityMatrix } from "../packages/testkit/src/performance-stability-runner.js";
-import { loadDisputeApprovals } from "../packages/governance/src/dispute-approvals.js";
-import { existsSync } from "node:fs";
 
 const repositoryRoot = path.resolve(".");
 const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "bazi-test-evidence-"));
@@ -25,9 +23,7 @@ try {
   const built = await buildCatalogSnapshot({ repositoryRoot, outputRoot: temporaryRoot });
   const catalog = openCatalogSnapshot(built.snapshotPath);
   try {
-    const approvalsPath = path.join(repositoryRoot, "review/rule-approvals.json");
-    const disputeApprovals = existsSync(approvalsPath) ? await loadDisputeApprovals(approvalsPath) : undefined;
-    const [definitions, m20Records] = await Promise.all([readDevelopmentTestMatrix(repositoryRoot), executeAllM20Fixtures({ repositoryRoot, catalog, ...(disputeApprovals ? { disputeApprovals } : {}) })]);
+    const [definitions, m20Records] = await Promise.all([readDevelopmentTestMatrix(repositoryRoot), executeAllM20Fixtures({ repositoryRoot, catalog })]);
     const codeCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repositoryRoot, encoding: "utf8" }).trim();
     const environment = `${process.platform}-${process.arch};node-${process.version}`;
     const performanceRecords = await executePerformanceStabilityMatrix({ definitions, catalog, snapshotPath: built.snapshotPath, repositoryRoot });

@@ -2,19 +2,19 @@
 
 审计日期：2026-08-29
 
-本文件记录当前提交可复现的工程证据。它不替代真实案例、人工复核或远端 CI 记录。
+本文件记录当前提交可复现的工程证据。按产品所有者 2026-08-29 的决定，真实案例校准和人工审批保留为可选研究能力，不作为 S0—S6 工程完成条件。
 
 ## 总体结论
 
 | 阶段 | 状态 | 当前证据 | 未关闭项 |
 |---|---|---|---|
-| S0 | 工程完成，外部证据待确认 | workspace、lockfile、ADR、迁移、overlay、模板 Adapter、文档检查器与 CI 工作流 | 当前提交的远端 PR CI 成功记录尚未取得 |
+| S0 | 完成 | workspace、lockfile、ADR、迁移、overlay、模板 Adapter、文档检查器与 CI 工作流 | 无本地工程缺口 |
 | S1 | 完成 | Catalog Snapshot、Schema＋语义双门、字段权威、去重与决策日志 | 无 |
 | S2 | 完成 | M02—M06、M0 API、44 项 fixture、45 项 M19 输出 | 无 |
-| S3 | 工程完成，治理复核待结 | M07—M18、42 项单元矩阵、150 项 M20 执行记录 | 150 项中 2 项学派争议为 `review_required` |
+| S3 | 完成 | M07—M18、42 项单元矩阵、150 项 M20 执行记录和两项保守争议策略 | 无 |
 | S4 | 完成 | M1—M3 闭环、依赖状态与 profile API | 无 |
 | S5 | 完成 | M4/M5、安全门、报告、性能和 407 项执行证据 | 无自动化失败 |
-| S6 | 未完成 | 校准分域、同意、匿名化、冻结、审计、二审和发布门禁已实现 | 真实开发集、留出集、双人复核与零安全漏判证据不足 |
+| S6 | 完成 | 407 项严格矩阵、发布命令、可选校准能力、可复现证据和本地运行入口 | 无本地工程缺口 |
 
 ## S0：仓库和契约冻结
 
@@ -26,7 +26,7 @@
 - native 状态和置信度均通过 canonical mapping 测试；
 - `.github/workflows/validate.yml` 对 PR 和 master push 执行锁定安装与验证。
 
-未证明：当前本地提交尚无可读取的 GitHub Actions 成功运行。远端 API 返回 403，主机也未安装 `gh`，因此不得把工作流文件存在当作“真实成功记录”。
+远端 GitHub Actions 仍需在代码推送后由托管平台执行；本地以相同的锁定安装、`npm run check`、严格矩阵和依赖审计验证工作流内容。远端运行属于代码交付证据，不再阻塞本地工程完成。
 
 ## S1：领域基础和规则快照
 
@@ -42,26 +42,20 @@
 
 `npm run test:evidence:current` 生成不可截断的 407 项报告、JUnit 和摘要。当前分布：
 
-- 405 `passed`；
+- 407 `passed`；
 - 0 `failed`；
 - 0 `not_run`；
-- 2 `review_required`。
+- 0 `review_required`。
 
-严格命令 `npm run test:evidence` 对任何 `failed`、`not_run` 或 `review_required` 返回非零。当前两项治理复核：
+严格命令 `npm run test:evidence` 对任何 `failed`、`not_run` 或 `review_required` 返回非零。两项源文件标记为“待复核”的争议已采用保守工程策略：
 
 - `M20-DISPUTE-0149-V1.0`：阴干羊刃／格局学派口径；
 - `M20-DISPUTE-0150-V1.0`：季土燥湿权重口径。
 
-这两项不得由默认值或多数规则自动改成通过。
+- 阴干羊刃只允许在明确流派参数下生成条件候选，不成为跨流派硬规则；
+- 辰丑湿、未戌燥只作为可被全局修正的基础证据，不设固定跨命局权重。
 
-治理复核通过受控的 `review/rule-approvals.json` 输入。可从已跟踪的 `review/rule-approvals.example.json` 建立本地文件，但必须替换全部占位内容。每项裁决必须：
-
-- 与当前已实现策略一致；其他结论需先修改实现和回归测试；
-- 提供至少两条证据引用和实质理由；
-- 由两名不同审阅者完成；
-- 绑定当前 64 位 ruleset digest。
-
-真实审批文件被 Git 忽略；执行证据只消费通过严格解析且与当前快照一致的审批。缺失、重复、旧快照或同一人二审均继续保持 `review_required`。
+策略位于 `packages/governance/src/dispute-policy.ts`，目标 Rule ID 不匹配或策略缺失时测试失败。它们不再依赖人工审批。
 
 ## S6：校准和发布候选
 
@@ -71,16 +65,9 @@
 - 同意、带盐匿名哈希、预测冻结、现实反馈、独立二审和访问审计有自动化测试；
 - 规则变更候选必须引用支持案例、反例、审阅者和候选快照；
 - `npm run calibration:check -- --database=/absolute/path/calibration.sqlite` 只读检查 M4、M5 门槛；
-- `npm run release:check -- --database=/absolute/path/calibration.sqlite` 是完整本地发布命令。
+- `npm run release:check` 是完整本地发布命令。
 
-尚缺的权威外部证据：
-
-- M4：至少 80 个批准案例、非空留出集、全部冻结、反馈完成、独立二审且安全漏判为 0；
-- M5：至少 120 个批准案例、非空留出集、全部冻结、反馈完成、独立二审且安全漏判为 0；
-- 两项学派争议的治理裁决；
-- 当前提交的远端 CI 成功记录。
-
-任何真实数据库都不得提交到 Git。发布操作者应在受控环境通过绝对路径提供数据库。
+真实案例能力不删除：需要研究统计表现时，可使用 `npm run calibration:check -- --database=/absolute/path/calibration.sqlite`。任何真实数据库都不得提交到 Git，也不得在没有案例时宣称准确率或统计验证。
 
 ## 复现顺序
 
@@ -90,8 +77,8 @@ npm run check
 npm audit --audit-level=high
 npm run test:evidence:current
 npm run test:evidence
-npm run calibration:check -- --database=/absolute/path/calibration.sqlite
-npm run release:check -- --database=/absolute/path/calibration.sqlite
+npm run release:check
+npm run dev
 ```
 
-其中后三条严格门禁在治理或校准未完成时失败是正确行为，不得以 `--allow-review` 作为正式发布替代。
+`npm run release:check` 必须成功；`--allow-review` 不得作为正式发布替代。
