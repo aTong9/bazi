@@ -112,3 +112,4 @@ API 地址或密钥。在 **Settings → Pages → Build and deployment → Sour
 Pages 必须由仓库管理员进行上述一次性启用。未启用时 GitHub 的
 `configure-pages` 会返回 404；这是仓库设置问题，不是项目构建失败。启用后，
 每次推送 `master` 都会自动取消旧的在途部署，并发布最新版本。
+end
