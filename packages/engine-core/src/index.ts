@@ -67,6 +67,18 @@ export class EvidenceLedger {
   }
 }
 
+export interface CalibrationFindingProvenance {
+  readonly discoveryTiming: "prediction_locked" | "feedback_after";
+  readonly countsAsPredictionHit: boolean;
+}
+
+export function classifyCalibrationFinding(discoveredAfterFeedback: boolean): CalibrationFindingProvenance {
+  return Object.freeze({
+    discoveryTiming: discoveredAfterFeedback ? "feedback_after" : "prediction_locked",
+    countsAsPredictionHit: !discoveredAfterFeedback,
+  });
+}
+
 function addReference(index: Map<string, Set<string>>, id: string, fieldId: string): void {
   if (!id || !fieldId) throw new Error("Evidence IDs and field IDs must be non-empty");
   const fields = index.get(id) ?? new Set<string>();

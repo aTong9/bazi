@@ -18,6 +18,8 @@ export type AnalyzeProfileCommand = AnalyzeM0Command & {
   readonly observations?: readonly M4Observation[];
   readonly gateAssessments?: readonly RealityGateAssessment[];
   readonly crossStateValidation?: { readonly steady: boolean; readonly pressure: boolean; readonly repair: boolean; readonly turningPoint: boolean; readonly counterevidenceReviewed: boolean };
+  readonly subjectB?: AnalyzeM0Command["subject"] | null;
+  readonly legacyPayloads?: Readonly<Record<string, unknown>>;
 };
 export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogSnapshot) {
   const m0 = analyzeM0(command, catalog);
@@ -29,6 +31,16 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
   const m3 = analyzeM3({ m02, m09, m10, rules: catalog });
   const m4 = analyzeM4({ m3, rules: catalog, ...(command.observations ? { observations: command.observations } : {}) });
   const m5 = analyzeM5({ mode: command.relationshipMode ?? "single_chart_relationship_profile", m4, rules: catalog, ...(command.gateAssessments ? { gateAssessments: command.gateAssessments } : {}), ...(command.crossStateValidation ? { crossStateValidation: command.crossStateValidation } : {}) });
+  const subjectBResult = command.subjectB ? analyzeM0({ analysisMode: command.analysisMode, subject: command.subjectB, requestedSections: ["m0"] }, catalog) : null;
+  if (subjectBResult && !subjectBResult.ok) return subjectBResult;
+  const structuralSupplement = Object.freeze({
+    available: Boolean(subjectBResult?.ok),
+    scope: "structural_auxiliary_only" as const,
+    replacesRealityEvidence: false as const,
+    replacesRealityGates: false as const,
+    fields: subjectBResult?.ok ? subjectBResult.response.m0.fields : null,
+  });
+  const legacyPayloads = command.legacyPayloads ? Object.freeze({ mode: "wrapped_read_only" as const, payloads: command.legacyPayloads }) : null;
   const relationshipRuleTrace = Object.freeze([...new Set([...m1.ruleTrace, ...m2.ruleTrace, ...m3.ruleTrace, ...m4.ruleTrace, ...m5.ruleTrace])].sort());
   const eventIds = Object.freeze([...new Set(m5.realityGates.flatMap((gate) => gate.evidenceIds))]);
   const report = buildAnalysisReport({
@@ -41,7 +53,7 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
     decisions: m5.fit.assessment === "AF08" ? [{ decisionId: `${m0.response.requestId}:core-gate`, code: "CORE_REALITY_GATE_CAP_FG2", outcome: "CAP_FG2", ruleIds: m5.ruleTrace }] : m5.fit.assessment === "AF09" ? [{ decisionId: `${m0.response.requestId}:safety-stop`, code: "SAFETY_STOP_OVERRIDES_ORDINARY_FIT", outcome: "STOP", ruleIds: m5.ruleTrace }] : [],
     ...(m5.safetyStatus === "safety_stop" ? { safetyReason: "现实资料触发安全停止；请优先关注安全、同意与现实支持。" } : {}),
   });
-  const response = { ...m0.response, relationship: { status: m1.status === "dependency_pending" || m2.status === "dependency_pending" ? "dependency_pending" as const : "provisional" as const, roleBasis: command.roleBasis, m1, m2, m3, m4, m5, dependencyFlags: Object.freeze([...new Set([...m1.dependencyFlags, ...m2.dependencyFlags, ...m3.dependencyFlags])]), ruleTrace: relationshipRuleTrace }, report };
+  const response = { ...m0.response, relationship: { status: m1.status === "dependency_pending" || m2.status === "dependency_pending" ? "dependency_pending" as const : "provisional" as const, roleBasis: command.roleBasis, m1, m2, m3, m4, m5, structuralSupplement, legacyPayloads, dependencyFlags: Object.freeze([...new Set([...m1.dependencyFlags, ...m2.dependencyFlags, ...m3.dependencyFlags])]), ruleTrace: relationshipRuleTrace }, report };
   const publicationErrors = validateRelationshipResponse(response, { rulesetDigest: catalog.manifest.rulesetDigest, integrationVersion: catalog.manifest.integrationVersion });
   if (publicationErrors.length) return { ok: false as const, httpStatus: 500 as const, issues: Object.freeze(publicationErrors.map((message) => ({ code: "E_REPORT_PUBLICATION", severity: "error" as const, stage: "publication" as const, message, retryable: false }))) };
   return { ok: true as const, httpStatus: 200 as const, response };

@@ -12,6 +12,7 @@ export interface M3Result {
   readonly repair: { readonly trigger: string; readonly steps: readonly string[]; readonly stopConditions: readonly string[] };
   readonly synthesis: { readonly primaryChannels: readonly ChannelKey[]; readonly statements: readonly string[] };
   readonly dependencyFlags: readonly string[]; readonly boundaries: readonly string[]; readonly ruleTrace: readonly string[];
+  readonly calibration?: { readonly stateRepairSynthesis: "dependency_pending"; readonly requiredAsset: "M3_CASE_CALIBRATION" };
 }
 const MODULES: Readonly<Record<ChannelKey, string>> = { base: "M3.BASE", expression: "M3.EXPR", care: "M3.CARE", boundary: "M3.BOUND", conflict: "M3.CONFLICT" };
 export function analyzeM3(input: { m02: M02Result; m09: M09Result; m10: M10Result; rules: RelationshipRuleCatalog }): M3Result {
@@ -30,5 +31,5 @@ export function analyzeM3(input: { m02: M02Result; m09: M09Result; m10: M10Resul
   const repair = Object.freeze({ trigger: pressure ? "PRESSURE_OR_CHANNEL_BREAK" : "DISAGREEMENT_OR_MISALIGNMENT", steps: Object.freeze(["PAUSE_WITHOUT_WITHDRAWAL_INFERENCE", "NAME_THE_ACTIVE_CHANNEL_AND_NEED", "MAKE_ONE_OBSERVABLE_REQUEST", "CONFIRM_RESPONSE_AND_BOUNDARY", "RESUME_OR_RENEGOTIATE"]), stopConditions: Object.freeze(["CONSENT_WITHDRAWN", "SAFETY_RISK_REQUIRES_M4", "EVIDENCE_INSUFFICIENT"]) });
   const primaryChannels = (Object.keys(channels) as ChannelKey[]).sort((a, b) => channels[b].statements.length - channels[a].statements.length).slice(0, 3);
   const synthesisStatements = unique(primaryChannels.flatMap((key) => channels[key].statements.slice(0, 1)));
-  return { moduleId: "M3.SYNTH", status: "provisional", channels, state, repair, synthesis: { primaryChannels: Object.freeze(primaryChannels), statements: synthesisStatements }, dependencyFlags: [], boundaries: Object.freeze(["只描述关系建立后的互动机制", "不推断人格或依恋类型", "不判断关系结果或适配", "风险转M4，适配转M5"]), ruleTrace: unique(Object.values(channels).flatMap((channel) => channel.ruleIds)) };
+  return { moduleId: "M3.SYNTH", status: "provisional", channels, state, repair, synthesis: { primaryChannels: Object.freeze(primaryChannels), statements: synthesisStatements }, dependencyFlags: [], calibration: Object.freeze({ stateRepairSynthesis: "dependency_pending", requiredAsset: "M3_CASE_CALIBRATION" }), boundaries: Object.freeze(["只描述关系建立后的互动机制", "不推断人格或依恋类型", "不判断关系结果或适配", "风险转M4，适配转M5"]), ruleTrace: unique(Object.values(channels).flatMap((channel) => channel.ruleIds)) };
 }
