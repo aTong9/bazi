@@ -16,6 +16,60 @@ export interface M0EnrichmentReport {
   readonly conflicts: readonly string[];
 }
 
+export interface M0SemanticWorkbookRow {
+  readonly id: string;
+  readonly moduleId: string;
+  readonly sourceSheet: string;
+  readonly sourceRow: number;
+  readonly fields: Readonly<Record<string, string>>;
+}
+
+export async function readM0SemanticWorkbook(options: {
+  repositoryRoot: string;
+}): Promise<readonly M0SemanticWorkbookRow[]> {
+  const root = path.resolve(options.repositoryRoot);
+  const lock = JSON.parse(await readFile(path.join(root, "data/source-package.lock.json"), "utf8")) as SourceLock;
+  const workbookRelativePath = lock.semanticSources.m0[0]?.path;
+  if (!workbookRelativePath) throw new Error("M0 semantic workbook is absent from source lock");
+  const integrationFile = path.join(
+    root,
+    "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/M0_标准化记录_V1.0.csv",
+  );
+  const integrationRows = parse(await readFile(integrationFile, "utf8"), {
+    bom: true, columns: true, skip_empty_lines: true,
+  }) as NativeRow[];
+  const archive = await readXmlArchive(path.join(root, workbookRelativePath));
+  const targets = workbookSheetTargets(archive);
+  const worksheets = new Map<string, Map<number, Record<string, string>>>();
+  const result: M0SemanticWorkbookRow[] = [];
+  for (const integrationRow of integrationRows) {
+    const id = integrationRow.global_id ?? "";
+    const moduleId = integrationRow.module_id ?? "";
+    const sourceSheet = integrationRow.source_sheet ?? "";
+    const sourceRow = Number.parseInt(integrationRow.source_row ?? "", 10);
+    const target = targets.get(sourceSheet);
+    if (!id || !moduleId || !target || !Number.isInteger(sourceRow)) {
+      throw new Error(`Invalid semantic workbook locator for ${id || "(missing-id)"}`);
+    }
+    let worksheet = worksheets.get(target);
+    if (!worksheet) {
+      worksheet = worksheetRows(requiredXml(archive, target));
+      worksheets.set(target, worksheet);
+    }
+    const headers = worksheet.get(5);
+    const values = worksheet.get(sourceRow);
+    if (!headers || !values) throw new Error(`Semantic workbook row missing: ${sourceSheet}!${sourceRow}`);
+    const fields = Object.fromEntries(
+      Object.entries(headers).filter(([, name]) => name).map(([column, name]) => [name, values[column] ?? ""]),
+    );
+    const nativeId = values.A ?? "";
+    if (nativeId !== id) throw new Error(`Semantic workbook ID mismatch at ${sourceSheet}!${sourceRow}`);
+    fields.Record_ID = nativeId;
+    result.push({ id, moduleId, sourceSheet, sourceRow, fields: Object.freeze(fields) });
+  }
+  return Object.freeze(result);
+}
+
 export async function verifyM0Enrichment(options: {
   repositoryRoot: string;
 }): Promise<M0EnrichmentReport> {
