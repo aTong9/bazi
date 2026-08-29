@@ -1,0 +1,275 @@
+{
+  "lockVersion": "1.0",
+  "integrationVersion": "1.0",
+  "packageRoot": "docs/八字关系分析系统_M0-M5开发整合包_V1.0",
+  "integrationCore": [
+    {
+      "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/M0_标准化记录_V1.0.csv",
+      "role": "integration_core",
+      "modelVersion": "1.0",
+      "sha256": "401ccc6bbcb5e7ec81c6c7f798c79916092c38209dacef708ad640aaa4c8f7fc",
+      "expectedRecordCount": 1745
+    },
+    {
+      "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/M1-M5_原子规则总表_V1.0.csv",
+      "role": "integration_core",
+      "modelVersion": "1.0",
+      "sha256": "1ea3d8ee44d684c2d66641d4ef2643f69852a0e0c411fba21161828518117862",
+      "expectedRecordCount": 9373
+    },
+    {
+      "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/统一模块注册表_V1.0.csv",
+      "role": "integration_core",
+      "modelVersion": "1.0",
+      "sha256": "b227cdd5ce005e2a29a9a6252f8da0f704649634a03d906b7100b0a950082bb7",
+      "expectedRecordCount": 50
+    },
+    {
+      "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/M0_术语编码_V1.0.csv",
+      "role": "integration_core",
+      "modelVersion": "1.0",
+      "sha256": "cf8fa218dc6fa56723c1b06a69fc09a4dde7b3e7d1f85693f32a4a059fa8744b",
+      "expectedRecordCount": 621
+    },
+    {
+      "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/M0_M19输出字段_V1.0.csv",
+      "role": "integration_core",
+      "modelVersion": "1.0",
+      "sha256": "be63c3dc6cbda10c33e483a73e7e45564869772f95b01eac4f0b9e7bd93118d0",
+      "expectedRecordCount": 45
+    },
+    {
+      "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/八字关系分析系统_M0-M5统一JSON_Schema_V1.0.json",
+      "role": "integration_core",
+      "modelVersion": "1.0",
+      "sha256": "3b810a43c2a1c6c49286483f5b954086f06a67b1a5102f4614c7722359d919cb"
+    }
+  ],
+  "semanticSources": {
+    "m0": [
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/00_开发入口/M0_原始开发起步包/01_核心规则库/M0_八字结构判定与用神规则库_V1.9_版本与争议治理闭环版.xlsx",
+        "role": "semantic_source",
+        "modelVersion": "1.9",
+        "sha256": "95b4a6f6b4641f2f2005e9d43dbd4a57f7812968b777b9135c4c3950bfc65e1a",
+        "expectedRecordCount": 1745
+      }
+    ],
+    "m1M5": [
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M1/当前权威与参考/M1_CORE_核心规则原子表_V0.2.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.2",
+        "sha256": "be9d80b7a890f19f98feeeae727ec3401ad8d127f44abb94d137525223cc68cd",
+        "expectedRecordCount": 94
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M2/当前权威与参考/M2_CORE_夫妻星准入规则原子表_V0.3.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.3",
+        "sha256": "14887fb871227d25dfac02c55c477c8642700d6788d6f92a6100dec1d44ab5c8",
+        "expectedRecordCount": 122
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M2/当前权威与参考/M2_DUAL_双重门槛与正偏并见原子规则表_V0.6.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.6",
+        "sha256": "524f2f9869ec949537e19d3320aacd33153045e3a63dea519736585eee4e1272",
+        "expectedRecordCount": 193
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M2/当前权威与参考/M2_FLOW_确认路径原子规则表_V0.5.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.5",
+        "sha256": "6c69722f0192dd5b032425343218bfb67f2b00bf3caa85f719577cdd0f44f70a",
+        "expectedRecordCount": 168
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M2/当前权威与参考/M2_GATE_夫妻宫门槛原子表_V0.2.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.2",
+        "sha256": "7d15e4257400c1fb4849d12acaa3b67c540bc2ca41f2880617290ee478355dc3",
+        "expectedRecordCount": 106
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M2/当前权威与参考/M2_SELF_自我选择位置原子规则表_V0.4.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.4",
+        "sha256": "280f4fc8b8b075314471eaa64665cd12faae090eba9374a6f7cf2ba604b74825",
+        "expectedRecordCount": 144
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M2/当前权威与参考/M2_SYNTH_总合成规则原子表_V0.8.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.8",
+        "sha256": "07b5496a657c9dca8d31452c5810571e8285452225a3c374b12d03ec7c1469b8",
+        "expectedRecordCount": 180
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M2/当前权威与参考/M2_TEMPO_确认与进入节奏原子规则表_V0.7.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.7",
+        "sha256": "57bdd38e3abc09fbe2f108094b76c2886d41da46ef8bbc1f0ddf3bb53dda0520",
+        "expectedRecordCount": 196
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M3/当前权威与参考/M3_BASE_关系运行底盘原子规则表_V0.2.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.2",
+        "sha256": "75dcfd4efa974dbc589638d1c1e9c40785a78c01bdf2e35c9b6ff6dd69119e65",
+        "expectedRecordCount": 206
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M3/当前权威与参考/M3_BOUND_亲密距离依赖与边界原子规则表_V0.5.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.5",
+        "sha256": "62c3e789c5499ec70d445cd626cf1dd2e19f33563fbc576be46410c69c99de7a",
+        "expectedRecordCount": 260
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M3/当前权威与参考/M3_CARE_付出照顾与支持交换原子规则表_V0.4.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.4",
+        "sha256": "014a4574d74dec779c61d43c5e4a897d0a85596c77be8cc64c6664e7f4fd28cc",
+        "expectedRecordCount": 236
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M3/当前权威与参考/M3_CONFLICT_分歧响应与冲突处理原子规则表_V0.6.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.6",
+        "sha256": "8d95ecb5e7b863da6d7835b01f7459df10d26adb2251d3aabc8f10617d3b61b6",
+        "expectedRecordCount": 280
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M3/当前权威与参考/M3_EXPR_情感表达与沟通原子规则表_V0.3.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.3",
+        "sha256": "3f14e81dcd51123e1e6220fcbcc59aeb0adbb764d292b2e7490bf557cde68b41",
+        "expectedRecordCount": 220
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M4/当前权威与参考/M4_BASE_失衡候选底盘原子规则表_V0.2.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.2",
+        "sha256": "a90b6648b2f76e8bc97aebf6d6f4ee5fa6148ebe4b4e8028d9c93ab152693cec",
+        "expectedRecordCount": 280
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M4/当前权威与参考/M4_BUFFER_调节保护与病药接口原子规则表_V0.8.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.8",
+        "sha256": "754a16120474b855a4a1a42e831993e2c44e342ba40ee8a508feae40547eb83b",
+        "expectedRecordCount": 520
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M4/当前权威与参考/M4_LOOP_重复互动循环原子规则表_V0.6.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.6",
+        "sha256": "cd9a079d9e089b64deb570580f69db9f1768bb2717328310b5f8028f0f310ac1",
+        "expectedRecordCount": 440
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M4/当前权威与参考/M4_MISREAD_关系识别与证据误读原子规则表_V0.3.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.3",
+        "sha256": "f210040bcf2f2bafe0bee0c9f7982b7eccb6ce8fc99f12132ccc88f52acd4378",
+        "expectedRecordCount": 320
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M4/当前权威与参考/M4_OVERUSE_功能过用不足与竞争原子规则表_V0.4.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.4",
+        "sha256": "72c1541a0ec41d4d4fa0c5d7c677e92f2d7fe90716632064ea2230be969f5d7d",
+        "expectedRecordCount": 360
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M4/当前权威与参考/M4_REPAIR_修复卡点与回流断点原子规则表_V0.7.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.7",
+        "sha256": "1f72d06a00894598e7ad25e90d2df6b3d9a58fe0645396c0078c8635e486e3e2",
+        "expectedRecordCount": 480
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M4/当前权威与参考/M4_SYNTH_总合成规则原子表_V0.9.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.9",
+        "sha256": "e818f10f3460b32ade93b2e6d81261b47d9b5d513be179b999d88da858585982",
+        "expectedRecordCount": 240
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M4/当前权威与参考/M4_TRIGGER_触发条件阈值与状态切换原子规则表_V0.5.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.5",
+        "sha256": "f4dcef05e6938af836c0b2868da31920dcd546f4b1d531fe7f7758848f65f403",
+        "expectedRecordCount": 400
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M5/当前权威与参考/M5_BASE_适配需求底盘与核心必要条件原子规则表_V0.2.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.2",
+        "sha256": "9c90e593203c5840b73f2188a5d1883d45b2cc40e3cfd9fce9592e2c10ef3677",
+        "expectedRecordCount": 368
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M5/当前权威与参考/M5_BOUND_边界决定权资源与亲密空间原子规则表_V0.5.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.5",
+        "sha256": "d84e497f81e9c1c06758d8614ccd70ad82198fd14e8ca04e96e95d0bd0da34d1",
+        "expectedRecordCount": 520
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M5/当前权威与参考/M5_EXCHANGE_表达支持投入与双向交换原子规则表_V0.4.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.4",
+        "sha256": "8c6856a5ff163ab4e676fa8f2203e7bba461e4ffabac53acbaae015d16296e63",
+        "expectedRecordCount": 480
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M5/当前权威与参考/M5_GAP_心动准入相处盲点与适配差异原子规则表_V0.8.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.8",
+        "sha256": "d2dc02784b34d42101200c7197e807ed1e416d1f9e7b7c5190e0bfac633da5b8",
+        "expectedRecordCount": 640
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M5/当前权威与参考/M5_PARTNER_伴侣功能画像与可观察行为原子规则表_V0.3.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.3",
+        "sha256": "7798659489ceb12ad9d84ba11d6b3855c5e55af3828591142d001f8cdb034915",
+        "expectedRecordCount": 440
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M5/当前权威与参考/M5_REPAIR_冲突顺序修复协议与状态协同原子规则表_V0.6.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.6",
+        "sha256": "39f0fada585df95169862d2d0cd8f5f5c4527cd3ecaf00c24670f6d320de8bae",
+        "expectedRecordCount": 560
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M5/当前权威与参考/M5_RHYTHM_推进节奏生活协同与关系气候原子规则表_V0.7.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.7",
+        "sha256": "3e741cf6dddeaf6f4fffe8d5a2490a6acbcc922ee76a1b25f21153065fb96509",
+        "expectedRecordCount": 600
+      },
+      {
+        "path": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/05_原始来源_只读/M1-M5/M5/当前权威与参考/M5_SYNTH_总合成规则原子表_V0.9.csv",
+        "role": "semantic_source",
+        "modelVersion": "0.9",
+        "sha256": "562af56a3056a898446a76796abbc71b6de587fc367be73f0a2e225ce2816e42",
+        "expectedRecordCount": 320
+      }
+    ]
+  },
+  "overlays": [
+    {
+      "path": "data/overlays/integration-v1.0-patch-001.json",
+      "role": "overlay",
+      "modelVersion": "1.0",
+      "sha256": "aa78e7a21b11b084a15599f041f50004e96369fd9b6f43948f61647a6971325c"
+    }
+  ],
+  "deniedPrefixes": [
+    "06_历史归档/"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "bazi-relationship-analysis-system",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22 <26"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test \"tests/**/*.test.ts\"",
+    "test:watch": "tsx --test --watch \"tests/**/*.test.ts\"",
+    "docs:verify": "tsx apps/catalog-cli/src/main.ts verify-doc-package",
+    "catalog:lock:build": "tsx scripts/build-source-package-lock.ts",
+    "catalog:lock:verify": "tsx apps/catalog-cli/src/main.ts verify-source-package-lock",
+    "check": "npm run typecheck && npm test && npm run docs:verify && npm run catalog:lock:verify"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "@types/yauzl": "^3.4.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "csv-parse": "^7.0.2",
+    "yauzl": "^3.4.0"
+  }
+}

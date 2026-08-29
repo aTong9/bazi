@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bazi.local/schemas/source-package-lock-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "lockVersion",
+    "integrationVersion",
+    "packageRoot",
+    "integrationCore",
+    "semanticSources",
+    "overlays",
+    "deniedPrefixes"
+  ],
+  "properties": {
+    "lockVersion": { "const": "1.0" },
+    "integrationVersion": { "const": "1.0" },
+    "packageRoot": { "type": "string", "minLength": 1 },
+    "integrationCore": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": { "$ref": "#/$defs/integrationCoreFile" }
+    },
+    "semanticSources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["m0", "m1M5"],
+      "properties": {
+        "m0": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": { "$ref": "#/$defs/semanticSourceFile" }
+        },
+        "m1M5": {
+          "type": "array",
+          "minItems": 29,
+          "maxItems": 29,
+          "items": { "$ref": "#/$defs/semanticSourceFile" }
+        }
+      }
+    },
+    "overlays": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/overlayFile" }
+    },
+    "deniedPrefixes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "baseFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "role", "modelVersion", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "role": { "type": "string" },
+        "modelVersion": { "type": "string", "minLength": 1 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "expectedRecordCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "integrationCoreFile": {
+      "allOf": [
+        { "$ref": "#/$defs/baseFile" },
+        {
+          "type": "object",
+          "properties": { "role": { "const": "integration_core" } }
+        }
+      ]
+    },
+    "semanticSourceFile": {
+      "allOf": [
+        { "$ref": "#/$defs/baseFile" },
+        {
+          "type": "object",
+          "properties": { "role": { "const": "semantic_source" } }
+        }
+      ]
+    },
+    "overlayFile": {
+      "allOf": [
+        { "$ref": "#/$defs/baseFile" },
+        {
+          "type": "object",
+          "properties": { "role": { "const": "overlay" } }
+        }
+      ]
+    }
+  }
+}

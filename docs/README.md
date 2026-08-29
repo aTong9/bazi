@@ -2,6 +2,29 @@
 
 > 开发实施入口：[《八字关系分析系统 M0—M5 详细开发文档 V1.0》](./八字关系分析系统_详细开发文档_V1.0.md)
 
+## 当前仓库开发入口
+
+运行环境为 Node.js 22；安装和完整校验使用：
+
+```bash
+npm ci
+npm run check
+```
+
+`npm run check` 会执行严格类型检查、测试、161 文件文档包的清单/哈希/JSON/CSV/ZIP CRC 校验，以及权威来源锁校验。原始整合包只读；所有勘误通过 `data/overlays/` 的版本化覆盖层表达。关键契约位于：
+
+- `data/source-package.lock.json`：明确锁定运行时核心、语义权威源和覆盖层；
+- `data/migrations/integration-v1.0-canonical-mappings.json`：状态、置信、Excel 日期和夫妻星策略裁决；
+- `docs/architecture/adr/`：已批准架构决策；
+- `.github/workflows/validate.yml`：PR 与 master 的统一验证门禁。
+
+重新生成来源锁后必须立即运行校验：
+
+```bash
+npm run catalog:lock:build
+npm run catalog:lock:verify
+```
+
 已经对两份M0资料包进行解压、识别、字段抽取、版本判定，并与当前页面中的M1—M5文件完成统一整合。
 
 ## 完整交付包

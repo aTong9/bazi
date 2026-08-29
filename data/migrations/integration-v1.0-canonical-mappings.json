@@ -1,0 +1,59 @@
+{
+  "$schema": "../../packages/contracts/schemas/canonical-mappings.schema.json",
+  "mappingVersion": "1.0",
+  "integrationVersion": "1.0",
+  "lifecycleStatus": {
+    "sourceFields": ["validation_status"],
+    "nativeToCanonical": {
+      "采用": "active",
+      "通过": "active",
+      "已生效": "active",
+      "待验证": "provisional",
+      "部分通过": "provisional",
+      "待复核": "provisional",
+      "示例": "example",
+      "停用": "deprecated"
+    },
+    "preserveAs": "nativeStatus"
+  },
+  "confidence": {
+    "sourceFields": ["confidence", "confidence_base"],
+    "nativeToCanonical": {
+      "": "unknown",
+      "确定": "high",
+      "高": "high",
+      "较高": "medium_high",
+      "中高": "medium_high",
+      "中等": "medium",
+      "中": "medium",
+      "中低": "medium_low",
+      "中或低": "medium_low",
+      "低": "low",
+      "待验证": "unknown",
+      "门控": "gated",
+      "停止": "stopped",
+      "停止/低": "stopped",
+      "低/停止": "stopped",
+      "不适用": "not_applicable",
+      "继承主规则": "inherited",
+      "继承综合": "inherited"
+    },
+    "preserveAs": "nativeConfidence",
+    "notes": "复合值按更保守的可执行状态映射；置信等级不是统计概率。"
+  },
+  "excelDate": {
+    "epochSystem": "excel-1900-compatible",
+    "serialOneDate": "1900-01-01",
+    "leapYearBugPolicy": "serial_60_rejected",
+    "timezone": "date-only",
+    "output": "ISO-8601-date",
+    "preserveSerialAs": "nativeSerial"
+  },
+  "traditionalSpouseStarPolicy": {
+    "configKey": "traditionalSpouseStarPolicy",
+    "allowedValues": ["enabled", "disabled", "custom"],
+    "default": "enabled",
+    "identityBinding": "never_inferred",
+    "notes": "传统映射仅是可配置分析策略，不得从现实性别或关系形式自动推断。"
+  }
+}
