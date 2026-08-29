@@ -48,6 +48,18 @@ export function analyzeM5(input: M5Input) {
   else if (allPass && crossState && Object.values(crossState).every(Boolean)) { grade = "FG4"; assessment = "AF05"; }
   else if (allPass) { grade = "FG3"; assessment = "AF04"; }
   const ordinaryFindings = safetyFailure ? [] : input.m4.riskChains.map((chain) => ({ chainId: chain.id, realityStatus: chain.realityStatus }));
+  const stageStatus = (dimension: RealityEvidenceDimension) => dimension.status === "not_assessed" ? "not_assessed" as const : dimension.status === "blocked" ? "blocked" as const : "provisional" as const;
+  const gapCodes = Object.values(evidenceDimensions).filter((dimension) => dimension.status !== "available").map((dimension) => `${dimension.scheme}:${dimension.status}`);
+  const stages = Object.freeze({
+    base: Object.freeze({ status: single ? "provisional" as const : coreUnresolved ? "limited" as const : "provisional" as const, needs: Object.freeze(["现实尊重", "双向交换", "边界与同意", "修复闭环", "生活节奏"]) }),
+    partner: Object.freeze({ status: stageStatus(evidenceDimensions.PV), evidence: evidenceDimensions.PV, scope: "observable_partner_behavior_only" as const }),
+    exchange: Object.freeze({ status: stageStatus(evidenceDimensions.XV), evidence: evidenceDimensions.XV, scope: "bidirectional_exchange_only" as const }),
+    bound: Object.freeze({ status: stageStatus(evidenceDimensions.BV), evidence: evidenceDimensions.BV, consentPriority: true as const }),
+    repair: Object.freeze({ status: stageStatus(evidenceDimensions.FV), evidence: evidenceDimensions.FV, requiresReceiverFeedback: true as const }),
+    rhythm: Object.freeze({ status: stageStatus(evidenceDimensions.HV), evidence: evidenceDimensions.HV, separateFromEntryTempo: true as const }),
+    gap: Object.freeze({ status: gapCodes.length ? "limited" as const : "clear" as const, codes: Object.freeze(gapCodes), attractionDoesNotRaiseFit: true as const }),
+    synth: Object.freeze({ status: safetyFailure ? "stopped" as const : coreUnresolved ? "limited" as const : "provisional" as const, grade, assessment }),
+  });
   const ruleTrace = ["BASE", "PARTNER", "EXCHANGE", "BOUND", "REPAIR", "RHYTHM", "GAP", "SYNTH"].flatMap((stage) => input.rules?.getModuleRecords(`M5.${stage}`).slice(0, 8).map((record) => record.id) ?? []);
   return Object.freeze({
     moduleId: "M5.SYNTH" as const,
@@ -57,6 +69,7 @@ export function analyzeM5(input: M5Input) {
     safetyStatus: safetyFailure ? "safety_stop" as const : coreFailure ? "core_gate_stop" as const : coreUnresolved ? "insufficient_data" as const : "standard" as const,
     realityGates,
     evidenceDimensions,
+    stages,
     observationPlan: Object.freeze(realityGates.filter((gate) => gate.status !== "pass").slice(0, 3).map((gate) => Object.freeze({ gateId: gate.id, observe: gate.label, directive: false as const }))),
     partnerFacts: single ? null : Object.freeze({ scope: "submitted_reality_evidence_only" as const }),
     fit: Object.freeze({ grade, assessment, ordinaryFindings: Object.freeze(ordinaryFindings), isSuccessProbability: false as const }),

@@ -21,6 +21,16 @@ export interface M4Result {
   readonly status: "provisional";
   readonly stageOrder: readonly ["BASE", "MISREAD", "OVERUSE", "TRIGGER", "LOOP", "REPAIR", "BUFFER", "SYNTH"];
   readonly riskChains: readonly M4RiskChain[];
+  readonly stages: {
+    readonly base: { readonly status: "candidate"; readonly candidates: readonly string[] };
+    readonly misread: { readonly status: "candidate"; readonly hypotheses: readonly string[] };
+    readonly overuse: { readonly status: "candidate"; readonly modifiers: readonly string[] };
+    readonly trigger: { readonly status: "candidate"; readonly conditions: readonly string[] };
+    readonly loop: { readonly status: "unconfirmed" | "observed" | "mixed" | "contradicted"; readonly chainIds: readonly string[] };
+    readonly repair: { readonly status: "candidate"; readonly routes: readonly { readonly chainId: string; readonly actions: readonly string[] }[] };
+    readonly buffer: { readonly status: "candidate"; readonly protections: readonly { readonly chainId: string; readonly conditions: readonly string[] }[] };
+    readonly synth: { readonly status: "provisional"; readonly observedCount: number; readonly unconfirmedCount: number };
+  };
   readonly boundaries: readonly string[];
   readonly ruleTrace: readonly string[];
 }
@@ -41,7 +51,19 @@ export function analyzeM4(input: { readonly m3: M3Result; readonly observations?
     return Object.freeze({ id, structuralCandidate, realityStatus, evidenceIds: Object.freeze(evidence.map((item) => item.id)), repair: Object.freeze({ chainId: id, actions: input.m3.repair.steps }), buffer: Object.freeze({ chainId: id, conditions: Object.freeze(["明确同意", "允许暂停", "观察行为变化"]) }) });
   });
   const stageTrace = ["BASE", "MISREAD", "OVERUSE", "TRIGGER", "LOOP", "REPAIR", "BUFFER", "SYNTH"].flatMap((stage) => input.rules?.getModuleRecords(`M4.${stage}`).slice(0, 8).map((record) => record.id) ?? []);
-  return Object.freeze({ moduleId: "M4.SYNTH", status: "provisional", stageOrder: Object.freeze(["BASE", "MISREAD", "OVERUSE", "TRIGGER", "LOOP", "REPAIR", "BUFFER", "SYNTH"] as const), riskChains: Object.freeze(riskChains), boundaries: Object.freeze(["结构风险不等于现实伤害", "单次陈述不确认重复模式", "保护因素只有改变同一风险链才有效", "安全风险优先进入现实闸门"]), ruleTrace: Object.freeze([...new Set([...input.m3.ruleTrace, ...stageTrace])]) });
+  const loopStatuses = riskChains.map((chain) => chain.realityStatus);
+  const loopStatus = loopStatuses.includes("observed_pattern") ? "observed" : loopStatuses.includes("mixed_evidence") ? "mixed" : loopStatuses.includes("contradicted") ? "contradicted" : "unconfirmed";
+  const stages = Object.freeze({
+    base: Object.freeze({ status: "candidate" as const, candidates: Object.freeze(candidates) }),
+    misread: Object.freeze({ status: "candidate" as const, hypotheses: Object.freeze(candidates.map((candidate) => `可能误读：${candidate}`)) }),
+    overuse: Object.freeze({ status: "candidate" as const, modifiers: input.m3.state.modifiers }),
+    trigger: Object.freeze({ status: "candidate" as const, conditions: Object.freeze([input.m3.repair.trigger, ...input.m3.repair.stopConditions]) }),
+    loop: Object.freeze({ status: loopStatus, chainIds: Object.freeze(riskChains.map((chain) => chain.id)) }),
+    repair: Object.freeze({ status: "candidate" as const, routes: Object.freeze(riskChains.map((chain) => chain.repair)) }),
+    buffer: Object.freeze({ status: "candidate" as const, protections: Object.freeze(riskChains.map((chain) => chain.buffer)) }),
+    synth: Object.freeze({ status: "provisional" as const, observedCount: riskChains.filter((chain) => chain.realityStatus === "observed_pattern").length, unconfirmedCount: riskChains.filter((chain) => chain.realityStatus === "unconfirmed").length }),
+  });
+  return Object.freeze({ moduleId: "M4.SYNTH", status: "provisional", stageOrder: Object.freeze(["BASE", "MISREAD", "OVERUSE", "TRIGGER", "LOOP", "REPAIR", "BUFFER", "SYNTH"] as const), stages, riskChains: Object.freeze(riskChains), boundaries: Object.freeze(["结构风险不等于现实伤害", "单次陈述不确认重复模式", "保护因素只有改变同一风险链才有效", "安全风险优先进入现实闸门"]), ruleTrace: Object.freeze([...new Set([...input.m3.ruleTrace, ...stageTrace])]) });
 }
 
 function dedupeObservations(values: readonly M4Observation[]): readonly M4Observation[] {
