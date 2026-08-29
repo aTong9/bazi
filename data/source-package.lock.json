@@ -52,7 +52,18 @@
         "role": "semantic_source",
         "modelVersion": "1.9",
         "sha256": "95b4a6f6b4641f2f2005e9d43dbd4a57f7812968b777b9135c4c3950bfc65e1a",
-        "expectedRecordCount": 1745
+        "expectedRecordCount": 1745,
+        "enrichment": {
+          "matchKeys": [
+            "globalId",
+            "nativeReference",
+            "sourceSheet",
+            "sourceRow"
+          ],
+          "idColumn": "A",
+          "headerRow": 5,
+          "dataStartRow": 7
+        }
       }
     ],
     "m1M5": [

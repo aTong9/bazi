@@ -75,14 +75,20 @@ const lock = {
   ),
   semanticSources: {
     m0: await Promise.all(
-      m0SemanticSources.map(([relativePath, expectedRecordCount]) =>
-        fileEntry(
+      m0SemanticSources.map(async ([relativePath, expectedRecordCount]) => ({
+        ...(await fileEntry(
           path.posix.join(packageRoot, relativePath),
           "semantic_source",
           "1.9",
           expectedRecordCount,
-        ),
-      ),
+        )),
+        enrichment: {
+          matchKeys: ["globalId", "nativeReference", "sourceSheet", "sourceRow"],
+          idColumn: "A",
+          headerRow: 5,
+          dataStartRow: 7,
+        },
+      })),
     ),
     m1M5: await Promise.all(
       m1M5SemanticSources.map(async (relativePath) => {

@@ -31,7 +31,7 @@
           "type": "array",
           "minItems": 1,
           "maxItems": 1,
-          "items": { "$ref": "#/$defs/semanticSourceFile" }
+          "items": { "$ref": "#/$defs/m0SemanticSourceFile" }
         },
         "m1M5": {
           "type": "array",
@@ -69,6 +69,17 @@
         "expectedRecordCount": {
           "type": "integer",
           "minimum": 0
+        },
+        "enrichment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["matchKeys", "idColumn", "headerRow", "dataStartRow"],
+          "properties": {
+            "matchKeys": { "const": ["globalId", "nativeReference", "sourceSheet", "sourceRow"] },
+            "idColumn": { "const": "A" },
+            "headerRow": { "const": 5 },
+            "dataStartRow": { "const": 7 }
+          }
         }
       }
     },
@@ -87,6 +98,16 @@
         {
           "type": "object",
           "properties": { "role": { "const": "semantic_source" } }
+        }
+      ]
+    },
+    "m0SemanticSourceFile": {
+      "allOf": [
+        { "$ref": "#/$defs/semanticSourceFile" },
+        {
+          "type": "object",
+          "required": ["enrichment"],
+          "properties": { "enrichment": { "$ref": "#/$defs/baseFile/properties/enrichment" } }
         }
       ]
     },

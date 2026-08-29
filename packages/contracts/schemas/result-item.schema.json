@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bazi.local/schemas/result-item-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "applicability", "status", "value", "confidence", "evidence", "ruleIds",
+    "sourceIds", "eventIds", "conditions", "counterevidence"
+  ],
+  "properties": {
+    "applicability": { "enum": ["applicable", "not_applicable"] },
+    "status": { "enum": ["not_assessed", "unknown", "candidate", "supported", "conditional", "contradicted", "stopped"] },
+    "value": {},
+    "confidence": { "enum": ["high", "medium_high", "medium", "medium_low", "low", "not_applicable", "unknown"] },
+    "evidence": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scheme", "level"],
+          "properties": {
+            "scheme": { "enum": ["PV", "XV", "BV", "FV", "HV", "GE"] },
+            "level": { "type": "integer", "minimum": 0, "maximum": 7 }
+          }
+        }
+      ]
+    },
+    "ruleIds": { "$ref": "#/$defs/stringArray" },
+    "sourceIds": { "$ref": "#/$defs/stringArray" },
+    "eventIds": { "$ref": "#/$defs/stringArray" },
+    "conditions": { "$ref": "#/$defs/stringArray" },
+    "counterevidence": { "$ref": "#/$defs/stringArray" },
+    "notes": { "type": "string" }
+  },
+  "$defs": {
+    "stringArray": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+  }
+}

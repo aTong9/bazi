@@ -8,6 +8,7 @@ import {
   type SourcePackageLockReport,
   verifySourcePackageLock,
 } from "../../../packages/catalog/src/verify-source-package-lock.js";
+import { verifyM0Enrichment } from "../../../packages/catalog/src/verify-m0-enrichment.js";
 
 const command = process.argv[2];
 
@@ -15,11 +16,38 @@ if (command === "verify-doc-package") {
   await runDocumentPackageVerification();
 } else if (command === "verify-source-package-lock") {
   await runSourcePackageLockVerification();
+} else if (command === "build-catalog-snapshot") {
+  await runCatalogSnapshotBuild();
+} else if (command === "verify-m0-enrichment") {
+  await runM0EnrichmentVerification();
 } else {
   process.stderr.write(
-    `Unknown command: ${command ?? "(missing)"}\nAvailable commands: verify-doc-package, verify-source-package-lock\n`,
+    `Unknown command: ${command ?? "(missing)"}\nAvailable commands: verify-doc-package, verify-source-package-lock, verify-m0-enrichment, build-catalog-snapshot\n`,
   );
   process.exitCode = 2;
+}
+
+async function runM0EnrichmentVerification(): Promise<void> {
+  const report = await verifyM0Enrichment({ repositoryRoot: path.resolve(".") });
+  process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  if (report.integrationRows !== 1_745 || report.matchedRows !== 1_745 || report.conflicts.length > 0) {
+    process.exitCode = 1;
+  }
+}
+
+async function runCatalogSnapshotBuild(): Promise<void> {
+  const { buildCatalogSnapshot } = await import("../../../packages/catalog/src/build-catalog-snapshot.js");
+  const result = await buildCatalogSnapshot({
+    repositoryRoot: path.resolve("."),
+    outputRoot: path.resolve("rulesets"),
+  });
+  process.stdout.write(`${JSON.stringify({
+    rulesetDigest: result.rulesetDigest,
+    snapshotPath: result.snapshotPath,
+    sourceRecordCount: result.manifest.sourceRecordCount,
+    loadedRecordCount: result.manifest.loadedRecordCount,
+    compiledRecordCount: result.manifest.compiledRecordCount,
+  }, null, 2)}\n`);
 }
 
 async function runDocumentPackageVerification(): Promise<void> {

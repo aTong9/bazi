@@ -17,7 +17,9 @@
     "docs:verify": "tsx apps/catalog-cli/src/main.ts verify-doc-package",
     "catalog:lock:build": "tsx scripts/build-source-package-lock.ts",
     "catalog:lock:verify": "tsx apps/catalog-cli/src/main.ts verify-source-package-lock",
-    "check": "npm run typecheck && npm test && npm run docs:verify && npm run catalog:lock:verify"
+    "catalog:m0:verify": "tsx apps/catalog-cli/src/main.ts verify-m0-enrichment",
+    "catalog:build": "tsx apps/catalog-cli/src/main.ts build-catalog-snapshot",
+    "check": "npm run typecheck && npm test && npm run docs:verify && npm run catalog:lock:verify && npm run catalog:m0:verify"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

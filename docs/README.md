@@ -25,6 +25,15 @@ npm run catalog:lock:build
 npm run catalog:lock:verify
 ```
 
+构建并只读自检当前 Catalog Snapshot：
+
+```bash
+npm run catalog:m0:verify
+npm run catalog:build
+```
+
+快照写入被 Git 忽略的 `rulesets/<digest>/`。运行时只打开其中的 `runtime.sqlite`，不得回退读取 `docs` 下的 CSV 或 XLSX。
+
 已经对两份M0资料包进行解压、识别、字段抽取、版本判定，并与当前页面中的M1—M5文件完成统一整合。
 
 ## 完整交付包
