@@ -51,7 +51,7 @@ async function route(
     else sendJson(response, 200, result.response);
     return;
   }
-  if (request.method === "POST" && url.pathname === "/v1/profile/analyze") {
+  if (request.method === "POST" && ["/v1/profile/analyze", "/v1/relationship/profile", "/v1/relationship/evaluate"].includes(url.pathname)) {
     const body = await readJsonBody(request);
     if (!body.ok) {
       sendJson(response, 400, { issues: [{ code: "E_JSON", severity: "error", stage: "request", message: body.message, retryable: false }] });
@@ -62,7 +62,10 @@ async function route(
       sendJson(response, 400, { issues: parsed.errors.map((message) => ({ code: "E_REQUEST_SCHEMA", severity: "error", stage: "request", message, retryable: false })) });
       return;
     }
-    const result = analyzeProfile(parsed.command, catalog);
+    const command = url.pathname === "/v1/relationship/evaluate"
+      ? { ...parsed.command, relationshipMode: "specific_partner_with_reality_data" as const, ...(parsed.observations ? { observations: parsed.observations } : {}), ...(parsed.gateAssessments ? { gateAssessments: parsed.gateAssessments } : {}), ...(parsed.crossStateValidation ? { crossStateValidation: parsed.crossStateValidation } : {}) }
+      : { ...parsed.command, relationshipMode: "single_chart_relationship_profile" as const };
+    const result = analyzeProfile(command, catalog);
     if (!result.ok) sendJson(response, result.httpStatus, { issues: result.issues });
     else sendJson(response, 200, result.response);
     return;

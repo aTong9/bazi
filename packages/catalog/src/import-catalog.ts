@@ -135,7 +135,7 @@ function importM1M5(
 ): CanonicalCatalogRecord {
   const model = required(row, "model");
   const moduleId = required(row, "module_id");
-  const disposition: CompilationDisposition = ["M1", "M2", "M3"].includes(model) ? "compiled" : "unsupported_with_reason";
+  const disposition: CompilationDisposition = ["M1", "M2", "M3", "M4", "M5"].includes(model) ? "compiled" : "unsupported_with_reason";
   const id = required(row, "rule_id");
   return canonicalRecord({
     row,

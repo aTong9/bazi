@@ -17,7 +17,14 @@
         "data_quality": { "enum": ["high", "medium", "low", "unknown"] }, "synthetic_fixture": { "type": "boolean" }
       }
     },
-    "requested_sections": { "type": "array", "items": { "enum": ["m0", "m1", "m2", "m3"] }, "minItems": 1, "uniqueItems": true }
+    "requested_sections": { "type": "array", "items": { "enum": ["m0", "m1", "m2", "m3", "m4", "m5"] }, "minItems": 1, "uniqueItems": true },
+    "observations": { "type": "array", "items": { "$ref": "#/$defs/observation" } },
+    "reality_gates": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/realityGate" } },
+    "cross_state_validation": { "type": "object", "additionalProperties": false, "required": ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"], "properties": { "steady": { "type": "boolean" }, "pressure": { "type": "boolean" }, "repair": { "type": "boolean" }, "turningPoint": { "type": "boolean" }, "counterevidenceReviewed": { "type": "boolean" } } }
   },
-  "$defs": { "pillar": { "type": "object", "additionalProperties": false, "required": ["stem", "branch"], "properties": { "stem": { "enum": ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] }, "branch": { "enum": ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"] } } } }
+  "$defs": {
+    "pillar": { "type": "object", "additionalProperties": false, "required": ["stem", "branch"], "properties": { "stem": { "enum": ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] }, "branch": { "enum": ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"] } } },
+    "observation": { "type": "object", "additionalProperties": false, "required": ["id", "chainId", "source", "context", "direction"], "properties": { "id": { "type": "string", "minLength": 1 }, "chainId": { "type": "string", "pattern": "^M4-C[0-9]{2}$" }, "source": { "type": "string", "minLength": 1 }, "context": { "type": "string", "minLength": 1 }, "direction": { "enum": ["supports", "contradicts"] } } },
+    "realityGate": { "type": "object", "additionalProperties": false, "required": ["id", "status", "evidenceIds"], "properties": { "id": { "enum": ["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"] }, "status": { "enum": ["pass", "conditional", "fail", "unknown", "not_assessed"] }, "evidenceIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }, "note": { "type": "string" } } }
+  }
 }

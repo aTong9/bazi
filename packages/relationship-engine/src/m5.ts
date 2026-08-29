@@ -1,0 +1,47 @@
+import type { M4Result } from "./m4.js";
+import { normalizeRealityGates, type RealityGateAssessment } from "./reality-gates.js";
+import type { RelationshipRuleCatalog } from "./rule-catalog.js";
+
+export type FitGrade = "FG0" | "FG1" | "FG2" | "FG3" | "FG4";
+export type AssessmentFlag = "AF01" | "AF02" | "AF03" | "AF04" | "AF05" | "AF06" | "AF07" | "AF08" | "AF09";
+export interface M5Input {
+  readonly mode: "single_chart_relationship_profile" | "specific_partner_with_reality_data";
+  readonly m4: M4Result;
+  readonly gateAssessments?: readonly RealityGateAssessment[];
+  readonly crossStateValidation?: { readonly steady: boolean; readonly pressure: boolean; readonly repair: boolean; readonly turningPoint: boolean; readonly counterevidenceReviewed: boolean };
+  readonly rules?: RelationshipRuleCatalog;
+}
+
+export function analyzeM5(input: M5Input) {
+  const single = input.mode === "single_chart_relationship_profile";
+  const realityGates = normalizeRealityGates(single ? undefined : input.gateAssessments, single ? "not_assessed" : "unknown");
+  const safetyFailure = realityGates.some((gate) => (gate.id === "RG01" || gate.id === "RG07") && gate.status === "fail");
+  const core = realityGates.filter((gate) => ["RG02", "RG03", "RG06", "RG07"].includes(gate.id));
+  const coreFailure = core.some((gate) => gate.status === "fail");
+  const coreUnresolved = core.some((gate) => gate.status === "unknown" || gate.status === "not_assessed");
+  const allPass = realityGates.every((gate) => gate.status === "pass");
+  const crossState = input.crossStateValidation;
+  let grade: FitGrade = "FG2";
+  let assessment: AssessmentFlag = "AF02";
+  if (single) { grade = "FG1"; assessment = "AF01"; }
+  else if (safetyFailure) { grade = "FG0"; assessment = "AF09"; }
+  else if (coreFailure) { grade = "FG2"; assessment = "AF08"; }
+  else if (coreUnresolved) { grade = "FG2"; assessment = "AF07"; }
+  else if (allPass && crossState && Object.values(crossState).every(Boolean)) { grade = "FG4"; assessment = "AF05"; }
+  else if (allPass) { grade = "FG3"; assessment = "AF04"; }
+  const ordinaryFindings = safetyFailure ? [] : input.m4.riskChains.map((chain) => ({ chainId: chain.id, realityStatus: chain.realityStatus }));
+  const ruleTrace = ["BASE", "PARTNER", "EXCHANGE", "BOUND", "REPAIR", "RHYTHM", "GAP", "SYNTH"].flatMap((stage) => input.rules?.getModuleRecords(`M5.${stage}`).slice(0, 8).map((record) => record.id) ?? []);
+  return Object.freeze({
+    moduleId: "M5.SYNTH" as const,
+    stageOrder: Object.freeze(["BASE", "PARTNER", "EXCHANGE", "BOUND", "REPAIR", "RHYTHM", "GAP", "SYNTH"] as const),
+    mode: input.mode,
+    reportStatus: safetyFailure ? "stop" as const : single || coreUnresolved ? "limited" as const : "complete" as const,
+    safetyStatus: safetyFailure ? "safety_stop" as const : coreFailure ? "core_gate_stop" as const : coreUnresolved ? "insufficient_data" as const : "standard" as const,
+    realityGates,
+    partnerFacts: single ? null : Object.freeze({ scope: "submitted_reality_evidence_only" as const }),
+    fit: Object.freeze({ grade, assessment, ordinaryFindings: Object.freeze(ordinaryFindings), isSuccessProbability: false as const }),
+    boundaries: Object.freeze(["适配是结构交集加现实闸门，不是总分", "FG 是发布证据等级，不是成功概率", "AF 是当前评估状态，不是命运"]),
+    ruleTrace: Object.freeze([...new Set(ruleTrace)]),
+    notADirective: true as const,
+  });
+}
