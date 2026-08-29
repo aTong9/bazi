@@ -6,6 +6,7 @@ import { test } from "node:test";
 import { buildCatalogSnapshot } from "../../packages/catalog/src/build-catalog-snapshot.js";
 import { openCatalogSnapshot } from "../../packages/catalog/src/open-catalog-snapshot.js";
 import { executeAllM20Fixtures } from "../../packages/testkit/src/s3-m20-runner.js";
+import { REQUIRED_DISPUTE_DECISIONS, type DisputeApproval, type DisputeTestId } from "../../packages/governance/src/dispute-approvals.js";
 
 test("all 150 V1.9 M20 fixtures produce explicit execution or governance records", async () => {
   const outputRoot = await mkdtemp(path.join(os.tmpdir(), "bazi-s3-m20-"));
@@ -21,6 +22,14 @@ test("all 150 V1.9 M20 fixtures produce explicit execution or governance records
       assert.equal(records.filter((record) => record.executionStatus === "review_required").length, 2);
       assert.equal(records.filter((record) => record.executionStatus === "quality_gate").length, 0);
       assert.ok(records.every((record) => record.targetRulesExist));
+      const approvals = new Map<string, DisputeApproval>(Object.entries(REQUIRED_DISPUTE_DECISIONS).map(([testId, decision]) => [testId, {
+        testId: testId as DisputeTestId, decision, rationale: "Two independent reviewers approved the implemented conditional policy.",
+        evidenceRefs: ["authoritative-governance-record", "paired-case-review"], primaryReviewer: "reviewer-a", independentReviewer: "reviewer-b",
+        reviewedAt: "2026-08-29T00:00:00.000Z", rulesetDigest: catalog.manifest.rulesetDigest,
+      }]));
+      const governed = await executeAllM20Fixtures({ repositoryRoot: path.resolve("."), catalog, disputeApprovals: approvals });
+      assert.equal(governed.filter((record) => record.executionStatus === "executed").length, 150);
+      assert.deepEqual(governed.filter((record) => record.executionStatus === "review_required"), []);
     } finally { catalog.close(); }
   } finally { await rm(outputRoot, { recursive: true, force: true }); }
 });

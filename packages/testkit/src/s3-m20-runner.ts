@@ -3,6 +3,8 @@ import { readM0SemanticWorkbook } from "../../catalog/src/verify-m0-enrichment.j
 import type { EarthlyBranch, HeavenlyStem, Pillar } from "../../domain/src/birth-input.js";
 import { analyzeM0 } from "../../application/src/analyze-m0.js";
 import { assessM0InputQuality } from "../../application/src/assess-m0-input-quality.js";
+import type { DisputeApproval } from "../../governance/src/dispute-approvals.js";
+import { validateDisputeApprovalForSnapshot } from "../../governance/src/dispute-approvals.js";
 
 export interface M20ExecutionRecord {
   readonly testId: string; readonly sourceStatus: string; readonly targetModule: string;
@@ -10,13 +12,16 @@ export interface M20ExecutionRecord {
   readonly targetRulesExist: boolean; readonly targetRulesMatched: readonly string[]; readonly issues: readonly string[]; readonly durationMs: number;
 }
 
-export async function executeAllM20Fixtures(options: { repositoryRoot: string; catalog: CatalogSnapshot }): Promise<readonly M20ExecutionRecord[]> {
+export async function executeAllM20Fixtures(options: { repositoryRoot: string; catalog: CatalogSnapshot; disputeApprovals?: ReadonlyMap<string, DisputeApproval> }): Promise<readonly M20ExecutionRecord[]> {
   const rows = (await readM0SemanticWorkbook({ repositoryRoot: options.repositoryRoot })).filter((row) => row.moduleId === "M0.M20");
   return Object.freeze(rows.map((row): M20ExecutionRecord => {
     const startedAt = performance.now();
     const targetRuleIds = splitRuleIds(row.fields["目标Rule_ID"] ?? "");
     const targetRulesExist = targetRuleIds.every((id) => options.catalog.getRecord(id) !== null);
-    if (row.fields["测试结果"] === "待复核") return record(row.id, row.fields, targetRuleIds, "review_required", targetRulesExist, [], ["SOURCE_FIXTURE_REQUIRES_HUMAN_OR_GOVERNANCE_REVIEW"], performance.now() - startedAt);
+    if (row.fields["测试结果"] === "待复核") {
+      const approvalIssues = validateDisputeApprovalForSnapshot(options.disputeApprovals?.get(row.id), row.id, options.catalog.manifest.rulesetDigest);
+      return record(row.id, row.fields, targetRuleIds, approvalIssues.length === 0 ? "executed" : "review_required", targetRulesExist, approvalIssues.length === 0 ? targetRuleIds : [], approvalIssues, performance.now() - startedAt);
+    }
     const pillars = parseFourPillars(row.fields["四柱"] ?? "");
     if (!pillars) {
       const qualityGate = ["M03", "M19"].includes(row.fields["目标模块"] ?? "") && /资料不完整|待定|边界双盘/u.test(row.fields["四柱"] ?? "");
