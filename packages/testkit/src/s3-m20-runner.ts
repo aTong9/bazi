@@ -2,6 +2,7 @@ import type { CatalogSnapshot } from "../../catalog/src/open-catalog-snapshot.js
 import { readM0SemanticWorkbook } from "../../catalog/src/verify-m0-enrichment.js";
 import type { EarthlyBranch, HeavenlyStem, Pillar } from "../../domain/src/birth-input.js";
 import { analyzeM0 } from "../../application/src/analyze-m0.js";
+import { assessM0InputQuality } from "../../application/src/assess-m0-input-quality.js";
 
 export interface M20ExecutionRecord {
   readonly testId: string; readonly sourceStatus: string; readonly targetModule: string;
@@ -19,7 +20,13 @@ export async function executeAllM20Fixtures(options: { repositoryRoot: string; c
     const pillars = parseFourPillars(row.fields["四柱"] ?? "");
     if (!pillars) {
       const qualityGate = ["M03", "M19"].includes(row.fields["目标模块"] ?? "") && /资料不完整|待定|边界双盘/u.test(row.fields["四柱"] ?? "");
-      return record(row.id, row.fields, targetRuleIds, qualityGate ? "quality_gate" : "failed", targetRulesExist, [], qualityGate ? ["INVALID_INPUT_EXPECTED_BY_FIXTURE"] : ["FOUR_PILLARS_NOT_PARSEABLE"], performance.now() - startedAt);
+      if (qualityGate) {
+        const assessment = assessM0InputQuality({ timezoneKnown: !/时区未知/u.test(row.fields["四柱"] ?? ""), calendarBoundaryCandidates: /边界双盘|接近交节/u.test(`${row.fields["四柱"] ?? ""}${row.fields["输入事实"] ?? ""}`) ? 2 : 1 });
+        const matched = targetRuleIds.filter((id) => assessment.ruleTrace.includes(id));
+        const passed = assessment.status === "stopped" && assessment.issues.length > 0 && matched.length === targetRuleIds.length;
+        return record(row.id, row.fields, targetRuleIds, passed ? "executed" : "failed", targetRulesExist, matched, passed ? [] : ["INPUT_QUALITY_GATE_MISMATCH"], performance.now() - startedAt);
+      }
+      return record(row.id, row.fields, targetRuleIds, "failed", targetRulesExist, [], ["FOUR_PILLARS_NOT_PARSEABLE"], performance.now() - startedAt);
     }
     const result = analyzeM0({ analysisMode: "test", subject: { inputMode: "four_pillars_provided", subjectId: row.id, fourPillars: pillars, birthTimeStatus: "exact", timezone: "Asia/Shanghai", dataQuality: "high", syntheticFixture: true }, requestedSections: ["m0"] }, options.catalog);
     if (!result.ok) return record(row.id, row.fields, targetRuleIds, "failed", targetRulesExist, [], result.issues.map((issue) => issue.code), performance.now() - startedAt);

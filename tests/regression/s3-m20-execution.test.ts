@@ -17,8 +17,9 @@ test("all 150 V1.9 M20 fixtures produce explicit execution or governance records
       assert.equal(records.length, 150);
       assert.equal(new Set(records.map((record) => record.testId)).size, 150);
       assert.deepEqual(records.filter((record) => record.executionStatus === "failed"), []);
+      assert.equal(records.filter((record) => record.executionStatus === "executed").length, 148);
       assert.equal(records.filter((record) => record.executionStatus === "review_required").length, 2);
-      assert.equal(records.filter((record) => record.executionStatus === "quality_gate").length, 2);
+      assert.equal(records.filter((record) => record.executionStatus === "quality_gate").length, 0);
       assert.ok(records.every((record) => record.targetRulesExist));
     } finally { catalog.close(); }
   } finally { await rm(outputRoot, { recursive: true, force: true }); }
