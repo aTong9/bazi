@@ -6,6 +6,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { createApiServer } from "../../apps/api/src/server.js";
 import { buildCatalogSnapshot } from "../../packages/catalog/src/build-catalog-snapshot.js";
+import { validateRelationshipResponse } from "../../packages/contracts/src/relationship-response-contract.js";
 
 test("POST /v1/profile/analyze executes M0-M3 and preserves explicit role-basis dependency", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "bazi-profile-")); const built = await buildCatalogSnapshot({ repositoryRoot: path.resolve("."), outputRoot: root });
@@ -28,6 +29,7 @@ test("canonical relationship routes expose a bounded profile and safety-stop eva
     const profileJson = await profile.json() as { relationship: { m5: { fit: { grade: string }; partnerFacts: unknown; realityGates: unknown[] } }; report: { evidenceGrade: string; boundaries: Array<{ hard: boolean }> } };
     assert.equal(profileJson.relationship.m5.fit.grade, "FG1"); assert.equal(profileJson.relationship.m5.partnerFacts, null); assert.equal(profileJson.relationship.m5.realityGates.length, 8);
     assert.equal(profileJson.report.evidenceGrade, "FG1"); assert.ok(profileJson.report.boundaries.every((item) => item.hard));
+    assert.deepEqual(validateRelationshipResponse(profileJson), []);
     const evaluation = await fetch(`http://127.0.0.1:${port}/v1/relationship/evaluate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: [{ id: "RG01", status: "fail", evidenceIds: ["incident-1"], note: "safety failure" }] }) });
     assert.equal(evaluation.status, 200);
     const evaluationJson = await evaluation.json() as { relationship: { m5: { reportStatus: string; fit: { grade: string; assessment: string; ordinaryFindings: unknown[] } } }; report: { sections: Array<{ id: string }> } };

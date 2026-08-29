@@ -38,6 +38,7 @@ export function analyzeM5(input: M5Input) {
     reportStatus: safetyFailure ? "stop" as const : single || coreUnresolved ? "limited" as const : "complete" as const,
     safetyStatus: safetyFailure ? "safety_stop" as const : coreFailure ? "core_gate_stop" as const : coreUnresolved ? "insufficient_data" as const : "standard" as const,
     realityGates,
+    observationPlan: Object.freeze(realityGates.filter((gate) => gate.status !== "pass").slice(0, 3).map((gate) => Object.freeze({ gateId: gate.id, observe: gate.label, directive: false as const }))),
     partnerFacts: single ? null : Object.freeze({ scope: "submitted_reality_evidence_only" as const }),
     fit: Object.freeze({ grade, assessment, ordinaryFindings: Object.freeze(ordinaryFindings), isSuccessProbability: false as const }),
     boundaries: Object.freeze(["适配是结构交集加现实闸门，不是总分", "FG 是发布证据等级，不是成功概率", "AF 是当前评估状态，不是命运"]),

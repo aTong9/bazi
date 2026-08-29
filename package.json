@@ -19,6 +19,7 @@
     "catalog:lock:verify": "tsx apps/catalog-cli/src/main.ts verify-source-package-lock",
     "catalog:m0:verify": "tsx apps/catalog-cli/src/main.ts verify-m0-enrichment",
     "catalog:build": "tsx apps/catalog-cli/src/main.ts build-catalog-snapshot",
+    "test:evidence": "tsx scripts/generate-test-evidence.ts",
     "check": "npm run typecheck && npm test && npm run docs:verify && npm run catalog:lock:verify && npm run catalog:m0:verify"
   },
   "devDependencies": {

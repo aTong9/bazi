@@ -14,6 +14,15 @@ export interface ContractValidationResult {
 
 export function validateResultItemContract(value: unknown): ContractValidationResult {
   const valid = validate(value);
+  if (valid) {
+    const item = value as { status: string; value: unknown; confidence: string; conditions: unknown[] };
+    const semanticErrors = [
+      ...(item.status === "unknown" && item.value !== null ? ["/value unknown result must use null"] : []),
+      ...(item.status === "unknown" && item.confidence !== "unknown" ? ["/confidence unknown result must use unknown confidence"] : []),
+      ...(item.status === "conditional" && item.conditions.length === 0 ? ["/conditions conditional result requires conditions"] : []),
+    ];
+    if (semanticErrors.length) return { valid: false, errors: semanticErrors };
+  }
   return {
     valid,
     errors: valid ? [] : formatErrors(validate.errors),

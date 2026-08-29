@@ -19,6 +19,7 @@ export interface ReportProjectionInput {
   readonly dedupLog: readonly string[];
   readonly conflictLog: readonly string[];
   readonly discardedCandidates: readonly string[];
+  readonly decisions?: readonly { readonly decisionId: string; readonly code: string; readonly outcome: string; readonly ruleIds: readonly string[] }[];
   readonly safetyReason?: string;
 }
 
@@ -46,9 +47,9 @@ export function buildAnalysisReport(input: ReportProjectionInput) {
     fields: input.m0Fields,
     sections: Object.freeze(sections.map((section) => Object.freeze(section))),
     realityGates: input.realityGates,
-    observationPlan: Object.freeze(stopped ? [] : input.realityGates.filter((gate) => gate.status !== "pass").map((gate) => Object.freeze({ gateId: gate.id, observe: gate.label, directive: false as const }))),
+    observationPlan: Object.freeze(stopped ? [] : input.realityGates.filter((gate) => gate.status !== "pass").slice(0, 5).map((gate) => Object.freeze({ gateId: gate.id, observe: gate.label, directive: false as const }))),
     trace: Object.freeze({ ruleIds: unique(input.ruleIds), sourceIds: unique(input.sourceIds), eventIds: unique(input.eventIds) }),
-    logs: Object.freeze({ dedup: unique(input.dedupLog), conflicts: unique(input.conflictLog), discardedCandidates: unique(input.discardedCandidates) }),
+    logs: Object.freeze({ dedup: unique(input.dedupLog), conflicts: unique(input.conflictLog), discardedCandidates: unique(input.discardedCandidates), decisions: Object.freeze((input.decisions ?? []).map((decision) => Object.freeze({ ...decision, ruleIds: unique(decision.ruleIds) }))) }),
     boundaries: Object.freeze([
       Object.freeze({ code: "NOT_FATE", hard: true as const, text: "本报告不是命定结果。" }),
       Object.freeze({ code: "NOT_SUCCESS_PROBABILITY", hard: true as const, text: "FG 是证据发布等级，不是关系成功概率。" }),
@@ -59,11 +60,23 @@ export function buildAnalysisReport(input: ReportProjectionInput) {
 }
 
 const FORBIDDEN: readonly [RegExp, string][] = [
-  [/(唯一|命中注定).{0,4}(正缘|伴侣)/u, "DETERMINISTIC_PARTNER"],
+  [/(唯一|命中注定|就是).{0,4}(正缘|伴侣)/u, "DETERMINISTIC_PARTNER"],
   [/(必然|一定|注定).{0,5}(结婚|离婚|分手|复合)/u, "DETERMINISTIC_OUTCOME"],
-  [/(患有|确诊|诊断为).{0,8}(症|病|障碍)/u, "MEDICAL_DIAGNOSIS"],
-  [/(必须|应该立即|务必).{0,8}(分手|结婚|离婚|复合)/u, "COERCIVE_DIRECTIVE"],
+  [/(明年|后年|\d{4}年).{0,8}(结婚|离婚|分手|复合)/u, "SPECIFIC_EVENT_TIMING"],
+  [/(正官|七杀|财星|夫妻星).{0,8}(公务员|职业|工作)/u, "PARTNER_CAREER_INFERENCE"],
+  [/(财星|官星|喜用).{0,8}(有钱|收入|资产)/u, "PARTNER_INCOME_INFERENCE"],
+  [/(患有|确诊|诊断为|病药说明).{0,8}(症|病|疾病|障碍)/u, "MEDICAL_DIAGNOSIS"],
+  [/(必须|应该|务必).{0,8}(分手|结婚|离婚|复合|原谅)/u, "COERCIVE_DIRECTIVE"],
   [/(成功率|结婚概率|离婚概率).{0,4}\d+%/u, "PROBABILITY_CLAIM"],
+  [/(太敏感|渣男|贱|活该)/u, "SHAMING_LANGUAGE"],
+  [/(双方都有问题).{0,8}(控制|暴力|强迫).{0,4}(可理解|正常)/u, "SAFETY_AVERAGING"],
+  [/(不联系就是不爱|推进快说明认真|慢热的人更可靠)/u, "BEHAVIOR_SHORTCUT"],
+  [/(相反所以互补|相同所以一定合适)/u, "FIT_SHORTCUT"],
+  [/(找|选择).{0,6}(五行|金木水火土).{0,4}(的人|对象)/u, "FAVORABILITY_OBJECTIFICATION"],
+  [/(配置|命局).{0,6}(婚姻|关系).{0,4}(一定|注定).{0,4}(不好|失败)/u, "CONFIG_DETERMINISM"],
+  [/^(他很成熟|她很成熟|你们很合)$/u, "UNSUPPORTED_VAGUE_CLAIM"],
+  [/(十多个主条件|超过十项主条件)/u, "INFORMATION_OVERLOAD"],
+  [/(未说明|缺少).{0,8}(静态|证据|非指令).{0,8}(边界)?/u, "MISSING_BOUNDARY_DISCLOSURE"],
 ];
 
 export function validateReportLanguage(text: string): readonly string[] {

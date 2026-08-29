@@ -21,6 +21,8 @@
     "observations": { "type": "array", "items": { "$ref": "#/$defs/observation" } },
     "reality_gates": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/realityGate" } },
     "cross_state_validation": { "type": "object", "additionalProperties": false, "required": ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"], "properties": { "steady": { "type": "boolean" }, "pressure": { "type": "boolean" }, "repair": { "type": "boolean" }, "turningPoint": { "type": "boolean" }, "counterevidenceReviewed": { "type": "boolean" } } }
+    ,"subject_b": { "oneOf": [{ "type": "null" }, { "$ref": "#/properties/subject" }] }
+    ,"legacy_payloads": { "type": "object", "additionalProperties": true }
   },
   "$defs": {
     "pillar": { "type": "object", "additionalProperties": false, "required": ["stem", "branch"], "properties": { "stem": { "enum": ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] }, "branch": { "enum": ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"] } } },

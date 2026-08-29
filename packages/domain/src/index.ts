@@ -72,6 +72,7 @@ export function createResultItem<T>(input: ResultItem<T>): Readonly<ResultItem<T
     if (input.confidence !== "unknown") throw new Error("unknown result must have confidence=unknown");
     if (input.conditions.length === 0) throw new Error("unknown result must record a reason");
   }
+  if (input.status === "conditional" && input.conditions.length === 0) throw new Error("conditional result must record conditions");
   if (input.applicability === "not_applicable") {
     if (input.status !== "not_assessed" || input.value !== null || input.confidence !== "not_applicable") {
       throw new Error("not_applicable result must use the V1.0 compatibility projection");
