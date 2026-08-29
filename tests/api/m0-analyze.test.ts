@@ -19,7 +19,7 @@ test("POST /v1/m0/analyze returns all 45 M19 fields and rejects exact input with
     const valid = await post(port, requestBody({ stem: "壬", branch: "午" }, "exact"));
     assert.equal(valid.status, 200);
     const body = await valid.json() as { m0: { status: string; fields: Record<string, unknown> }; ruleTrace: string[] };
-    assert.equal(body.m0.status, "partial");
+    assert.equal(body.m0.status, "complete");
     assert.equal(Object.keys(body.m0.fields).length, 45);
     assert.ok(body.ruleTrace.length > 0);
     assert.deepEqual(validateM0AnalyzeResponse(body), []);
@@ -47,7 +47,7 @@ test("POST /v1/m0/analyze returns all 45 M19 fields and rejects exact input with
     assert.equal(health.status, 200);
     const healthBody = await health.json() as { status: string; catalog: { compiledRecords: number } };
     assert.equal(healthBody.status, "ready");
-    assert.equal(healthBody.catalog.compiledRecords, 360);
+    assert.equal(healthBody.catalog.compiledRecords, 1_500);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     await rm(outputRoot, { recursive: true, force: true });

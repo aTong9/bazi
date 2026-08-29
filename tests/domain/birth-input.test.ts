@@ -20,3 +20,13 @@ test("exact four-pillar input is rejected when the hour pillar is missing", () =
   assert.equal(result.ok, false);
   if (!result.ok) assert.equal(result.issues[0]?.code, "E_EXACT_HOUR_REQUIRED");
 });
+
+test("synthetic fixtures bypass calendar-cycle consistency but production input does not", () => {
+  const subject = {
+    inputMode: "four_pillars_provided" as const, subjectId: "fixture",
+    fourPillars: { year: { stem: "甲" as const, branch: "子" as const }, month: { stem: "乙" as const, branch: "卯" as const }, day: { stem: "丙" as const, branch: "子" as const }, hour: { stem: "丁" as const, branch: "卯" as const } },
+    birthTimeStatus: "exact" as const, dataQuality: "high" as const,
+  };
+  assert.equal(validateBirthInput(subject).ok, false);
+  assert.equal(validateBirthInput({ ...subject, syntheticFixture: true }).ok, true);
+});

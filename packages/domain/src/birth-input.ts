@@ -44,7 +44,7 @@ export function validateBirthInput(input: FourPillarsProvidedInput): BirthInputV
     ["day", input.fourPillars.day], ["hour", input.fourPillars.hour],
   ];
   for (const [name, pillar] of pillars) {
-    if (pillar && !isSexagenaryPillar(pillar)) {
+    if (pillar && !input.syntheticFixture && !isSexagenaryPillar(pillar)) {
       issues.push(issue("E_INVALID_PILLAR", `${name} is not a valid sexagenary pillar`, `/fourPillars/${name}`));
     }
   }

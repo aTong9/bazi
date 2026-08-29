@@ -4,6 +4,7 @@ import path from "node:path";
 import { parse } from "csv-parse/sync";
 
 import type { CompilationDisposition, SourceReference } from "../../rule-ir/src/index.js";
+import { readM0SemanticWorkbook } from "./verify-m0-enrichment.js";
 
 type NativeRow = Record<string, string>;
 
@@ -17,6 +18,7 @@ export interface CanonicalCatalogRecord {
   readonly unsupportedReason?: string;
   readonly handlerKey?: string;
   readonly jsonKey?: string;
+  readonly semanticFields?: Readonly<Record<string, string>>;
   readonly lifecycleStatus: string;
   readonly nativeStatus: string;
   readonly confidence: string;
@@ -60,11 +62,13 @@ export async function importCatalog(options: { repositoryRoot: string }): Promis
   const m0 = await readCsv(path.join(coreRoot, "M0_标准化记录_V1.0.csv"));
   const m1M5 = await readCsv(path.join(coreRoot, "M1-M5_原子规则总表_V1.0.csv"));
   const m19Fields = await readCsv(path.join(coreRoot, "M0_M19输出字段_V1.0.csv"));
+  const semanticRows = await readM0SemanticWorkbook({ repositoryRoot: root });
+  const semanticById = new Map(semanticRows.map((row) => [row.id, row.fields]));
   const m19JsonKeys = new Map(m19Fields.map((row) => [required(row, "Field_ID"), required(row, "json_key")]));
   if (m19JsonKeys.size !== 45) throw new Error(`M19 field dictionary must contain 45 unique IDs; got ${m19JsonKeys.size}`);
 
   const records = [
-    ...m0.map((row, index) => importM0(row, index, hashes, mappings, m19JsonKeys)),
+    ...m0.map((row, index) => importM0(row, index, hashes, mappings, m19JsonKeys, semanticById)),
     ...m1M5.map((row, index) => importM1M5(row, index, hashes, mappings)),
   ];
   const ids = new Set<string>();
@@ -91,11 +95,14 @@ function importM0(
   hashes: ReadonlyMap<string, string>,
   mappings: CanonicalMappings,
   m19JsonKeys: ReadonlyMap<string, string>,
+  semanticById: ReadonlyMap<string, Readonly<Record<string, string>>>,
 ): CanonicalCatalogRecord {
   const recordClass = required(row, "record_class");
   const moduleId = required(row, "module_id");
   const disposition = m0Disposition(recordClass, moduleId);
   const id = required(row, "global_id");
+  const semanticFields = semanticById.get(id);
+  if (!semanticFields) throw new Error(`Semantic workbook payload missing for ${id}`);
   const handlerKey = disposition === "compiled" ? handlerKeyFor(id, moduleId) : undefined;
   const jsonKey = recordClass === "output_contract" ? m19JsonKeys.get(id) : undefined;
   if (recordClass === "output_contract" && !jsonKey) throw new Error(`M19 JSON key missing for ${id}`);
@@ -116,6 +123,7 @@ function importM0(
       : {}),
     ...(handlerKey ? { handlerKey } : {}),
     ...(jsonKey ? { jsonKey } : {}),
+    semanticFields,
   });
 }
 
@@ -156,6 +164,7 @@ function canonicalRecord(input: {
   unsupportedReason?: string;
   handlerKey?: string;
   jsonKey?: string;
+  semanticFields?: Readonly<Record<string, string>>;
 }): CanonicalCatalogRecord {
   const sourceFile = required(input.row, "source_file");
   const nativeStatus = input.row.validation_status ?? "";
@@ -173,6 +182,7 @@ function canonicalRecord(input: {
     ...(input.unsupportedReason === undefined ? {} : { unsupportedReason: input.unsupportedReason }),
     ...(input.handlerKey === undefined ? {} : { handlerKey: input.handlerKey }),
     ...(input.jsonKey === undefined ? {} : { jsonKey: input.jsonKey }),
+    ...(input.semanticFields === undefined ? {} : { semanticFields: input.semanticFields }),
     lifecycleStatus,
     nativeStatus,
     confidence,
@@ -190,7 +200,7 @@ function canonicalRecord(input: {
 }
 
 function m0Disposition(recordClass: string, moduleId: string): CompilationDisposition {
-  if (["M0.M02", "M0.M03", "M0.M04", "M0.M05", "M0.M06"].includes(moduleId)) return "compiled";
+  if (/^M0\.M(?:0[2-9]|1[0-8])$/u.test(moduleId)) return "compiled";
   switch (recordClass) {
     case "reference_data": return "reference_only";
     case "output_contract": return "reference_only";

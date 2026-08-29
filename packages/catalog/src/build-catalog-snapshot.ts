@@ -9,7 +9,7 @@ import { verifySourcePackageLock } from "./verify-source-package-lock.js";
 import { verifyM0Enrichment } from "./verify-m0-enrichment.js";
 import { openCatalogSnapshot } from "./open-catalog-snapshot.js";
 
-const COMPILER_VERSION = "2.0.0";
+const COMPILER_VERSION = "3.0.0";
 
 interface LockedFile { path: string; sha256: string; modelVersion: string }
 interface SourceLock {

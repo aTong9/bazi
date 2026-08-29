@@ -17,7 +17,7 @@ test("catalog snapshot rebuild is deterministic and runtime data reopens read-on
     assert.equal(first.manifest.sourceRecordCount, 11_118);
     assert.equal(first.manifest.loadedRecordCount, 10_918);
     assert.equal(first.manifest.silentDrops, 0);
-    assert.equal(first.manifest.compiledRecordCount, 360);
+    assert.equal(first.manifest.compiledRecordCount, 1_500);
 
     const database = new DatabaseSync(path.join(first.snapshotPath, "runtime.sqlite"), { readOnly: true });
     const row = database.prepare("SELECT COUNT(*) AS count FROM catalog_records").get() as { count: number };

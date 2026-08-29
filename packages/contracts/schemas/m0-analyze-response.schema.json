@@ -23,15 +23,21 @@
       "additionalProperties": false,
       "required": ["status", "modules", "fields", "dependencyFlags", "issues"],
       "properties": {
-        "status": { "const": "partial" },
+        "status": { "enum": ["complete", "limited"] },
         "modules": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["M0.M02", "M0.M03", "M0.M04", "M0.M05", "M0.M06"],
+          "required": ["M0.M02", "M0.M03", "M0.M04", "M0.M05", "M0.M06", "M0.M07", "M0.M08", "M0.M09", "M0.M10", "M0.M11", "M0.M12", "M0.M13", "M0.M14", "M0.M15", "M0.M16", "M0.M17", "M0.M18"],
           "properties": {
             "M0.M02": { "type": "object" }, "M0.M03": { "type": "object" },
             "M0.M04": { "type": "object" }, "M0.M05": { "type": "object" },
-            "M0.M06": { "type": "object" }
+            "M0.M06": { "type": "object" }, "M0.M07": { "type": "object" },
+            "M0.M08": { "type": "object" }, "M0.M09": { "type": "object" },
+            "M0.M10": { "type": "object" }, "M0.M11": { "type": "object" },
+            "M0.M12": { "type": "object" }, "M0.M13": { "type": "object" },
+            "M0.M14": { "type": "object" }, "M0.M15": { "type": "object" },
+            "M0.M16": { "type": "object" }, "M0.M17": { "type": "object" },
+            "M0.M18": { "type": "object" }
           }
         },
         "fields": {
