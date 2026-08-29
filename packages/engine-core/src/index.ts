@@ -79,6 +79,17 @@ export function classifyCalibrationFinding(discoveredAfterFeedback: boolean): Ca
   });
 }
 
+export class VersionedResultCache<T> {
+  readonly #values = new Map<string, T>();
+  get(rulesetDigest: string, requestFingerprint: string): T | undefined { return this.#values.get(key(rulesetDigest, requestFingerprint)); }
+  set(rulesetDigest: string, requestFingerprint: string, value: T): void { this.#values.set(key(rulesetDigest, requestFingerprint), value); }
+}
+
+function key(rulesetDigest: string, requestFingerprint: string): string {
+  if (!rulesetDigest || !requestFingerprint) throw new Error("cache key components must be non-empty");
+  return `${rulesetDigest}\u0000${requestFingerprint}`;
+}
+
 function addReference(index: Map<string, Set<string>>, id: string, fieldId: string): void {
   if (!id || !fieldId) throw new Error("Evidence IDs and field IDs must be non-empty");
   const fields = index.get(id) ?? new Set<string>();

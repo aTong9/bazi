@@ -5,7 +5,7 @@ import type { M09Result } from "../../m0-engine/src/m09.js";
 import type { M10Result } from "../../m0-engine/src/m10.js";
 import { analyzeM1, type TraditionalRoleBasis } from "../../relationship-engine/src/m1.js";
 import { analyzeM2 } from "../../relationship-engine/src/m2.js";
-import { analyzeM3 } from "../../relationship-engine/src/m3.js";
+import { analyzeM3, unavailableM3Projection } from "../../relationship-engine/src/m3.js";
 import { analyzeM4, type M4Observation } from "../../relationship-engine/src/m4.js";
 import { analyzeM5 } from "../../relationship-engine/src/m5.js";
 import type { RealityGateAssessment } from "../../relationship-engine/src/reality-gates.js";
@@ -20,6 +20,7 @@ export type AnalyzeProfileCommand = AnalyzeM0Command & {
   readonly crossStateValidation?: { readonly steady: boolean; readonly pressure: boolean; readonly repair: boolean; readonly turningPoint: boolean; readonly counterevidenceReviewed: boolean };
   readonly subjectB?: AnalyzeM0Command["subject"] | null;
   readonly legacyPayloads?: Readonly<Record<string, unknown>>;
+  readonly unavailableModules?: readonly ["M3"];
 };
 export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogSnapshot) {
   const m0 = analyzeM0(command, catalog);
@@ -28,7 +29,7 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
   const m02 = modules["M0.M02"] as M02Result; const m09 = modules["M0.M09"] as M09Result; const m10 = modules["M0.M10"] as M10Result;
   const m1 = analyzeM1({ roleBasis: command.roleBasis, m10, rules: catalog });
   const m2 = analyzeM2({ m02, m09, m10, m1, rules: catalog });
-  const m3 = analyzeM3({ m02, m09, m10, rules: catalog });
+  const m3 = command.unavailableModules?.includes("M3") ? unavailableM3Projection() : analyzeM3({ m02, m09, m10, rules: catalog });
   const m4 = analyzeM4({ m3, rules: catalog, ...(command.observations ? { observations: command.observations } : {}) });
   const m5 = analyzeM5({ mode: command.relationshipMode ?? "single_chart_relationship_profile", m4, rules: catalog, ...(command.gateAssessments ? { gateAssessments: command.gateAssessments } : {}), ...(command.crossStateValidation ? { crossStateValidation: command.crossStateValidation } : {}) });
   const subjectBResult = command.subjectB ? analyzeM0({ analysisMode: command.analysisMode, subject: command.subjectB, requestedSections: ["m0"] }, catalog) : null;
@@ -53,7 +54,7 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
     decisions: m5.fit.assessment === "AF08" ? [{ decisionId: `${m0.response.requestId}:core-gate`, code: "CORE_REALITY_GATE_CAP_FG2", outcome: "CAP_FG2", ruleIds: m5.ruleTrace }] : m5.fit.assessment === "AF09" ? [{ decisionId: `${m0.response.requestId}:safety-stop`, code: "SAFETY_STOP_OVERRIDES_ORDINARY_FIT", outcome: "STOP", ruleIds: m5.ruleTrace }] : [],
     ...(m5.safetyStatus === "safety_stop" ? { safetyReason: "现实资料触发安全停止；请优先关注安全、同意与现实支持。" } : {}),
   });
-  const response = { ...m0.response, relationship: { status: m1.status === "dependency_pending" || m2.status === "dependency_pending" ? "dependency_pending" as const : "provisional" as const, roleBasis: command.roleBasis, m1, m2, m3, m4, m5, structuralSupplement, legacyPayloads, dependencyFlags: Object.freeze([...new Set([...m1.dependencyFlags, ...m2.dependencyFlags, ...m3.dependencyFlags])]), ruleTrace: relationshipRuleTrace }, report };
+  const response = { ...m0.response, relationship: { status: m1.status === "dependency_pending" || m2.status === "dependency_pending" || m3.dependencyFlags.includes("M3_MODULE_UNAVAILABLE") ? "dependency_pending" as const : "provisional" as const, roleBasis: command.roleBasis, m1, m2, m3, m4, m5, structuralSupplement, legacyPayloads, dependencyFlags: Object.freeze([...new Set([...m1.dependencyFlags, ...m2.dependencyFlags, ...m3.dependencyFlags])]), ruleTrace: relationshipRuleTrace }, report };
   const publicationErrors = validateRelationshipResponse(response, { rulesetDigest: catalog.manifest.rulesetDigest, integrationVersion: catalog.manifest.integrationVersion });
   if (publicationErrors.length) return { ok: false as const, httpStatus: 500 as const, issues: Object.freeze(publicationErrors.map((message) => ({ code: "E_REPORT_PUBLICATION", severity: "error" as const, stage: "publication" as const, message, retryable: false }))) };
   return { ok: true as const, httpStatus: 200 as const, response };

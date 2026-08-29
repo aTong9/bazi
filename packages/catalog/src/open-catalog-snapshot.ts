@@ -18,6 +18,7 @@ export interface CatalogSnapshot {
   readonly diagnostics: CatalogDiagnostics;
   getRecord(id: string): CanonicalCatalogRecord | null;
   getModuleRecords(moduleId: string): readonly CanonicalCatalogRecord[];
+  queryRecords(input: { readonly moduleId: string; readonly outputSlot?: string; readonly limit: number; readonly cursor?: number }): { readonly records: readonly CanonicalCatalogRecord[]; readonly nextCursor: number | null };
   getOutputContracts(): readonly CanonicalCatalogRecord[];
   close(): void;
 }
@@ -52,6 +53,7 @@ export function openCatalogSnapshot(snapshotPath: string): CatalogSnapshot {
   const query = database.prepare("SELECT record_json FROM catalog_records WHERE id = ?");
   const outputContractsQuery = database.prepare("SELECT record_json FROM catalog_records WHERE record_class = 'output_contract' ORDER BY id");
   const moduleRecordsQuery = database.prepare("SELECT record_json FROM catalog_records WHERE module_id = ? ORDER BY id");
+  const moduleCache = new Map<string, readonly CanonicalCatalogRecord[]>();
   let closed = false;
   return {
     manifest,
@@ -72,7 +74,23 @@ export function openCatalogSnapshot(snapshotPath: string): CatalogSnapshot {
     },
     getModuleRecords(moduleId: string): readonly CanonicalCatalogRecord[] {
       if (closed) throw new Error("Catalog snapshot is closed");
-      return Object.freeze((moduleRecordsQuery.all(moduleId) as Array<{ record_json: string }>).map((row) => JSON.parse(row.record_json) as CanonicalCatalogRecord));
+      const cached = moduleCache.get(moduleId);
+      if (cached) return cached;
+      const records = Object.freeze((moduleRecordsQuery.all(moduleId) as Array<{ record_json: string }>).map((row) => JSON.parse(row.record_json) as CanonicalCatalogRecord));
+      moduleCache.set(moduleId, records);
+      return records;
+    },
+    queryRecords(input): { readonly records: readonly CanonicalCatalogRecord[]; readonly nextCursor: number | null } {
+      if (closed) throw new Error("Catalog snapshot is closed");
+      if (!Number.isInteger(input.limit) || input.limit < 1 || input.limit > 500) throw new Error("query limit must be an integer from 1 to 500");
+      const offset = input.cursor ?? 0;
+      if (!Number.isInteger(offset) || offset < 0) throw new Error("query cursor must be a non-negative integer");
+      const cached = moduleCache.get(input.moduleId);
+      const moduleRecords = cached ?? Object.freeze((moduleRecordsQuery.all(input.moduleId) as Array<{ record_json: string }>).map((row) => JSON.parse(row.record_json) as CanonicalCatalogRecord));
+      if (!cached) moduleCache.set(input.moduleId, moduleRecords);
+      const values = moduleRecords.filter((record) => !input.outputSlot || record.source.nativePayload.output_slot === input.outputSlot);
+      const records = values.slice(offset, offset + input.limit);
+      return Object.freeze({ records: Object.freeze(records), nextCursor: offset + records.length < values.length ? offset + records.length : null });
     },
     close(): void {
       if (!closed) {
