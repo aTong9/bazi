@@ -1,6 +1,8 @@
 # M0—M5开发资料已完成整合
 
 > 开发实施入口：[《八字关系分析系统 M0—M5 详细开发文档 V1.0》](./八字关系分析系统_详细开发文档_V1.0.md)
+>
+> 当前验收证据：[《S0—S6 完成度审计》](./development/S0-S6-completion-audit.md)
 
 ## 当前仓库开发入口
 
@@ -10,6 +12,8 @@
 npm ci
 npm run check
 ```
+
+正式发布还必须执行 `npm run release:check -- --database=/absolute/path/calibration.sqlite`。当前真实案例与治理复核未闭合，因此严格发布门禁应当失败；详见完成度审计。
 
 `npm run check` 会执行严格类型检查、测试、161 文件文档包的清单/哈希/JSON/CSV/ZIP CRC 校验，以及权威来源锁校验。原始整合包只读；所有勘误通过 `data/overlays/` 的版本化覆盖层表达。关键契约位于：
 
