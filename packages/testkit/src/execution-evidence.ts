@@ -56,6 +56,17 @@ export function summarizeExecutionEvidence(records: readonly TestExecutionEviden
   return Object.freeze({ total: records.length, byStatus: Object.freeze(byStatus), bySuite: Object.freeze(bySuite), releaseReady: byStatus.failed === 0 && byStatus.review_required === 0 && byStatus.not_run === 0 });
 }
 
+export function renderExecutionEvidenceJUnit(records: readonly TestExecutionEvidence[]): string {
+  const failures = records.filter((record) => record.status !== "passed");
+  const durationSeconds = records.reduce((sum, record) => sum + (record.duration_ms ?? 0), 0) / 1000;
+  const cases = records.map((record) => {
+    const body = record.status === "passed" ? "" : `<failure message="${xml(`${record.status}: ${record.actual_summary}`)}">${xml(JSON.stringify(record))}</failure>`;
+    return `<testcase classname="${xml(record.suite)}" name="${xml(record.test_id)}" time="${((record.duration_ms ?? 0) / 1000).toFixed(6)}">${body}</testcase>`;
+  }).join("");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="development-matrix" tests="${records.length}" failures="${failures.length}" errors="0" skipped="0" time="${durationSeconds.toFixed(6)}">${cases}</testsuite>\n`;
+}
+
 function expectedSummary(fields: Readonly<Record<string, string>>): string { return fields["预期综合"] || fields["预期结果"] || fields["预期裁决"] || fields["期望关键输出"] || fields["预期"] || "See authoritative matrix definition."; }
 function normalizeSeverity(value: string | undefined): "P0" | "P1" | "P2" { return value === "P0" || value === "P2" ? value : "P1"; }
 function sha256(value: string): string { return createHash("sha256").update(value).digest("hex"); }
+function xml(value: string): string { return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("'", "&apos;"); }

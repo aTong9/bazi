@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import path from "node:path";
 import { test } from "node:test";
-import { buildCurrentExecutionEvidence, summarizeExecutionEvidence } from "../../packages/testkit/src/execution-evidence.js";
+import { buildCurrentExecutionEvidence, renderExecutionEvidenceJUnit, summarizeExecutionEvidence } from "../../packages/testkit/src/execution-evidence.js";
 import { readDevelopmentTestMatrix } from "../../packages/testkit/src/read-development-test-matrix.js";
 
 test("execution evidence is unbounded, reproducible, and never reports an unbound matrix case as passed", async () => {
@@ -15,4 +15,8 @@ test("execution evidence is unbounded, reproducible, and never reports an unboun
   const summary = summarizeExecutionEvidence(records);
   assert.deepEqual(summary.byStatus, { passed: 1, failed: 0, review_required: 0, not_run: 406 });
   assert.equal(summary.releaseReady, false);
+  const junit = renderExecutionEvidenceJUnit(records);
+  assert.match(junit, /tests="407" failures="406"/u);
+  assert.match(junit, /<testcase classname=/u);
+  assert.match(junit, /<failure message="not_run:/u);
 });

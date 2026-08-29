@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { buildCatalogSnapshot } from "../packages/catalog/src/build-catalog-snapshot.js";
 import { openCatalogSnapshot } from "../packages/catalog/src/open-catalog-snapshot.js";
-import { buildCurrentExecutionEvidence, summarizeExecutionEvidence } from "../packages/testkit/src/execution-evidence.js";
+import { buildCurrentExecutionEvidence, renderExecutionEvidenceJUnit, summarizeExecutionEvidence } from "../packages/testkit/src/execution-evidence.js";
 import { readDevelopmentTestMatrix } from "../packages/testkit/src/read-development-test-matrix.js";
 import { executeAllM20Fixtures } from "../packages/testkit/src/s3-m20-runner.js";
 import { executeReportLanguageMatrix } from "../packages/testkit/src/report-language-runner.js";
@@ -34,8 +34,10 @@ try {
     await Promise.all([
       writeFile(path.join(outputRoot, "execution-report.jsonl"), `${records.map((record) => JSON.stringify(record)).join("\n")}\n`),
       writeFile(path.join(outputRoot, "summary.json"), `${JSON.stringify({ generatedAt: new Date().toISOString(), codeCommit, rulesetDigest: built.rulesetDigest, environment, ...summary }, null, 2)}\n`),
+      writeFile(path.join(outputRoot, "junit.xml"), renderExecutionEvidenceJUnit(records)),
     ]);
     process.stdout.write(`${JSON.stringify({ outputRoot, ...summary }, null, 2)}\n`);
-    if (!summary.releaseReady) process.exitCode = 1;
+    const allowReview = process.argv.includes("--allow-review");
+    if (!summary.releaseReady && !(allowReview && summary.byStatus.failed === 0 && summary.byStatus.not_run === 0)) process.exitCode = 1;
   } finally { catalog.close(); }
 } finally { await rm(temporaryRoot, { recursive: true, force: true }); }

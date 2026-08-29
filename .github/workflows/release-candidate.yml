@@ -1,0 +1,22 @@
+name: Release candidate gates
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 19 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  strict-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Require every matrix item to pass
+        run: npm run test:evidence
