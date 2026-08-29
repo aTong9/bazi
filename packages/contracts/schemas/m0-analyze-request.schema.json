@@ -9,7 +9,7 @@
     "subject": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["input_mode", "subject_id", "four_pillars", "birth_time_status", "data_quality"],
+      "required": ["input_mode", "subject_id", "four_pillars", "birth_time_status", "timezone", "data_quality"],
       "properties": {
         "input_mode": { "const": "four_pillars_provided" },
         "subject_id": { "type": "string", "minLength": 1, "maxLength": 128 },

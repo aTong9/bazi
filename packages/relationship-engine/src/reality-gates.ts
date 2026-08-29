@@ -27,6 +27,12 @@ export function normalizeRealityGates(
   }
   return Object.freeze(REALITY_GATE_IDS.map((id) => {
     const value = byId.get(id);
-    return Object.freeze({ id, label: LABELS[id], status: value?.status ?? fallback, evidenceIds: Object.freeze([...new Set(value?.evidenceIds ?? [])]), ...(value?.note ? { note: value.note } : {}) });
+    const evidenceIds = [...new Set((value?.evidenceIds ?? []).map((evidenceId) => evidenceId.trim()).filter(Boolean))];
+    const submittedStatus = value?.status ?? fallback;
+    const unsupportedNonNeutral = ["pass", "conditional", "fail"].includes(submittedStatus) && evidenceIds.length === 0;
+    const conservativeSafetyFailure = submittedStatus === "fail" && (id === "RG01" || id === "RG07");
+    const status = unsupportedNonNeutral && !conservativeSafetyFailure ? "unknown" : submittedStatus;
+    const note = value?.note?.trim();
+    return Object.freeze({ id, label: LABELS[id], status, evidenceIds: Object.freeze(evidenceIds), ...(note ? { note } : {}) });
   }));
 }

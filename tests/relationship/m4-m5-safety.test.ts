@@ -61,9 +61,49 @@ test("RG01 safety failure stops ordinary fit reporting with FG0 and AF09", () =>
   assert.deepEqual(result.fit.ordinaryFindings, []);
 });
 
+test("an unsupported RG01 or RG07 failure still conservatively triggers the safety stop", () => {
+  for (const id of ["RG01", "RG07"] as const) {
+    const result = analyzeM5({
+      mode: "specific_partner_with_reality_data",
+      m4: analyzeM4({ m3, observations: [] }),
+      gateAssessments: [{ id, status: "fail", evidenceIds: [] }],
+    });
+    assert.equal(result.realityGates.find((gate) => gate.id === id)?.status, "fail");
+    assert.equal(result.reportStatus, "stop");
+    assert.equal(result.safetyStatus, "safety_stop");
+    assert.equal(result.fit.grade, "FG0");
+    assert.equal(result.fit.assessment, "AF09");
+  }
+});
+
 test("unknown or failed core gates cap publication at FG2", () => {
   const assessments = (["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"] as const).map((id) => ({ id, status: id === "RG03" ? "fail" as const : "pass" as const, evidenceIds: [`e-${id}`] }));
   const result = analyzeM5({ mode: "specific_partner_with_reality_data", m4: analyzeM4({ m3, observations: [] }), gateAssessments: assessments });
   assert.equal(result.fit.grade, "FG2");
   assert.equal(result.fit.assessment, "AF08");
+});
+
+test("M5 defensively downgrades a non-neutral gate without evidence", () => {
+  const result = analyzeM5({
+    mode: "specific_partner_with_reality_data",
+    m4: analyzeM4({ m3, observations: [] }),
+    gateAssessments: [{ id: "RG02", status: "pass", evidenceIds: [], note: "unsupported claim" }],
+  });
+  assert.equal(result.realityGates.find((gate) => gate.id === "RG02")?.status, "unknown");
+  assert.equal(result.fit.grade, "FG2");
+});
+
+test("M5 requires evidence for every checked cross-state before publishing FG4", () => {
+  const gates = (["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"] as const)
+    .map((id) => ({ id, status: "pass" as const, evidenceIds: [`e-${id}`] }));
+  const validation = { steady: true, pressure: true, repair: true, turningPoint: true, counterevidenceReviewed: true };
+  const withoutEvidence = analyzeM5({ mode: "specific_partner_with_reality_data", m4: analyzeM4({ m3, observations: [] }), gateAssessments: gates, crossStateValidation: validation });
+  assert.equal(withoutEvidence.fit.grade, "FG3");
+
+  const crossStateEvidence = (["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const)
+    .map((state) => ({ state, note: `observed ${state}`, evidenceIds: [`cross-${state}`] }));
+  const evidenced = analyzeM5({ mode: "specific_partner_with_reality_data", m4: analyzeM4({ m3, observations: [] }), gateAssessments: gates, crossStateValidation: validation, crossStateEvidence });
+  assert.equal(evidenced.fit.grade, "FG4");
+  assert.equal(evidenced.fit.assessment, "AF07");
+  assert.equal(evidenced.crossStateEvidence.length, 5);
 });

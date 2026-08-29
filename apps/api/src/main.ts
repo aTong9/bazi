@@ -9,7 +9,8 @@ if (!snapshotPath) {
 } else {
   const host = process.env.BAZI_HOST || "127.0.0.1";
   const port = parsePort(process.env.BAZI_PORT);
-  const server = createApiServer({ snapshotPath: path.resolve(snapshotPath) });
+  const webRoot = path.resolve(process.env.BAZI_WEB_ROOT || "apps/web/dist");
+  const server = createApiServer({ snapshotPath: path.resolve(snapshotPath), webRoot });
   server.listen(port, host, () => {
     process.stdout.write(`Bazi API listening on http://${host}:${port}\n`);
   });

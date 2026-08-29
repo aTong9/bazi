@@ -9,7 +9,7 @@
     "role_basis": { "enum": ["female_traditional", "male_traditional", "unspecified"] },
     "subject": {
       "type": "object", "additionalProperties": false,
-      "required": ["input_mode", "subject_id", "four_pillars", "birth_time_status", "data_quality"],
+      "required": ["input_mode", "subject_id", "four_pillars", "birth_time_status", "timezone", "data_quality"],
       "properties": {
         "input_mode": { "const": "four_pillars_provided" }, "subject_id": { "type": "string", "minLength": 1, "maxLength": 128 },
         "four_pillars": { "type": "object", "additionalProperties": false, "required": ["year", "month", "day", "hour"], "properties": { "year": { "$ref": "#/$defs/pillar" }, "month": { "$ref": "#/$defs/pillar" }, "day": { "$ref": "#/$defs/pillar" }, "hour": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/pillar" }] } } },
@@ -20,13 +20,26 @@
     "requested_sections": { "type": "array", "items": { "enum": ["m0", "m1", "m2", "m3", "m4", "m5", "dynamic_timing"] }, "minItems": 1, "uniqueItems": true },
     "observations": { "type": "array", "items": { "$ref": "#/$defs/observation" } },
     "reality_gates": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/realityGate" } },
-    "cross_state_validation": { "type": "object", "additionalProperties": false, "required": ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"], "properties": { "steady": { "type": "boolean" }, "pressure": { "type": "boolean" }, "repair": { "type": "boolean" }, "turningPoint": { "type": "boolean" }, "counterevidenceReviewed": { "type": "boolean" } } }
+    "cross_state_validation": { "type": "object", "additionalProperties": false, "required": ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"], "properties": { "steady": { "type": "boolean" }, "pressure": { "type": "boolean" }, "repair": { "type": "boolean" }, "turningPoint": { "type": "boolean" }, "counterevidenceReviewed": { "type": "boolean" } } },
+    "cross_state_evidence": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/crossStateEvidence" } }
     ,"subject_b": { "oneOf": [{ "type": "null" }, { "$ref": "#/properties/subject" }] }
     ,"legacy_payloads": { "type": "object", "additionalProperties": true }
   },
   "$defs": {
     "pillar": { "type": "object", "additionalProperties": false, "required": ["stem", "branch"], "properties": { "stem": { "enum": ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"] }, "branch": { "enum": ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"] } } },
     "observation": { "type": "object", "additionalProperties": false, "required": ["id", "chainId", "source", "context", "direction"], "properties": { "id": { "type": "string", "minLength": 1 }, "chainId": { "type": "string", "pattern": "^M4-C[0-9]{2}$" }, "source": { "type": "string", "minLength": 1 }, "context": { "type": "string", "minLength": 1 }, "direction": { "enum": ["supports", "contradicts"] } } },
-    "realityGate": { "type": "object", "additionalProperties": false, "required": ["id", "status", "evidenceIds"], "properties": { "id": { "enum": ["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"] }, "status": { "enum": ["pass", "conditional", "fail", "unknown", "not_assessed"] }, "evidenceIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }, "note": { "type": "string" } } }
+    "realityGate": {
+      "type": "object", "additionalProperties": false, "required": ["id", "status", "evidenceIds"],
+      "properties": { "id": { "enum": ["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"] }, "status": { "enum": ["pass", "conditional", "fail", "unknown", "not_assessed"] }, "evidenceIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }, "note": { "type": "string" } },
+      "allOf": [{ "if": { "properties": { "status": { "enum": ["pass", "conditional", "fail"] } }, "required": ["status"] }, "then": { "required": ["note"], "properties": { "evidenceIds": { "type": "array", "minItems": 1 }, "note": { "type": "string", "minLength": 1 } } } }]
+    },
+    "crossStateEvidence": {
+      "type": "object", "additionalProperties": false, "required": ["state", "note", "evidenceIds"],
+      "properties": {
+        "state": { "enum": ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] },
+        "note": { "type": "string", "minLength": 1 },
+        "evidenceIds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      }
+    }
   }
 }

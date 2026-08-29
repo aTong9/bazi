@@ -1,7 +1,8 @@
 {
   "extends": "./tsconfig.base.json",
   "include": [
-    "apps/**/*.ts",
+    "apps/api/**/*.ts",
+    "apps/catalog-cli/**/*.ts",
     "packages/**/*.ts",
     "scripts/**/*.ts",
     "tests/**/*.ts"

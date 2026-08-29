@@ -23,7 +23,7 @@ interface WireRequest {
     subject_id: string;
     four_pillars: { year: WirePillar; month: WirePillar; day: WirePillar; hour: WirePillar | null };
     birth_time_status: "exact" | "approximate" | "unknown";
-    timezone?: string;
+    timezone: string;
     data_quality: "high" | "medium" | "low" | "unknown";
     synthetic_fixture?: boolean;
   };
@@ -46,7 +46,7 @@ export function parseM0AnalyzeRequest(value: unknown): ParsedM0Request {
         subjectId: wire.subject.subject_id,
         fourPillars: wire.subject.four_pillars,
         birthTimeStatus: wire.subject.birth_time_status,
-        ...(wire.subject.timezone === undefined ? {} : { timezone: wire.subject.timezone }),
+        timezone: wire.subject.timezone,
         dataQuality: wire.subject.data_quality,
         ...(wire.subject.synthetic_fixture === undefined ? {} : { syntheticFixture: wire.subject.synthetic_fixture }),
       },

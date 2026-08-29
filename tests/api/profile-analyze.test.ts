@@ -29,6 +29,14 @@ test("POST /v1/profile/analyze executes M0-M3 and preserves explicit role-basis 
     assert.equal(compatibility.relationship.structuralSupplement.replacesRealityEvidence, false);
     assert.equal(compatibility.relationship.legacyPayloads.mode, "wrapped_read_only");
     assert.ok(compatibility.relationship.legacyPayloads.payloads.m5_v0_9);
+
+    const missingTimezone = structuredClone(body("female_traditional")) as { subject: { timezone?: string } };
+    delete missingTimezone.subject.timezone;
+    const invalidTimezone = await post(port, missingTimezone);
+    assert.equal(invalidTimezone.status, 400);
+    const invalidTimezoneBody = await invalidTimezone.json() as { issues: Array<{ code: string; message: string }> };
+    assert.equal(invalidTimezoneBody.issues[0]?.code, "E_REQUEST_SCHEMA");
+    assert.match(invalidTimezoneBody.issues[0]?.message ?? "", /timezone/u);
   } finally { await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve())); await rm(root, { recursive: true, force: true }); }
 });
 test("canonical relationship routes expose a bounded profile and safety-stop evaluation", async () => {
@@ -46,7 +54,30 @@ test("canonical relationship routes expose a bounded profile and safety-stop eva
     const evaluationJson = await evaluation.json() as { relationship: { m5: { reportStatus: string; fit: { grade: string; assessment: string; ordinaryFindings: unknown[] } } }; report: { sections: Array<{ id: string }> } };
     assert.equal(evaluationJson.relationship.m5.reportStatus, "stop"); assert.equal(evaluationJson.relationship.m5.fit.grade, "FG0"); assert.equal(evaluationJson.relationship.m5.fit.assessment, "AF09"); assert.deepEqual(evaluationJson.relationship.m5.fit.ordinaryFindings, []);
     assert.deepEqual(evaluationJson.report.sections.map((section) => section.id), ["safety"]);
+
+    for (const status of ["pass", "conditional", "fail"]) {
+      const unsupportedGate = await evaluate(port, { ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: [{ id: "RG02", status, evidenceIds: [], note: "" }] });
+      assert.equal(unsupportedGate.status, 400);
+      const unsupportedGateJson = await unsupportedGate.json() as { issues: Array<{ code: string }> };
+      assert.equal(unsupportedGateJson.issues[0]?.code, "E_REQUEST_SCHEMA");
+    }
+
+    const allGates = (["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"] as const)
+      .map((id) => ({ id, status: "pass", evidenceIds: [`event-${id}`], note: `observed ${id}` }));
+    const crossStateValidation = { steady: true, pressure: true, repair: true, turningPoint: true, counterevidenceReviewed: true };
+    const missingCrossEvidence = await evaluate(port, { ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: allGates, cross_state_validation: crossStateValidation });
+    assert.equal(missingCrossEvidence.status, 400);
+
+    const crossStateEvidence = (["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const)
+      .map((state) => ({ state, note: `observed ${state}`, evidenceIds: [`event-cross-${state}`] }));
+    const completeCrossEvidence = await evaluate(port, { ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: allGates, cross_state_validation: crossStateValidation, cross_state_evidence: crossStateEvidence });
+    assert.equal(completeCrossEvidence.status, 200);
+    const completeJson = await completeCrossEvidence.json() as { relationship: { m5: { fit: { grade: string }; crossStateEvidence: unknown[] } }; report: { trace: { eventIds: string[] } } };
+    assert.equal(completeJson.relationship.m5.fit.grade, "FG4");
+    assert.equal(completeJson.relationship.m5.crossStateEvidence.length, 5);
+    assert.ok(completeJson.report.trace.eventIds.includes("event-cross-steady"));
   } finally { await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve())); await rm(root, { recursive: true, force: true }); }
 });
 function body(role_basis: string) { return { analysis_mode: "test", role_basis, subject: { input_mode: "four_pillars_provided", subject_id: "P", four_pillars: { year: { stem: "庚", branch: "申" }, month: { stem: "癸", branch: "丑" }, day: { stem: "甲", branch: "寅" }, hour: { stem: "丙", branch: "午" } }, birth_time_status: "exact", timezone: "Asia/Shanghai", data_quality: "high", synthetic_fixture: true }, requested_sections: ["m0", "m1", "m2", "m3"] }; }
 function post(port: number, payload: unknown) { return fetch(`http://127.0.0.1:${port}/v1/profile/analyze`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); }
+function evaluate(port: number, payload: unknown) { return fetch(`http://127.0.0.1:${port}/v1/relationship/evaluate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) }); }

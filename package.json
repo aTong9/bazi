@@ -4,34 +4,44 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22 <26"
+    "node": ">=22.12 <26"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "tsx --test \"tests/**/*.test.ts\"",
+    "typecheck:core": "tsc --noEmit",
+    "typecheck:web": "npm run typecheck --workspace @bazi/web",
+    "typecheck": "npm run typecheck:core && npm run typecheck:web",
+    "test:core": "tsx --test \"tests/**/*.test.ts\"",
+    "test:web": "npm run test --workspace @bazi/web",
+    "test": "npm run test:core && npm run test:web",
     "test:watch": "tsx --test --watch \"tests/**/*.test.ts\"",
     "docs:verify": "tsx apps/catalog-cli/src/main.ts verify-doc-package",
     "catalog:lock:build": "tsx scripts/build-source-package-lock.ts",
     "catalog:lock:verify": "tsx apps/catalog-cli/src/main.ts verify-source-package-lock",
     "catalog:m0:verify": "tsx apps/catalog-cli/src/main.ts verify-m0-enrichment",
     "catalog:build": "tsx apps/catalog-cli/src/main.ts build-catalog-snapshot",
-    "dev": "tsx apps/api/src/dev.ts",
+    "dev:api": "tsx apps/api/src/dev.ts",
+    "dev:web": "npm run dev --workspace @bazi/web",
+    "dev": "concurrently --kill-others-on-fail --names API,WEB --prefix-colors cyan,green \"npm:dev:api\" \"npm:dev:web\"",
+    "build:web": "npm run build --workspace @bazi/web",
+    "build": "npm run build:web",
+    "preview": "npm run build:web && tsx apps/api/src/preview.ts",
     "start": "tsx apps/api/src/main.ts",
     "test:evidence": "tsx scripts/generate-test-evidence.ts",
     "test:evidence:current": "tsx scripts/generate-test-evidence.ts --allow-review",
     "calibration:check": "tsx scripts/check-calibration-readiness.ts",
     "release:check": "npm run check && npm run test:evidence && npm audit --audit-level=high",
-    "check": "npm run typecheck && npm test && npm run docs:verify && npm run catalog:lock:verify && npm run catalog:m0:verify"
+    "check": "npm run typecheck && npm test && npm run build:web && npm run docs:verify && npm run catalog:lock:verify && npm run catalog:m0:verify"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",
     "@types/yauzl": "^3.4.0",
+    "concurrently": "^9.2.1",
     "tsx": "^4.23.12",
-    "typescript": "^7.0.2"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "ajv": "^8.20.0",

@@ -48,6 +48,11 @@ export function projectM19(input: {
     ...input.m13.matchedRuleIds, ...input.m14.matchedRuleIds, ...input.m15.matchedRuleIds, ...input.m16.matchedRuleIds,
     ...input.m17.matchedRuleIds, ...input.m18.matchedRuleIds,
   ]);
+  const hourDependencyFlags = input.birthTimeStatus === "unknown"
+    ? ["HOUR_UNKNOWN"]
+    : input.birthTimeStatus === "approximate"
+      ? ["HOUR_APPROXIMATE"]
+      : [];
   set(fields, "input_validation", result(
     {
       fourPillarsProvided: true,
@@ -58,15 +63,15 @@ export function projectM19(input: {
     input.birthTimeStatus === "exact" ? "conditional" : "conditional",
     input.birthTimeStatus === "exact" ? "medium" : "medium_low",
     [...input.m02.matchedRuleIds, "M03-PROC-0018-V1.0"],
-    ["FOUR_PILLARS_STRUCTURE_VALID", "CALENDAR_NOT_REVERIFIED_FROM_FOUR_PILLARS", ...(input.birthTimeStatus === "unknown" ? ["HOUR_UNKNOWN"] : [])],
+    ["FOUR_PILLARS_STRUCTURE_VALID", "CALENDAR_NOT_REVERIFIED_FROM_FOUR_PILLARS", ...hourDependencyFlags],
   ));
   set(fields, "scope_boundary", result(
     ["NATAL_STATIC_STRUCTURE_ONLY", "NO_DYNAMIC_TIMING", "NO_MEDICAL_DIAGNOSIS", "NO_LIFESTYLE_REMEDY"],
     "supported", "high", [], ["SCOPE_BOUNDARY_ENFORCED"],
   ));
   set(fields, "overall_confidence", result(
-    { level: input.birthTimeStatus === "exact" ? "medium" : "medium_low", pendingModules: [], conditions: input.birthTimeStatus === "unknown" ? ["HOUR_UNKNOWN"] : [] },
-    input.birthTimeStatus === "exact" ? "supported" : "conditional", input.birthTimeStatus === "exact" ? "medium" : "medium_low", allRules, input.birthTimeStatus === "unknown" ? ["HOUR_UNKNOWN"] : [],
+    { level: input.birthTimeStatus === "exact" ? "medium" : "medium_low", pendingModules: [], conditions: hourDependencyFlags },
+    input.birthTimeStatus === "exact" ? "supported" : "conditional", input.birthTimeStatus === "exact" ? "medium" : "medium_low", allRules, hourDependencyFlags,
   ));
   set(fields, "day_master_and_season", result(
     {

@@ -8,7 +8,7 @@ import type { MatrixAssertionExecution } from "./report-language-runner.js";
 type Response = Extract<ReturnType<typeof analyzeProfile>, { ok: true }>["response"];
 
 export function executeUpstreamModuleMatrix(definitions: readonly DevelopmentTestDefinition[], catalog: CatalogSnapshot): readonly MatrixAssertionExecution[] {
-  const positive = success(analyzeProfile(command({ relationshipMode: "specific_partner_with_reality_data", gateAssessments: gates(), crossStateValidation: { steady: true, pressure: true, repair: true, turningPoint: true, counterevidenceReviewed: true }, observations: repeatedObservations() }), catalog));
+  const positive = success(analyzeProfile(command({ relationshipMode: "specific_partner_with_reality_data", gateAssessments: gates(), crossStateValidation: { steady: true, pressure: true, repair: true, turningPoint: true, counterevidenceReviewed: true }, crossStateEvidence: crossStateEvidence(), observations: repeatedObservations() }), catalog));
   const pending = success(analyzeProfile(command({ roleBasis: "unspecified" }), catalog));
   const limited = success(analyzeProfile(command({}, true), catalog));
   const unconfirmed = success(analyzeProfile(command(), catalog));
@@ -89,6 +89,7 @@ function assertM5(moduleId: string, boundary: boolean, c: { positive: Response; 
 
 function command(overrides: Partial<AnalyzeProfileCommand> = {}, unknownHour = false): AnalyzeProfileCommand { return { analysisMode: "test", subject: { inputMode: "four_pillars_provided", subjectId: unknownHour ? "UP-LIMITED" : "UP-EXACT", fourPillars: { year: { stem: "庚", branch: "申" }, month: { stem: "癸", branch: "丑" }, day: { stem: "甲", branch: "寅" }, hour: unknownHour ? null : { stem: "丙", branch: "午" } }, birthTimeStatus: unknownHour ? "unknown" : "exact", timezone: "Asia/Shanghai", dataQuality: unknownHour ? "medium" : "high", syntheticFixture: true }, requestedSections: ["m0", "m1", "m2", "m3", "m4", "m5"], roleBasis: "female_traditional", relationshipMode: "single_chart_relationship_profile", ...overrides }; }
 function gates(): NonNullable<AnalyzeProfileCommand["gateAssessments"]> { return (["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"] as const).map((id) => ({ id, status: "pass", evidenceIds: [`event-${id}`] })); }
+function crossStateEvidence(): NonNullable<AnalyzeProfileCommand["crossStateEvidence"]> { return (["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const).map((state) => ({ state, note: `observed ${state}`, evidenceIds: [`event-cross-${state}`] })); }
 function repeatedObservations(): NonNullable<AnalyzeProfileCommand["observations"]> { return [{ id: "up-o1", chainId: "M4-C01", source: "self", context: "steady", direction: "supports" }, { id: "up-o2", chainId: "M4-C01", source: "partner", context: "pressure", direction: "supports" }]; }
 function success(result: ReturnType<typeof analyzeProfile>): Response { if (!result.ok) throw new Error(result.issues.map((x) => x.code).join(",")); return result.response; }
 function check(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }

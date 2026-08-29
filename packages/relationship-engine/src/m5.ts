@@ -13,11 +13,20 @@ export interface RealityEvidenceDimension {
   readonly gateIds: readonly string[];
   readonly eventIds: readonly string[];
 }
+export const CROSS_STATE_KEYS = ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const;
+export type CrossStateKey = typeof CROSS_STATE_KEYS[number];
+export type CrossStateValidation = Readonly<Record<CrossStateKey, boolean>>;
+export interface CrossStateEvidence {
+  readonly state: CrossStateKey;
+  readonly note: string;
+  readonly evidenceIds: readonly string[];
+}
 export interface M5Input {
   readonly mode: "single_chart_relationship_profile" | "specific_partner_with_reality_data";
   readonly m4: M4Result;
   readonly gateAssessments?: readonly RealityGateAssessment[];
-  readonly crossStateValidation?: { readonly steady: boolean; readonly pressure: boolean; readonly repair: boolean; readonly turningPoint: boolean; readonly counterevidenceReviewed: boolean };
+  readonly crossStateValidation?: CrossStateValidation;
+  readonly crossStateEvidence?: readonly CrossStateEvidence[];
   readonly rules?: RelationshipRuleCatalog;
   readonly adjudicationProfile?: M5AdjudicationProfile;
 }
@@ -29,7 +38,6 @@ export function analyzeM5(input: M5Input) {
   const core = realityGates.filter((gate) => ["RG02", "RG03", "RG06", "RG07"].includes(gate.id));
   const coreFailure = core.some((gate) => gate.status === "fail");
   const coreUnresolved = core.some((gate) => gate.status === "unknown" || gate.status === "not_assessed");
-  const allPass = realityGates.every((gate) => gate.status === "pass");
   const dimensionGates: Readonly<Record<RealityEvidenceScheme, readonly string[]>> = {
     PV: ["RG02"], XV: ["RG04"], BV: ["RG01", "RG07"], FV: ["RG06"], HV: ["RG03", "RG05"],
   };
@@ -41,7 +49,10 @@ export function analyzeM5(input: M5Input) {
     return [scheme, Object.freeze({ scheme, level, status: blocked ? "blocked" : eventIds.length ? "available" : "not_assessed", gateIds: Object.freeze([...gateIds]), eventIds: Object.freeze(eventIds) })];
   })) as Record<RealityEvidenceScheme, RealityEvidenceDimension>);
   const crossState = input.crossStateValidation;
-  const defaultProfile: M5AdjudicationProfile = { explicitEvidenceProfile: false, attraction: "unknown", admissionVerified: false, evidenceLevels: Object.freeze({ PV: evidenceDimensions.PV.level, XV: evidenceDimensions.XV.level, BV: evidenceDimensions.BV.level, FV: evidenceDimensions.FV.level, HV: evidenceDimensions.HV.level }), bridgeLevel: null, crossStateValidated: Boolean(crossState && Object.values(crossState).every(Boolean)), dependencyPending: false, singlePartyEvidence: false, historicalSafetyFailure: false, currentSafetyImprovement: false, independentNeeds: 0, independentGaps: 0, transformationStatus: "none", functionalFamily: null, historicalCurrentConflict: false };
+  const crossStateEvidence = normalizeCrossStateEvidence(input.crossStateEvidence);
+  const evidencedCrossStates = new Set(crossStateEvidence.map((evidence) => evidence.state));
+  const crossStateValidated = Boolean(crossState && CROSS_STATE_KEYS.every((state) => crossState[state] && evidencedCrossStates.has(state)));
+  const defaultProfile: M5AdjudicationProfile = { explicitEvidenceProfile: false, attraction: "unknown", admissionVerified: false, evidenceLevels: Object.freeze({ PV: evidenceDimensions.PV.level, XV: evidenceDimensions.XV.level, BV: evidenceDimensions.BV.level, FV: evidenceDimensions.FV.level, HV: evidenceDimensions.HV.level }), bridgeLevel: null, crossStateValidated, dependencyPending: false, singlePartyEvidence: false, historicalSafetyFailure: false, currentSafetyImprovement: false, independentNeeds: 0, independentGaps: 0, transformationStatus: "none", functionalFamily: null, historicalCurrentConflict: false };
   const adjudication = adjudicateM5({ mode: input.mode, gates: realityGates, profile: input.adjudicationProfile ?? defaultProfile });
   const { grade, assessment } = adjudication;
   const ordinaryFindings = safetyFailure ? [] : input.m4.riskChains.map((chain) => ({ chainId: chain.id, realityStatus: chain.realityStatus }));
@@ -65,6 +76,7 @@ export function analyzeM5(input: M5Input) {
     reportStatus: adjudication.reportStatus,
     safetyStatus: adjudication.safetyStatus,
     realityGates,
+    crossStateEvidence,
     evidenceDimensions,
     stages,
     observationPlan: Object.freeze(realityGates.filter((gate) => gate.status !== "pass").slice(0, 3).map((gate) => Object.freeze({ gateId: gate.id, observe: gate.label, directive: false as const }))),
@@ -74,4 +86,19 @@ export function analyzeM5(input: M5Input) {
     ruleTrace: Object.freeze([...new Set(ruleTrace)]),
     notADirective: true as const,
   });
+}
+
+function normalizeCrossStateEvidence(evidence: readonly CrossStateEvidence[] | undefined): readonly CrossStateEvidence[] {
+  const byState = new Map<CrossStateKey, CrossStateEvidence>();
+  for (const item of evidence ?? []) {
+    if (!CROSS_STATE_KEYS.includes(item.state) || byState.has(item.state)) continue;
+    const note = item.note.trim();
+    const evidenceIds = [...new Set(item.evidenceIds.map((id) => id.trim()).filter(Boolean))];
+    if (!note || evidenceIds.length === 0) continue;
+    byState.set(item.state, Object.freeze({ state: item.state, note, evidenceIds: Object.freeze(evidenceIds) }));
+  }
+  return Object.freeze(CROSS_STATE_KEYS.flatMap((state) => {
+    const item = byState.get(state);
+    return item ? [item] : [];
+  }));
 }

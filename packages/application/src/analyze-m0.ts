@@ -95,7 +95,11 @@ export function analyzeM0(command: AnalyzeM0Command, catalog: CatalogSnapshot): 
   ])].sort();
   const traceIssues = validateRuleTrace(ruleTrace, catalog);
   if (traceIssues.length > 0) return { ok: false, httpStatus: 500, issues: traceIssues };
-  const dependencyFlags = validation.value.birthTimeStatus === "unknown" ? ["HOUR_UNKNOWN"] : [];
+  const dependencyFlags = validation.value.birthTimeStatus === "unknown"
+    ? ["HOUR_UNKNOWN"]
+    : validation.value.birthTimeStatus === "approximate"
+      ? ["HOUR_APPROXIMATE"]
+      : [];
   return {
     ok: true,
     httpStatus: 200,
@@ -109,7 +113,7 @@ export function analyzeM0(command: AnalyzeM0Command, catalog: CatalogSnapshot): 
         compilerVersion: catalog.manifest.compilerVersion,
       },
       m0: {
-        status: validation.value.birthTimeStatus === "unknown" ? "limited" : "complete",
+        status: validation.limited ? "limited" : "complete",
         modules: Object.freeze({ "M0.M02": m02, "M0.M03": m03, "M0.M04": m04, "M0.M05": m05, "M0.M06": m06, "M0.M07": m07, "M0.M08": m08, "M0.M09": m09, "M0.M10": m10, "M0.M11": m11, "M0.M12": m12, "M0.M13": m13, "M0.M14": m14, "M0.M15": m15, "M0.M16": m16, "M0.M17": m17, "M0.M18": m18 }),
         fields: m19.fields,
         dependencyFlags: Object.freeze(dependencyFlags),

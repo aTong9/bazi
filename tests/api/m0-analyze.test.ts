@@ -38,6 +38,20 @@ test("POST /v1/m0/analyze returns all 45 M19 fields and rejects exact input with
     assert.equal(unknownBody.m0.modules["M0.M02"].pillars.hour, null);
     assert.deepEqual(validateM0AnalyzeResponse(unknownBody), []);
 
+    const approximate = await post(port, requestBody({ stem: "壬", branch: "午" }, "approximate"));
+    assert.equal(approximate.status, 200);
+    const approximateBody = await approximate.json() as { m0: { status: string; dependencyFlags: string[] } };
+    assert.equal(approximateBody.m0.status, "limited");
+    assert.deepEqual(approximateBody.m0.dependencyFlags, ["HOUR_APPROXIMATE"]);
+
+    const missingTimezone = requestBody({ stem: "壬", branch: "午" }, "exact") as { subject: { timezone?: string } };
+    delete missingTimezone.subject.timezone;
+    const missingTimezoneResponse = await post(port, missingTimezone);
+    assert.equal(missingTimezoneResponse.status, 400);
+    const missingTimezoneBody = await missingTimezoneResponse.json() as { issues: Array<{ code: string; message: string }> };
+    assert.equal(missingTimezoneBody.issues[0]?.code, "E_REQUEST_SCHEMA");
+    assert.match(missingTimezoneBody.issues[0]?.message ?? "", /timezone/u);
+
     const invalid = await post(port, requestBody(null, "exact"));
     assert.equal(invalid.status, 422);
     const invalidBody = await invalid.json() as { issues: Array<{ code: string }> };

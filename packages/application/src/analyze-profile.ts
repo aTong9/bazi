@@ -7,7 +7,7 @@ import { analyzeM1, type TraditionalRoleBasis } from "../../relationship-engine/
 import { analyzeM2 } from "../../relationship-engine/src/m2.js";
 import { analyzeM3, unavailableM3Projection } from "../../relationship-engine/src/m3.js";
 import { analyzeM4, type M4Observation } from "../../relationship-engine/src/m4.js";
-import { analyzeM5 } from "../../relationship-engine/src/m5.js";
+import { analyzeM5, type CrossStateEvidence, type CrossStateValidation } from "../../relationship-engine/src/m5.js";
 import type { RealityGateAssessment } from "../../relationship-engine/src/reality-gates.js";
 import { buildAnalysisReport } from "../../reporting/src/build-report.js";
 import { analyzeM0, type AnalyzeM0Command } from "./analyze-m0.js";
@@ -17,7 +17,8 @@ export type AnalyzeProfileCommand = AnalyzeM0Command & {
   readonly relationshipMode?: "single_chart_relationship_profile" | "specific_partner_with_reality_data";
   readonly observations?: readonly M4Observation[];
   readonly gateAssessments?: readonly RealityGateAssessment[];
-  readonly crossStateValidation?: { readonly steady: boolean; readonly pressure: boolean; readonly repair: boolean; readonly turningPoint: boolean; readonly counterevidenceReviewed: boolean };
+  readonly crossStateValidation?: CrossStateValidation;
+  readonly crossStateEvidence?: readonly CrossStateEvidence[];
   readonly subjectB?: AnalyzeM0Command["subject"] | null;
   readonly legacyPayloads?: Readonly<Record<string, unknown>>;
   readonly unavailableModules?: readonly ["M3"];
@@ -31,7 +32,7 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
   const m2 = analyzeM2({ m02, m09, m10, m1, rules: catalog });
   const m3 = command.unavailableModules?.includes("M3") ? unavailableM3Projection() : analyzeM3({ m02, m09, m10, rules: catalog });
   const m4 = analyzeM4({ m3, rules: catalog, ...(command.observations ? { observations: command.observations } : {}) });
-  const m5 = analyzeM5({ mode: command.relationshipMode ?? "single_chart_relationship_profile", m4, rules: catalog, ...(command.gateAssessments ? { gateAssessments: command.gateAssessments } : {}), ...(command.crossStateValidation ? { crossStateValidation: command.crossStateValidation } : {}) });
+  const m5 = analyzeM5({ mode: command.relationshipMode ?? "single_chart_relationship_profile", m4, rules: catalog, ...(command.gateAssessments ? { gateAssessments: command.gateAssessments } : {}), ...(command.crossStateValidation ? { crossStateValidation: command.crossStateValidation } : {}), ...(command.crossStateEvidence ? { crossStateEvidence: command.crossStateEvidence } : {}) });
   const subjectBResult = command.subjectB ? analyzeM0({ analysisMode: command.analysisMode, subject: command.subjectB, requestedSections: ["m0"] }, catalog) : null;
   if (subjectBResult && !subjectBResult.ok) return subjectBResult;
   const structuralSupplement = Object.freeze({
@@ -43,7 +44,7 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
   });
   const legacyPayloads = command.legacyPayloads ? Object.freeze({ mode: "wrapped_read_only" as const, payloads: command.legacyPayloads }) : null;
   const relationshipRuleTrace = Object.freeze([...new Set([...m1.ruleTrace, ...m2.ruleTrace, ...m3.ruleTrace, ...m4.ruleTrace, ...m5.ruleTrace])].sort());
-  const eventIds = Object.freeze([...new Set(m5.realityGates.flatMap((gate) => gate.evidenceIds))]);
+  const eventIds = Object.freeze([...new Set([...m5.realityGates.flatMap((gate) => gate.evidenceIds), ...m5.crossStateEvidence.flatMap((evidence) => evidence.evidenceIds)])]);
   const report = buildAnalysisReport({
     analysisRunId: m0.response.requestId, rulesetDigest: m0.response.rulesetDigest, reportStatus: m5.reportStatus, safetyStatus: m5.safetyStatus,
     fit: m5.fit, m0Fields: m0.response.m0.fields, profileStatements: m3.synthesis.statements,
