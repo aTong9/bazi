@@ -1,6 +1,7 @@
 import type { M4Result } from "./m4.js";
 import { normalizeRealityGates, type RealityGateAssessment } from "./reality-gates.js";
 import type { RelationshipRuleCatalog } from "./rule-catalog.js";
+import { adjudicateM5, type M5AdjudicationProfile } from "./m5-adjudication.js";
 
 export type FitGrade = "FG0" | "FG1" | "FG2" | "FG3" | "FG4";
 export type AssessmentFlag = "AF01" | "AF02" | "AF03" | "AF04" | "AF05" | "AF06" | "AF07" | "AF08" | "AF09";
@@ -18,6 +19,7 @@ export interface M5Input {
   readonly gateAssessments?: readonly RealityGateAssessment[];
   readonly crossStateValidation?: { readonly steady: boolean; readonly pressure: boolean; readonly repair: boolean; readonly turningPoint: boolean; readonly counterevidenceReviewed: boolean };
   readonly rules?: RelationshipRuleCatalog;
+  readonly adjudicationProfile?: M5AdjudicationProfile;
 }
 
 export function analyzeM5(input: M5Input) {
@@ -39,14 +41,9 @@ export function analyzeM5(input: M5Input) {
     return [scheme, Object.freeze({ scheme, level, status: blocked ? "blocked" : eventIds.length ? "available" : "not_assessed", gateIds: Object.freeze([...gateIds]), eventIds: Object.freeze(eventIds) })];
   })) as Record<RealityEvidenceScheme, RealityEvidenceDimension>);
   const crossState = input.crossStateValidation;
-  let grade: FitGrade = "FG2";
-  let assessment: AssessmentFlag = "AF02";
-  if (single) { grade = "FG1"; assessment = "AF01"; }
-  else if (safetyFailure) { grade = "FG0"; assessment = "AF09"; }
-  else if (coreFailure) { grade = "FG2"; assessment = "AF08"; }
-  else if (coreUnresolved) { grade = "FG2"; assessment = "AF07"; }
-  else if (allPass && crossState && Object.values(crossState).every(Boolean)) { grade = "FG4"; assessment = "AF05"; }
-  else if (allPass) { grade = "FG3"; assessment = "AF04"; }
+  const defaultProfile: M5AdjudicationProfile = { explicitEvidenceProfile: false, attraction: "unknown", admissionVerified: false, evidenceLevels: Object.freeze({ PV: evidenceDimensions.PV.level, XV: evidenceDimensions.XV.level, BV: evidenceDimensions.BV.level, FV: evidenceDimensions.FV.level, HV: evidenceDimensions.HV.level }), bridgeLevel: null, crossStateValidated: Boolean(crossState && Object.values(crossState).every(Boolean)), dependencyPending: false, singlePartyEvidence: false, historicalSafetyFailure: false, currentSafetyImprovement: false, independentNeeds: 0, independentGaps: 0, transformationStatus: "none", functionalFamily: null, historicalCurrentConflict: false };
+  const adjudication = adjudicateM5({ mode: input.mode, gates: realityGates, profile: input.adjudicationProfile ?? defaultProfile });
+  const { grade, assessment } = adjudication;
   const ordinaryFindings = safetyFailure ? [] : input.m4.riskChains.map((chain) => ({ chainId: chain.id, realityStatus: chain.realityStatus }));
   const stageStatus = (dimension: RealityEvidenceDimension) => dimension.status === "not_assessed" ? "not_assessed" as const : dimension.status === "blocked" ? "blocked" as const : "provisional" as const;
   const gapCodes = Object.values(evidenceDimensions).filter((dimension) => dimension.status !== "available").map((dimension) => `${dimension.scheme}:${dimension.status}`);
@@ -65,14 +62,14 @@ export function analyzeM5(input: M5Input) {
     moduleId: "M5.SYNTH" as const,
     stageOrder: Object.freeze(["BASE", "PARTNER", "EXCHANGE", "BOUND", "REPAIR", "RHYTHM", "GAP", "SYNTH"] as const),
     mode: input.mode,
-    reportStatus: safetyFailure ? "stop" as const : single || coreUnresolved ? "limited" as const : "complete" as const,
-    safetyStatus: safetyFailure ? "safety_stop" as const : coreFailure ? "core_gate_stop" as const : coreUnresolved ? "insufficient_data" as const : "standard" as const,
+    reportStatus: adjudication.reportStatus,
+    safetyStatus: adjudication.safetyStatus,
     realityGates,
     evidenceDimensions,
     stages,
     observationPlan: Object.freeze(realityGates.filter((gate) => gate.status !== "pass").slice(0, 3).map((gate) => Object.freeze({ gateId: gate.id, observe: gate.label, directive: false as const }))),
     partnerFacts: single ? null : Object.freeze({ scope: "submitted_reality_evidence_only" as const }),
-    fit: Object.freeze({ grade, assessment, ordinaryFindings: Object.freeze(ordinaryFindings), isSuccessProbability: false as const }),
+    fit: Object.freeze({ grade, assessment, bridgeLevel: adjudication.bridgeLevel, residualRisks: adjudication.residualRisks, decisionCodes: adjudication.decisionCodes, repairStatus: adjudication.repairStatus, ordinaryFindings: Object.freeze(ordinaryFindings), isSuccessProbability: false as const }),
     boundaries: Object.freeze(["适配是结构交集加现实闸门，不是总分", "FG 是发布证据等级，不是成功概率", "AF 是当前评估状态，不是命运"]),
     ruleTrace: Object.freeze([...new Set(ruleTrace)]),
     notADirective: true as const,

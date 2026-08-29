@@ -83,7 +83,7 @@ function assertM5(moduleId: string, boundary: boolean, c: { positive: Response; 
     check(value.reportStatus === "complete" && value.fit.grade === "FG4", `${moduleId} positive synthesis incomplete`);
     if (["M5.PARTNER", "M5.EXCHANGE", "M5.BOUND", "M5.REPAIR", "M5.RHYTHM"].includes(moduleId)) check((stage as { status: string }).status === "provisional", `${moduleId} did not consume reality evidence`);
     if (moduleId === "M5.GAP") check(value.stages.gap.status === "clear", "M5.GAP retained false gaps");
-    if (moduleId === "M5.SYNTH") check(value.stages.synth.grade === "FG4" && value.stages.synth.assessment === "AF05", "M5.SYNTH final adjudication missing");
+    if (moduleId === "M5.SYNTH") check(value.stages.synth.grade === "FG4" && value.stages.synth.assessment === "AF07", "M5.SYNTH final adjudication missing");
   }
 }
 
