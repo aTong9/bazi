@@ -17,7 +17,7 @@
         "data_quality": { "enum": ["high", "medium", "low", "unknown"] }, "synthetic_fixture": { "type": "boolean" }
       }
     },
-    "requested_sections": { "type": "array", "items": { "enum": ["m0", "m1", "m2", "m3", "m4", "m5"] }, "minItems": 1, "uniqueItems": true },
+    "requested_sections": { "type": "array", "items": { "enum": ["m0", "m1", "m2", "m3", "m4", "m5", "dynamic_timing"] }, "minItems": 1, "uniqueItems": true },
     "observations": { "type": "array", "items": { "$ref": "#/$defs/observation" } },
     "reality_gates": { "type": "array", "maxItems": 8, "items": { "$ref": "#/$defs/realityGate" } },
     "cross_state_validation": { "type": "object", "additionalProperties": false, "required": ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"], "properties": { "steady": { "type": "boolean" }, "pressure": { "type": "boolean" }, "repair": { "type": "boolean" }, "turningPoint": { "type": "boolean" }, "counterevidenceReviewed": { "type": "boolean" } } }

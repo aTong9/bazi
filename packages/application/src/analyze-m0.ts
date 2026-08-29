@@ -25,7 +25,7 @@ import { projectM19 } from "../../m0-engine/src/m19.js";
 export interface AnalyzeM0Command {
   readonly analysisMode: "test" | "production";
   readonly subject: FourPillarsProvidedInput;
-  readonly requestedSections: readonly ["m0"] | readonly string[];
+  readonly requestedSections: readonly string[];
 }
 
 export type AnalyzeM0Result =
@@ -54,6 +54,9 @@ export interface M0AnalysisResponse {
 }
 
 export function analyzeM0(command: AnalyzeM0Command, catalog: CatalogSnapshot): AnalyzeM0Result {
+  if (command.requestedSections.includes("dynamic_timing")) {
+    return failure("E_DYNAMIC_MODEL_REQUIRED", "dynamic timing requires the D0 model and cannot be inferred from the static M0 chain");
+  }
   if (command.subject.syntheticFixture && command.analysisMode !== "test") {
     return failure("E_SYNTHETIC_FIXTURE_FORBIDDEN", "synthetic_fixture is allowed only in test mode");
   }

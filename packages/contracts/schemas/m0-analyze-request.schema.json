@@ -34,7 +34,7 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "const": "m0" }
+      "items": { "enum": ["m0", "dynamic_timing"] }
     }
   },
   "$defs": {

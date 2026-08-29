@@ -11,6 +11,7 @@ import { executeAllM20Fixtures } from "../packages/testkit/src/s3-m20-runner.js"
 import { executeReportLanguageMatrix } from "../packages/testkit/src/report-language-runner.js";
 import { executeJsonDataMatrix } from "../packages/testkit/src/json-data-runner.js";
 import { executeConflictSafetyMatrix } from "../packages/testkit/src/conflict-safety-runner.js";
+import { executeM0UnitMatrix } from "../packages/testkit/src/m0-unit-matrix-runner.js";
 
 const repositoryRoot = path.resolve(".");
 const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "bazi-test-evidence-"));
@@ -21,7 +22,7 @@ try {
     const [definitions, m20Records] = await Promise.all([readDevelopmentTestMatrix(repositoryRoot), executeAllM20Fixtures({ repositoryRoot, catalog })]);
     const codeCommit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repositoryRoot, encoding: "utf8" }).trim();
     const environment = `${process.platform}-${process.arch};node-${process.version}`;
-    const records = buildCurrentExecutionEvidence({ definitions, m20Records, matrixRecords: [...executeConflictSafetyMatrix(definitions, catalog, repositoryRoot), ...executeJsonDataMatrix(definitions, catalog), ...executeReportLanguageMatrix(definitions)], codeCommit, rulesetDigest: built.rulesetDigest, environment });
+    const records = buildCurrentExecutionEvidence({ definitions, m20Records, matrixRecords: [...executeM0UnitMatrix(definitions, catalog), ...executeConflictSafetyMatrix(definitions, catalog, repositoryRoot), ...executeJsonDataMatrix(definitions, catalog), ...executeReportLanguageMatrix(definitions)], codeCommit, rulesetDigest: built.rulesetDigest, environment });
     const summary = summarizeExecutionEvidence(records);
     const outputRoot = path.join(repositoryRoot, "artifacts/test-evidence", built.rulesetDigest, codeCommit);
     await mkdir(outputRoot, { recursive: true });

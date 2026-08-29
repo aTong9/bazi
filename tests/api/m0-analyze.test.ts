@@ -43,6 +43,13 @@ test("POST /v1/m0/analyze returns all 45 M19 fields and rejects exact input with
     const invalidBody = await invalid.json() as { issues: Array<{ code: string }> };
     assert.equal(invalidBody.issues[0]?.code, "E_EXACT_HOUR_REQUIRED");
 
+    const dynamic = requestBody({ stem: "壬", branch: "午" }, "exact") as { requested_sections: string[] };
+    dynamic.requested_sections = ["m0", "dynamic_timing"];
+    const dynamicResponse = await post(port, dynamic);
+    assert.equal(dynamicResponse.status, 422);
+    const dynamicBody = await dynamicResponse.json() as { issues: Array<{ code: string }> };
+    assert.equal(dynamicBody.issues[0]?.code, "E_DYNAMIC_MODEL_REQUIRED");
+
     const health = await fetch(`http://127.0.0.1:${port}/health`);
     assert.equal(health.status, 200);
     const healthBody = await health.json() as { status: string; catalog: { compiledRecords: number } };
