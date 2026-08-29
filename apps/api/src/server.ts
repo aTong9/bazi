@@ -1,8 +1,10 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
 import { analyzeM0 } from "../../../packages/application/src/analyze-m0.js";
+import { analyzeProfile } from "../../../packages/application/src/analyze-profile.js";
 import { openCatalogSnapshot } from "../../../packages/catalog/src/open-catalog-snapshot.js";
 import { parseM0AnalyzeRequest } from "../../../packages/contracts/src/m0-analyze-contract.js";
+import { parseProfileAnalyzeRequest } from "../../../packages/contracts/src/profile-analyze-contract.js";
 
 export function createApiServer(options: { snapshotPath: string }): Server {
   const catalog = openCatalogSnapshot(options.snapshotPath);
@@ -45,6 +47,22 @@ async function route(
       return;
     }
     const result = analyzeM0(parsed.command, catalog);
+    if (!result.ok) sendJson(response, result.httpStatus, { issues: result.issues });
+    else sendJson(response, 200, result.response);
+    return;
+  }
+  if (request.method === "POST" && url.pathname === "/v1/profile/analyze") {
+    const body = await readJsonBody(request);
+    if (!body.ok) {
+      sendJson(response, 400, { issues: [{ code: "E_JSON", severity: "error", stage: "request", message: body.message, retryable: false }] });
+      return;
+    }
+    const parsed = parseProfileAnalyzeRequest(body.value);
+    if (!parsed.valid) {
+      sendJson(response, 400, { issues: parsed.errors.map((message) => ({ code: "E_REQUEST_SCHEMA", severity: "error", stage: "request", message, retryable: false })) });
+      return;
+    }
+    const result = analyzeProfile(parsed.command, catalog);
     if (!result.ok) sendJson(response, result.httpStatus, { issues: result.issues });
     else sendJson(response, 200, result.response);
     return;

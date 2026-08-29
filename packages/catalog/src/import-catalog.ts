@@ -133,19 +133,23 @@ function importM1M5(
   hashes: ReadonlyMap<string, string>,
   mappings: CanonicalMappings,
 ): CanonicalCatalogRecord {
+  const model = required(row, "model");
+  const moduleId = required(row, "module_id");
+  const disposition: CompilationDisposition = ["M1", "M2", "M3"].includes(model) ? "compiled" : "unsupported_with_reason";
+  const id = required(row, "rule_id");
   return canonicalRecord({
     row,
     index,
-    id: required(row, "rule_id"),
-    model: required(row, "model"),
-    moduleId: required(row, "module_id"),
+    id,
+    model,
+    moduleId,
     recordClass: "executable_rule",
-    disposition: "unsupported_with_reason",
+    disposition,
     runtimeEligible: true,
     nativeConfidence: row.confidence_base ?? "",
     hashes,
     mappings,
-    unsupportedReason: "module_compiler_not_implemented",
+    ...(disposition === "compiled" ? { handlerKey: handlerKeyFor(id, moduleId) } : { unsupportedReason: "module_compiler_not_implemented" }),
   });
 }
 

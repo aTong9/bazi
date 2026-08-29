@@ -47,7 +47,7 @@ test("POST /v1/m0/analyze returns all 45 M19 fields and rejects exact input with
     assert.equal(health.status, 200);
     const healthBody = await health.json() as { status: string; catalog: { compiledRecords: number } };
     assert.equal(healthBody.status, "ready");
-    assert.equal(healthBody.catalog.compiledRecords, 1_500);
+    assert.equal(healthBody.catalog.compiledRecords, 3_905);
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
     await rm(outputRoot, { recursive: true, force: true });

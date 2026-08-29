@@ -13,7 +13,7 @@ test("catalog import accounts for every source record and preserves native prove
   assert.equal(catalog.governance.length, 50);
   assert.equal(catalog.coverage.total, 11_118);
   assert.equal(catalog.coverage.silentDrops, 0);
-  assert.equal(catalog.coverage.byDisposition.compiled, 1_500);
+  assert.equal(catalog.coverage.byDisposition.compiled, 3_905);
   assert.equal(catalog.coverage.byDisposition.test_only, 150);
   assert.equal(catalog.coverage.byDisposition.governance, 50);
 
