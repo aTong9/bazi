@@ -23,6 +23,9 @@ test("M1 requires an explicit traditional spouse-star role and never guesses it"
   assert.ok(unspecified.dependencyFlags.includes("M1_TRADITIONAL_ROLE_BASIS_REQUIRED"));
 
   const explicit = analyzeM1({ roleBasis: "female_traditional", m10, rules });
+  assert.equal(explicit.moduleId, "M1.SYNTH");
+  assert.equal(explicit.synthesis.boundary, "ATTRACTION_ENTRY_ONLY");
+  assert.deepEqual(Object.values(explicit.compatibilityFields), [null, null, null, null, null]);
   assert.ok(explicit.prototypes.some((prototype) => prototype.tenGod === "七杀"));
   assert.ok(explicit.ruleTrace.length > 0);
   assert.equal(explicit.forbiddenInferences.includes("relationship_outcome"), true);
