@@ -15,6 +15,8 @@ export interface CanonicalCatalogRecord {
   readonly runtimeEligible: boolean;
   readonly disposition: CompilationDisposition;
   readonly unsupportedReason?: string;
+  readonly handlerKey?: string;
+  readonly jsonKey?: string;
   readonly lifecycleStatus: string;
   readonly nativeStatus: string;
   readonly confidence: string;
@@ -57,9 +59,12 @@ export async function importCatalog(options: { repositoryRoot: string }): Promis
   const coreRoot = path.join(root, "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心");
   const m0 = await readCsv(path.join(coreRoot, "M0_标准化记录_V1.0.csv"));
   const m1M5 = await readCsv(path.join(coreRoot, "M1-M5_原子规则总表_V1.0.csv"));
+  const m19Fields = await readCsv(path.join(coreRoot, "M0_M19输出字段_V1.0.csv"));
+  const m19JsonKeys = new Map(m19Fields.map((row) => [required(row, "Field_ID"), required(row, "json_key")]));
+  if (m19JsonKeys.size !== 45) throw new Error(`M19 field dictionary must contain 45 unique IDs; got ${m19JsonKeys.size}`);
 
   const records = [
-    ...m0.map((row, index) => importM0(row, index, hashes, mappings)),
+    ...m0.map((row, index) => importM0(row, index, hashes, mappings, m19JsonKeys)),
     ...m1M5.map((row, index) => importM1M5(row, index, hashes, mappings)),
   ];
   const ids = new Set<string>();
@@ -85,15 +90,21 @@ function importM0(
   index: number,
   hashes: ReadonlyMap<string, string>,
   mappings: CanonicalMappings,
+  m19JsonKeys: ReadonlyMap<string, string>,
 ): CanonicalCatalogRecord {
   const recordClass = required(row, "record_class");
-  const disposition = m0Disposition(recordClass);
+  const moduleId = required(row, "module_id");
+  const disposition = m0Disposition(recordClass, moduleId);
+  const id = required(row, "global_id");
+  const handlerKey = disposition === "compiled" ? handlerKeyFor(id, moduleId) : undefined;
+  const jsonKey = recordClass === "output_contract" ? m19JsonKeys.get(id) : undefined;
+  if (recordClass === "output_contract" && !jsonKey) throw new Error(`M19 JSON key missing for ${id}`);
   return canonicalRecord({
     row,
     index,
-    id: required(row, "global_id"),
+    id,
     model: "M0",
-    moduleId: required(row, "module_id"),
+    moduleId,
     recordClass,
     disposition,
     runtimeEligible: recordClass !== "test_case" && recordClass !== "governance_record",
@@ -103,6 +114,8 @@ function importM0(
     ...(disposition === "unsupported_with_reason"
       ? { unsupportedReason: "module_compiler_not_implemented" }
       : {}),
+    ...(handlerKey ? { handlerKey } : {}),
+    ...(jsonKey ? { jsonKey } : {}),
   });
 }
 
@@ -141,6 +154,8 @@ function canonicalRecord(input: {
   hashes: ReadonlyMap<string, string>;
   mappings: CanonicalMappings;
   unsupportedReason?: string;
+  handlerKey?: string;
+  jsonKey?: string;
 }): CanonicalCatalogRecord {
   const sourceFile = required(input.row, "source_file");
   const nativeStatus = input.row.validation_status ?? "";
@@ -156,6 +171,8 @@ function canonicalRecord(input: {
     runtimeEligible: input.runtimeEligible,
     disposition: input.disposition,
     ...(input.unsupportedReason === undefined ? {} : { unsupportedReason: input.unsupportedReason }),
+    ...(input.handlerKey === undefined ? {} : { handlerKey: input.handlerKey }),
+    ...(input.jsonKey === undefined ? {} : { jsonKey: input.jsonKey }),
     lifecycleStatus,
     nativeStatus,
     confidence,
@@ -172,15 +189,21 @@ function canonicalRecord(input: {
   };
 }
 
-function m0Disposition(recordClass: string): CompilationDisposition {
+function m0Disposition(recordClass: string, moduleId: string): CompilationDisposition {
+  if (["M0.M02", "M0.M03", "M0.M04", "M0.M05", "M0.M06"].includes(moduleId)) return "compiled";
   switch (recordClass) {
     case "reference_data": return "reference_only";
-    case "output_contract": return "compiled";
+    case "output_contract": return "reference_only";
     case "test_case": return "test_only";
     case "governance_record": return "governance";
     case "executable_rule": return "unsupported_with_reason";
     default: throw new Error(`Unknown M0 record_class: ${recordClass}`);
   }
+}
+
+function handlerKeyFor(id: string, moduleId: string): string {
+  const prefix = id.split("-").slice(0, 2).join(".").toLowerCase();
+  return `${moduleId.toLowerCase()}.${prefix}`;
 }
 
 function sourceHashes(lock: SourceLock): Map<string, string> {

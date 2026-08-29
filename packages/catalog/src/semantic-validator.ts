@@ -21,9 +21,16 @@ export function validateCatalogSemantics(
     if (record.disposition === "unsupported_with_reason" && !record.unsupportedReason) {
       issues.push(issue("E_UNSUPPORTED_REASON_REQUIRED", `${record.id} has no unsupported reason`));
     }
+    if (record.disposition === "compiled" && !record.handlerKey) {
+      issues.push(issue("E_COMPILED_HANDLER_REQUIRED", `${record.id} has no typed handler binding`));
+    }
     if (!/^[a-f0-9]{64}$/u.test(record.source.sourceHash)) {
       issues.push(issue("E_SOURCE_HASH", `${record.id} has an invalid source hash`));
     }
+  }
+  const jsonKeys = outputContracts.map((record) => record.jsonKey);
+  if (jsonKeys.some((key) => !key) || new Set(jsonKeys).size !== 45) {
+    issues.push(issue("E_M19_JSON_KEYS", "M19 output contracts require 45 unique jsonKey values"));
   }
   return issues;
 }

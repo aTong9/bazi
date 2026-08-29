@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bazi.local/schemas/m0-analyze-response-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["requestId", "generatedAt", "rulesetDigest", "versionManifest", "m0", "ruleTrace", "sourceIds", "discardLog"],
+  "properties": {
+    "requestId": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    "generatedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$" },
+    "rulesetDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "versionManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["integrationVersion", "modelVersions", "compilerVersion"],
+      "properties": {
+        "integrationVersion": { "type": "string", "minLength": 1 },
+        "modelVersions": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } },
+        "compilerVersion": { "type": "string", "minLength": 1 }
+      }
+    },
+    "m0": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "modules", "fields", "dependencyFlags", "issues"],
+      "properties": {
+        "status": { "const": "partial" },
+        "modules": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["M0.M02", "M0.M03", "M0.M04", "M0.M05", "M0.M06"],
+          "properties": {
+            "M0.M02": { "type": "object" }, "M0.M03": { "type": "object" },
+            "M0.M04": { "type": "object" }, "M0.M05": { "type": "object" },
+            "M0.M06": { "type": "object" }
+          }
+        },
+        "fields": {
+          "type": "object",
+          "minProperties": 45,
+          "maxProperties": 45,
+          "additionalProperties": { "$ref": "https://bazi.local/schemas/result-item-v1.json" }
+        },
+        "dependencyFlags": { "$ref": "#/$defs/uniqueStrings" },
+        "issues": { "type": "array", "maxItems": 0 }
+      }
+    },
+    "ruleTrace": { "$ref": "#/$defs/uniqueStrings" },
+    "sourceIds": { "$ref": "#/$defs/uniqueStrings" },
+    "discardLog": { "type": "array", "maxItems": 0 }
+  },
+  "$defs": {
+    "uniqueStrings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+  }
+}

@@ -17,6 +17,7 @@ export interface CatalogSnapshot {
   readonly manifest: RulesetManifest;
   readonly diagnostics: CatalogDiagnostics;
   getRecord(id: string): CanonicalCatalogRecord | null;
+  getOutputContracts(): readonly CanonicalCatalogRecord[];
   close(): void;
 }
 
@@ -48,6 +49,7 @@ export function openCatalogSnapshot(snapshotPath: string): CatalogSnapshot {
     .prepare("SELECT DISTINCT module_id FROM catalog_records ORDER BY module_id")
     .all() as Array<{ module_id: string }>;
   const query = database.prepare("SELECT record_json FROM catalog_records WHERE id = ?");
+  const outputContractsQuery = database.prepare("SELECT record_json FROM catalog_records WHERE record_class = 'output_contract' ORDER BY id");
   let closed = false;
   return {
     manifest,
@@ -61,6 +63,10 @@ export function openCatalogSnapshot(snapshotPath: string): CatalogSnapshot {
       if (closed) throw new Error("Catalog snapshot is closed");
       const row = query.get(id) as { record_json: string } | undefined;
       return row ? (JSON.parse(row.record_json) as CanonicalCatalogRecord) : null;
+    },
+    getOutputContracts(): readonly CanonicalCatalogRecord[] {
+      if (closed) throw new Error("Catalog snapshot is closed");
+      return Object.freeze((outputContractsQuery.all() as Array<{ record_json: string }>).map((row) => JSON.parse(row.record_json) as CanonicalCatalogRecord));
     },
     close(): void {
       if (!closed) {
