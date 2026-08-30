@@ -458,7 +458,7 @@ describe("App analysis provenance", () => {
     expect(findButton(mounted.host, "保存到档案").disabled).toBe(false);
   });
 
-  it("protects reality observations edited after the reading was saved", async () => {
+  it("requires reevaluation before saving or exporting edited reality observations", async () => {
     installBrowserMocks(makeAnalysisResponse());
     mounted = mountComponent(App, {});
     await flushUi();
@@ -474,8 +474,16 @@ describe("App analysis provenance", () => {
     observation.value = "保存后补充的压力情境";
     observation.dispatchEvent(new Event("input", { bubbles: true }));
     await flushUi();
-    expect(findButton(mounted.host, "更新档案").disabled).toBe(false);
+    expect(findButton(mounted.host, "更新档案").disabled).toBe(true);
+    expect(findButton(mounted.host, "打印 / 存 PDF").disabled).toBe(true);
+    expect(findButton(mounted.host, "下载可读摘要").disabled).toBe(true);
+    expect(findButton(mounted.host, "下载完整 JSON").disabled).toBe(true);
+    expect(mounted.host.textContent).toContain("独立现实观察尚未进入当前结果");
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false);
+
+    await submit(mounted.host);
+    expect(findButton(mounted.host, "更新档案").disabled).toBe(false);
+    expect(findButton(mounted.host, "下载可读摘要").disabled).toBe(false);
   });
 
   it("saves a completed reading locally and restores it after starting over", async () => {

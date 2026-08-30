@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{
   hasSecondarySubject?: boolean;
   analysisMode?: AnalysisMode;
   saveState?: "new" | "saved" | "dirty";
+  actionsDisabled?: boolean;
 }>(), {
   canAddObservations: false,
   primarySubject: null,
@@ -22,6 +23,7 @@ const props = withDefaults(defineProps<{
   hasSecondarySubject: false,
   analysisMode: "profile",
   saveState: "new",
+  actionsDisabled: false,
 });
 const emit = defineEmits<{ download: []; downloadSummary: []; print: []; save: [] }>();
 
@@ -73,11 +75,12 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
         <small>证据发布等级</small>
       </div>
       <div class="result-tools">
-        <button type="button" class="quiet-button" :disabled="saveState === 'saved'" @click="emit('save')">{{ saveLabel }}</button>
-        <button type="button" class="quiet-button" @click="emit('print')">打印 / 存 PDF</button>
-        <button type="button" class="quiet-button" @click="emit('downloadSummary')">下载可读摘要</button>
-        <button type="button" class="quiet-button" @click="emit('download')">下载完整 JSON</button>
+        <button type="button" class="quiet-button" :disabled="actionsDisabled || saveState === 'saved'" @click="emit('save')">{{ saveLabel }}</button>
+        <button type="button" class="quiet-button" :disabled="actionsDisabled" @click="emit('print')">打印 / 存 PDF</button>
+        <button type="button" class="quiet-button" :disabled="actionsDisabled" @click="emit('downloadSummary')">下载可读摘要</button>
+        <button type="button" class="quiet-button" :disabled="actionsDisabled" @click="emit('download')">下载完整 JSON</button>
       </div>
+      <p v-if="actionsDisabled" class="inline-notice" role="status">独立现实观察尚未进入当前结果，请再次评估后再保存、打印或导出。</p>
       <dl class="result-context" aria-label="本次看盘输入摘要">
         <div><dt>分析方式</dt><dd>{{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</dd></div>
         <div><dt>主要命盘</dt><dd>{{ primaryLabel }} · {{ primaryPillars }}</dd></div>

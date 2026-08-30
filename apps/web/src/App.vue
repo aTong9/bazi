@@ -37,6 +37,7 @@ const isOnline = ref(navigator.onLine);
 const offlineReady = ref(Boolean(navigator.serviceWorker?.controller));
 let activeRequest: AbortController | null = null;
 let resultFingerprint: string | null = null;
+const resultObservationFingerprint = ref<string | null>(null);
 
 const isEvaluate = computed(() => analysisMode.value === "evaluate");
 const isStructure = computed(() => analysisMode.value === "structure");
@@ -65,6 +66,7 @@ const isCurrentResultArchived = computed(() => Boolean(currentArchive.value && !
 const hasUnsavedResult = computed(() => Boolean(activeResult.value && !isCurrentResultArchived.value));
 const hasUnsavedWork = computed(() => hasUnsavedResult.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value);
 const resultSaveState = computed<"new" | "saved" | "dirty">(() => !currentArchive.value ? "new" : !isCurrentResultArchived.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value ? "dirty" : "saved");
+const hasUnappliedObservationChanges = computed(() => Boolean(result.value && resultObservationFingerprint.value !== observationContentFingerprint()));
 const observableRiskChains = computed(() => {
   if (!result.value || result.value.report.safetyStatus === "safety_stop") return [];
   return result.value.relationship.m4.riskChains;
@@ -109,6 +111,7 @@ watch(currentInputFingerprint, (fingerprint, previousFingerprint) => {
   result.value = null;
   structureResult.value = null;
   safeResultFingerprint.value = null;
+  resultObservationFingerprint.value = null;
   observations.value = [];
 });
 
@@ -225,6 +228,7 @@ async function submitAnalysis(): Promise<void> {
     basisRequestId: sourceResult.requestId,
     candidateFingerprints,
   }) : [];
+  const submittedObservationFingerprint = observationContentFingerprint();
   const realityGates = toWireRealityGates(gates.value, runId);
   const crossStatePayload = toWireCrossState(crossState.value, runId);
   const payload = {
@@ -256,6 +260,7 @@ async function submitAnalysis(): Promise<void> {
     } else {
       result.value = response as AnalysisResponse;
       structureResult.value = null;
+      resultObservationFingerprint.value = submittedObservationFingerprint;
     }
     if (healthError.value) void refreshHealth();
     await nextTick();
@@ -279,6 +284,7 @@ async function submitAnalysis(): Promise<void> {
 }
 
 function downloadResult(): void {
+  if (hasUnappliedObservationChanges.value) return;
   if (structureResult.value) {
     downloadText(serializeReadingPackage(currentM0Workspace(structureResult.value)), "application/json", `bazi-m0-${structureResult.value.requestId}.json`);
     return;
@@ -288,6 +294,7 @@ function downloadResult(): void {
 }
 
 function downloadReadableSummary(): void {
+  if (hasUnappliedObservationChanges.value) return;
   if (structureResult.value) {
     const analysis = structureResult.value;
     const fields = analysis.m0.fields;
@@ -379,13 +386,13 @@ function readableSummary(analysis: AnalysisResponse): string {
 }
 
 function printResult(): void {
-  if (!result.value && !structureResult.value) return;
+  if ((!result.value && !structureResult.value) || hasUnappliedObservationChanges.value) return;
   window.print();
 }
 
 function saveCurrentAnalysis(): void {
   const analysis = activeResult.value;
-  if (!analysis) return;
+  if (!analysis || hasUnappliedObservationChanges.value) return;
   if (hasArchiveConflict.value && !window.confirm("这份档案已在另一标签页或备份中更新。继续会用当前工作区覆盖较新版本，是否继续？")) {
     archiveNotice.value = "已取消覆盖；请从看盘档案打开较新版本后再继续。";
     return;
@@ -438,6 +445,12 @@ function workspaceFingerprint(workspace: ArchiveWorkspaceSnapshot): string {
 
 function resultVersionFingerprint(analysisResult: AnalysisResponse | M0AnalysisResponse): string { return JSON.stringify(analysisResult); }
 
+function observationContentFingerprint(): string {
+  return JSON.stringify(observations.value
+    .filter(({ context }) => context.trim())
+    .map(({ chainId, slot, source, context, direction }) => ({ chainId, slot, source, context: context.trim(), direction })));
+}
+
 async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   if (hasUnsavedWork.value && !window.confirm("当前输入或看盘尚未保存，仍要打开档案吗？")) return;
   activeRequest?.abort();
@@ -468,6 +481,7 @@ async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   } else {
     result.value = workspace.result;
     structureResult.value = null;
+    resultObservationFingerprint.value = observationContentFingerprint();
   }
   safeResultFingerprint.value = resultVersionFingerprint(workspace.result);
   archivesOpen.value = false;
@@ -597,6 +611,7 @@ function resetWorkspace(): void {
   result.value = null;
   structureResult.value = null;
   safeResultFingerprint.value = null;
+  resultObservationFingerprint.value = null;
   errorMessage.value = "";
   safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
   safeModeSensitiveFingerprint.value = modeSensitiveDraftFingerprint();
@@ -767,6 +782,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             :has-secondary-subject="hasSecondarySubject"
             :can-add-observations="isEvaluate"
             :save-state="resultSaveState"
+            :actions-disabled="hasUnappliedObservationChanges"
             @save="saveCurrentAnalysis"
             @print="printResult"
             @download-summary="downloadReadableSummary"
