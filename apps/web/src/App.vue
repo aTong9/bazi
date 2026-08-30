@@ -545,7 +545,14 @@ function exportArchiveRecovery(): void {
 }
 
 function clearArchiveRecovery(): void {
+  const expectedRaw = archiveRecoveryRaw.value;
+  if (!expectedRaw) return;
   try {
+    if (localStorage.getItem(ARCHIVE_STORAGE_KEY) !== expectedRaw) {
+      refreshArchives();
+      archiveNotice.value = "本机档案已在另一标签页变化，未执行清理。";
+      return;
+    }
     localStorage.removeItem(ARCHIVE_STORAGE_KEY);
     refreshArchives();
     archiveNotice.value = "损坏的本机档案存储已清除，现在可以重新保存或导入备份。";
