@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 import type { AnalysisArchive } from "@/types";
 
-const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string }>();
+const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string; returnFocusTo?: HTMLElement | null }>();
 const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; delete: [id: string]; export: []; import: [file: File] }>();
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -19,7 +19,7 @@ watch(() => props.open, async (open) => {
     if (target?.isConnected) target.focus({ preventScroll: true });
     return;
   }
-  returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  returnFocus = props.returnFocusTo ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   await nextTick();
   focusableElements()[0]?.focus({ preventScroll: true });
 }, { immediate: true });
@@ -45,9 +45,7 @@ function onKeydown(event: KeyboardEvent): void {
   }
 }
 
-onMounted(() => window.addEventListener("keydown", onKeydown));
 onBeforeUnmount(() => {
-  window.removeEventListener("keydown", onKeydown);
   if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
 });
 
@@ -76,7 +74,7 @@ function confirmDelete(id: string): void {
   <Teleport to="body">
     <Transition name="archive-panel">
       <div v-if="open" class="archive-overlay" @click.self="emit('close')">
-        <aside ref="panel" class="archive-panel" role="dialog" aria-modal="true" aria-labelledby="archive-title">
+        <aside ref="panel" class="archive-panel" role="dialog" aria-modal="true" aria-labelledby="archive-title" @keydown="onKeydown">
           <header>
             <div><p class="eyebrow">仅保存在这台设备</p><h2 id="archive-title">看盘档案</h2></div>
             <button type="button" class="quiet-button" aria-label="关闭看盘档案" @click="emit('close')">关闭</button>
