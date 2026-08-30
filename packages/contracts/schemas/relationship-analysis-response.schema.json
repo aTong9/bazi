@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bazi.local/schemas/relationship-analysis-response-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["requestId", "generatedAt", "rulesetDigest", "versionManifest", "m0", "ruleTrace", "sourceIds", "discardLog", "relationship", "report"],
+  "properties": {
+    "requestId": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T.*Z$" },
+    "rulesetDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "versionManifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["integrationVersion", "modelVersions", "compilerVersion"],
+      "properties": { "integrationVersion": { "type": "string" }, "modelVersions": { "type": "object", "additionalProperties": { "type": "string" } }, "compilerVersion": { "type": "string" } }
+    },
+    "m0": {
+      "type": "object", "additionalProperties": false, "required": ["status", "modules", "fields", "dependencyFlags", "issues"],
+      "properties": { "status": { "enum": ["complete", "limited"] }, "modules": { "type": "object" }, "fields": { "type": "object", "minProperties": 45, "maxProperties": 45 }, "dependencyFlags": { "$ref": "#/$defs/uniqueStrings" }, "issues": { "type": "array" } }
+    },
+    "ruleTrace": { "$ref": "#/$defs/uniqueStrings" },
+    "sourceIds": { "$ref": "#/$defs/uniqueStrings" },
+    "discardLog": { "type": "array" },
+    "relationship": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "roleBasis", "m1", "m2", "m3", "m4", "m5", "structuralSupplement", "legacyPayloads", "dependencyFlags", "ruleTrace"],
+      "properties": { "status": { "enum": ["provisional", "dependency_pending"] }, "roleBasis": { "enum": ["female_traditional", "male_traditional", "unspecified"] }, "m1": { "type": "object" }, "m2": { "type": "object" }, "m3": { "type": "object" }, "m4": { "type": "object" }, "m5": { "type": "object" }, "structuralSupplement": { "type": "object", "additionalProperties": false, "required": ["available", "scope", "replacesRealityEvidence", "replacesRealityGates", "fields"], "properties": { "available": { "type": "boolean" }, "scope": { "const": "structural_auxiliary_only" }, "replacesRealityEvidence": { "const": false }, "replacesRealityGates": { "const": false }, "fields": { "type": ["object", "null"] } } }, "legacyPayloads": { "oneOf": [{ "type": "null" }, { "type": "object", "additionalProperties": false, "required": ["mode", "payloads"], "properties": { "mode": { "const": "wrapped_read_only" }, "payloads": { "type": "object" } } }] }, "dependencyFlags": { "$ref": "#/$defs/uniqueStrings" }, "ruleTrace": { "$ref": "#/$defs/uniqueStrings" } }
+    },
+    "report": { "$ref": "https://bazi.local/schemas/analysis-report-v1.json" }
+  },
+  "$defs": { "uniqueStrings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true } }
+}

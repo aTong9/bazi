@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bazi.local/schemas/ruleset-manifest-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaId", "rulesetDigest", "integrationVersion", "modelVersions", "compilerVersion",
+    "inputFiles", "sourceRecordCount", "loadedRecordCount", "compiledRecordCount", "silentDrops",
+    "coverage", "moduleCoverage", "moduleRegistryHash", "fieldAuthorityDigest", "semanticPolicyDigest",
+    "strategyConfigDigest", "schemaDigest", "overlayPatchIds", "catalogDigest"
+  ],
+  "properties": {
+    "schemaId": { "const": "https://bazi.local/schemas/ruleset-manifest-v1.json" },
+    "rulesetDigest": { "$ref": "#/$defs/hash" },
+    "integrationVersion": { "type": "string" },
+    "modelVersions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["M0", "M1", "M2", "M3", "M4", "M5"],
+      "properties": {
+        "M0": { "type": "string" }, "M1": { "type": "string" }, "M2": { "type": "string" },
+        "M3": { "type": "string" }, "M4": { "type": "string" }, "M5": { "type": "string" }
+      }
+    },
+    "compilerVersion": { "type": "string" },
+    "inputFiles": {
+      "type": "array",
+      "minItems": 37,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "$ref": "#/$defs/hash" }
+        }
+      }
+    },
+    "sourceRecordCount": { "const": 11118 },
+    "loadedRecordCount": { "const": 10918 },
+    "compiledRecordCount": { "type": "integer", "minimum": 0 },
+    "silentDrops": { "const": 0 },
+    "coverage": { "type": "object" },
+    "moduleCoverage": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["compiled", "unsupported"],
+        "properties": {
+          "compiled": { "type": "integer", "minimum": 0 },
+          "unsupported": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "moduleRegistryHash": { "$ref": "#/$defs/hash" },
+    "fieldAuthorityDigest": { "$ref": "#/$defs/hash" },
+    "semanticPolicyDigest": { "$ref": "#/$defs/hash" },
+    "strategyConfigDigest": { "$ref": "#/$defs/hash" },
+    "schemaDigest": { "$ref": "#/$defs/hash" },
+    "overlayPatchIds": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "catalogDigest": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

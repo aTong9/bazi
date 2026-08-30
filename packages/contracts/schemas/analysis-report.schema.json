@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bazi.local/schemas/analysis-report-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "analysisRunId", "rulesetDigest", "reportStatus", "safetyStatus", "evidenceGrade", "assessment", "fields", "sections", "realityGates", "observationPlan", "trace", "logs", "boundaries"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "analysisRunId": { "type": "string", "minLength": 1 },
+    "rulesetDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reportStatus": { "enum": ["complete", "limited", "stop"] },
+    "safetyStatus": { "enum": ["standard", "safety_stop", "insufficient_data", "core_gate_stop"] },
+    "evidenceGrade": { "enum": ["FG0", "FG1", "FG2", "FG3", "FG4"] },
+    "assessment": { "enum": ["AF01", "AF02", "AF03", "AF04", "AF05", "AF06", "AF07", "AF08", "AF09"] },
+    "fields": { "type": "object" },
+    "sections": { "type": "array", "items": { "$ref": "#/$defs/section" } },
+    "realityGates": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "$ref": "#/$defs/gate" } },
+    "observationPlan": { "type": "array", "maxItems": 5, "items": { "$ref": "#/$defs/observation" } },
+    "trace": { "$ref": "#/$defs/trace" },
+    "logs": { "$ref": "#/$defs/logs" },
+    "boundaries": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/boundary" } }
+  },
+  "$defs": {
+    "section": { "type": "object", "additionalProperties": false, "required": ["id", "title", "body"], "properties": { "id": { "enum": ["profile", "risk", "reality", "safety"] }, "title": { "type": "string" }, "body": { "type": "string" } } },
+    "gate": { "type": "object", "required": ["id", "label", "status", "evidenceIds"], "properties": { "id": { "enum": ["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"] }, "label": { "type": "string" }, "status": { "enum": ["pass", "conditional", "fail", "unknown", "not_assessed"] }, "evidenceIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }, "note": { "type": "string" } } },
+    "observation": { "type": "object", "additionalProperties": false, "required": ["gateId", "observe", "directive"], "properties": { "gateId": { "type": "string" }, "observe": { "type": "string" }, "directive": { "const": false } } },
+    "trace": { "type": "object", "additionalProperties": false, "required": ["ruleIds", "sourceIds", "eventIds"], "properties": { "ruleIds": { "$ref": "#/$defs/uniqueStrings" }, "sourceIds": { "$ref": "#/$defs/uniqueStrings" }, "eventIds": { "$ref": "#/$defs/uniqueStrings" } } },
+    "logs": { "type": "object", "additionalProperties": false, "required": ["dedup", "conflicts", "discardedCandidates", "decisions"], "properties": { "dedup": { "$ref": "#/$defs/uniqueStrings" }, "conflicts": { "$ref": "#/$defs/uniqueStrings" }, "discardedCandidates": { "$ref": "#/$defs/uniqueStrings" }, "decisions": { "type": "array", "items": { "$ref": "#/$defs/decision" } } } },
+    "decision": { "type": "object", "additionalProperties": false, "required": ["decisionId", "code", "outcome", "ruleIds"], "properties": { "decisionId": { "type": "string", "minLength": 1 }, "code": { "type": "string", "minLength": 1 }, "outcome": { "type": "string", "minLength": 1 }, "ruleIds": { "$ref": "#/$defs/uniqueStrings" } } },
+    "boundary": { "type": "object", "additionalProperties": false, "required": ["code", "hard", "text"], "properties": { "code": { "type": "string" }, "hard": { "const": true }, "text": { "type": "string" } } },
+    "uniqueStrings": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+  }
+}

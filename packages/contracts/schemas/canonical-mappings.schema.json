@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bazi.local/schemas/canonical-mappings-v1.json",
+  "type": "object",
+  "required": ["mappingVersion", "integrationVersion", "lifecycleStatus", "confidence", "excelDate", "traditionalSpouseStarPolicy"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "mappingVersion": { "const": "1.0" },
+    "integrationVersion": { "const": "1.0" },
+    "lifecycleStatus": { "$ref": "#/$defs/mapping" },
+    "confidence": { "$ref": "#/$defs/mapping" },
+    "excelDate": {
+      "type": "object",
+      "required": ["epochSystem", "serialOneDate", "leapYearBugPolicy", "timezone", "output", "preserveSerialAs"]
+    },
+    "traditionalSpouseStarPolicy": {
+      "type": "object",
+      "required": ["configKey", "allowedValues", "default", "identityBinding"],
+      "properties": {
+        "allowedValues": { "const": ["enabled", "disabled", "custom"] },
+        "identityBinding": { "const": "never_inferred" }
+      }
+    }
+  },
+  "$defs": {
+    "mapping": {
+      "type": "object",
+      "required": ["sourceFields", "nativeToCanonical", "preserveAs"],
+      "properties": {
+        "sourceFields": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "nativeToCanonical": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string" } },
+        "preserveAs": { "type": "string" }
+      }
+    }
+  }
+}

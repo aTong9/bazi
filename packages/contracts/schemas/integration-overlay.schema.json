@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bazi.local/schemas/integration-overlay-v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "patchId",
+    "integrationVersion",
+    "status",
+    "rationale",
+    "operations"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "patchId": { "type": "string", "pattern": "^OVL-[0-9]{4}$" },
+    "integrationVersion": { "const": "1.0" },
+    "status": { "const": "approved" },
+    "rationale": { "type": "string", "minLength": 1 },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "operationId",
+          "op",
+          "targetPath",
+          "targetSha256",
+          "rationale"
+        ],
+        "properties": {
+          "operationId": { "type": "string", "minLength": 1 },
+          "op": {
+            "enum": [
+              "add_module",
+              "replace_token",
+              "declare_calibration_contract"
+            ]
+          },
+          "targetPath": { "type": "string", "minLength": 1 },
+          "targetSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "rationale": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

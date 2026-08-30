@@ -1,0 +1,86 @@
+{
+  "$schema": "../../packages/contracts/schemas/integration-overlay.schema.json",
+  "patchId": "OVL-0001",
+  "integrationVersion": "1.0",
+  "status": "approved",
+  "rationale": "在不修改Integration V1.0原始文件的前提下，闭合模块注册、依赖引用和M5校准导入契约。",
+  "operations": [
+    {
+      "operationId": "OVL-0001-M21",
+      "op": "add_module",
+      "targetPath": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/统一模块注册表_V1.0.csv",
+      "targetSha256": "b227cdd5ce005e2a29a9a6252f8da0f704649634a03d906b7100b0a950082bb7",
+      "key": "M0.M21",
+      "value": {
+        "system_module_id": "M0.M21",
+        "model": "M0",
+        "native_module": "M21",
+        "module_name": "21_版本与争议治理",
+        "version": "1.9",
+        "record_count": 50,
+        "record_class": "governance_record",
+        "responsibility": "保存规则争议、版本变更、裁决和生效记录；不进入普通运行时。",
+        "upstream": "M20及所有模块",
+        "outputs": "争议记录、裁决、变更与版本追踪",
+        "downstream": "Catalog治理/审计",
+        "authority": "规则版本与争议治理",
+        "runtime_status": "开发/治理",
+        "validation_status": "治理记录",
+        "source_file": "M0_八字结构判定与用神规则库_V1.9_版本与争议治理闭环版.xlsx",
+        "notes": "50条治理记录；普通运行时禁用。"
+      },
+      "rationale": "全量索引包含50条M0.M21治理记录，但原模块注册表漏登记。"
+    },
+    {
+      "operationId": "OVL-0001-M1-DOWNSTREAM",
+      "op": "replace_token",
+      "targetPath": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/统一模块注册表_V1.0.csv",
+      "targetSha256": "b227cdd5ce005e2a29a9a6252f8da0f704649634a03d906b7100b0a950082bb7",
+      "key": "M1.CORE",
+      "field": "downstream",
+      "oldValue": "M4.GAP",
+      "newValue": "M4.BASE",
+      "rationale": "M4.GAP不存在，M4.BASE才是消费M1输入的已注册模块。"
+    },
+    {
+      "operationId": "OVL-0001-M5-GAP-UPSTREAM",
+      "op": "replace_token",
+      "targetPath": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/02_运行时核心/统一模块注册表_V1.0.csv",
+      "targetSha256": "b227cdd5ce005e2a29a9a6252f8da0f704649634a03d906b7100b0a950082bb7",
+      "key": "M5.GAP",
+      "field": "upstream",
+      "oldValue": "M5.BASE-PHYTHM",
+      "newValue": "M5.BASE/M5.PARTNER/M5.EXCHANGE/M5.BOUND/M5.REPAIR/M5.RHYTHM",
+      "rationale": "原值是拼写与范围压缩错误，无法构建显式依赖DAG。"
+    },
+    {
+      "operationId": "OVL-0001-M5-CALIBRATION",
+      "op": "declare_calibration_contract",
+      "targetPath": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/03_测试与校准/已有校准资产/M5/M5_CALIBRATION_规则命中导入模板_V0.10.csv",
+      "targetSha256": "767ffdfe53f874bba20ea6615507c81755e4dbba3a9c0f6fc19f3f5c027aa71e",
+      "authoritativeWorkbookPath": "docs/八字关系分析系统_M0-M5开发整合包_V1.0/03_测试与校准/已有校准资产/M5/M5_CALIBRATION_真实案例校准工作台_V0.10.xlsx",
+      "authoritativeWorkbookSha256": "8bf0113cd6231a00b6bcbfaaebbcfa0dc675781960ba8614157d48c7e6a101f8",
+      "sheet": "06_规则命中",
+      "range": "A5:O5",
+      "legacyAction": "reject",
+      "expectedHeaders": [
+        "hit_id",
+        "case_id",
+        "set_split",
+        "rule_id",
+        "模块",
+        "规则名称",
+        "命中时点",
+        "预测角色",
+        "核验结果",
+        "匹配分",
+        "反例强度",
+        "安全关键",
+        "event_ids",
+        "纳入",
+        "备注"
+      ],
+      "rationale": "现有17列CSV来自归档版契约；当前权威工作簿使用15列结构，旧模板必须拒绝而非猜测转换。"
+    }
+  ]
+}
