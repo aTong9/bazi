@@ -120,6 +120,9 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
       },
     },
     report: {
+      schemaVersion: "1.0",
+      analysisRunId: "11111111-1111-4111-8111-111111111111",
+      rulesetDigest: "a".repeat(64),
       reportStatus: isSafetyStop ? "stop" : "limited",
       safetyStatus: isSafetyStop ? "safety_stop" : "standard",
       evidenceGrade: isSafetyStop ? "FG0" : "FG2",
@@ -129,7 +132,7 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
       realityGates: gates,
       observationPlan: reportObservationPlan,
       boundaries: [{ code: "NOT_FATE", hard: true, text: "本报告不是命定结果。" }],
-      trace: { ruleIds: [], sourceIds: [], eventIds: [] },
+      trace: { ruleIds: [], sourceIds: [], eventIds: [...new Set(gates.flatMap((gate) => gate.evidenceIds))] },
     },
   };
 }

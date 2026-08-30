@@ -131,6 +131,9 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
   const trace = report && record(report.trace);
   if (
     !report || !trace
+    || report.schemaVersion !== "1.0"
+    || report.analysisRunId !== response.requestId
+    || report.rulesetDigest !== response.rulesetDigest
     || !isOneOf(report.reportStatus, ["complete", "limited", "stop"])
     || !isOneOf(report.safetyStatus, ["standard", "safety_stop", "insufficient_data", "core_gate_stop"])
     || !isOneOf(report.evidenceGrade, ["FG0", "FG1", "FG2", "FG3", "FG4"])
@@ -166,6 +169,16 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
     || JSON.stringify(report.observationPlan) !== JSON.stringify(expectedObservationPlan)) {
     throw responseSchemaError("分析模块与发布报告投影不一致");
   }
+  const unique = (items: unknown[]) => [...new Set(items.filter(isString))];
+  const expectedTrace = {
+    ruleIds: unique([...(response.ruleTrace as unknown[]), ...(relationship.ruleTrace as unknown[])]),
+    sourceIds: unique([...(response.sourceIds as unknown[]), ...(relationship.ruleTrace as unknown[])]),
+    eventIds: unique([
+      ...(m5.realityGates as Array<{ evidenceIds: unknown[] }>).flatMap((gate) => gate.evidenceIds),
+      ...(m5.crossStateEvidence as Array<{ evidenceIds: unknown[] }>).flatMap((evidence) => evidence.evidenceIds),
+    ]),
+  };
+  if (JSON.stringify(trace) !== JSON.stringify(expectedTrace)) throw responseSchemaError("分析报告追踪信息与当前结果不一致");
   if (report.safetyStatus === "safety_stop" && (report.reportStatus !== "stop" || report.evidenceGrade !== "FG0" || report.assessment !== "AF09" || report.sections.some((section) => record(section)?.id !== "safety"))) {
     throw responseSchemaError("安全停止响应仍包含普通分析内容");
   }

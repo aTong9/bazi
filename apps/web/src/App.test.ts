@@ -343,6 +343,7 @@ describe("App analysis provenance", () => {
   it("downloads adjudicated reality gates and cross-state evidence in the readable summary", async () => {
     const response = makeAnalysisResponse();
     response.relationship.m5.crossStateEvidence = [{ state: "pressure", note: "高压期仍能暂停并协商", evidenceIds: ["event-02"] }];
+    response.report.trace.eventIds.push("event-02");
     installBrowserMocks(response);
     let downloadedBlob: Blob | undefined;
     Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn((blob: Blob) => { downloadedBlob = blob; return "blob:evaluate-summary"; }) });

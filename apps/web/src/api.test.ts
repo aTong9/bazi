@@ -78,6 +78,16 @@ describe("API response guards", () => {
     expect(() => parseAnalysisResponse(plan)).toThrow("分析模块与发布报告投影不一致");
   });
 
+  it("binds report provenance and trace to the current analysis", () => {
+    const identity = makeAnalysisResponse();
+    identity.report.analysisRunId = "another-analysis";
+    expect(() => parseAnalysisResponse(identity)).toThrow("报告字段无效");
+
+    const trace = makeAnalysisResponse();
+    trace.report.trace.eventIds = [];
+    expect(() => parseAnalysisResponse(trace)).toThrow("追踪信息与当前结果不一致");
+  });
+
   it("applies guards to successful fetch calls", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: "ready", catalog: { rulesetDigest: "digest", loadedRecords: 1, compiledRecords: 1, activeModules: ["M0"] } }), { status: 200, headers: { "content-type": "application/json" } }))

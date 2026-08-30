@@ -110,7 +110,7 @@ describe("local analysis archive", () => {
   it("deletes only the selected archive", () => {
     const storage = memoryStorage();
     const first = makeWorkspace();
-    const second = { ...makeWorkspace(), result: { ...makeAnalysisResponse(), requestId: "request-second" } };
+    const second = workspaceWithRequestId("request-second");
     saveArchive(first, storage);
     const two = saveArchive(second, storage);
     const remaining = deleteArchive(two[1]!.id, two[1]!.savedAt, storage);
@@ -287,6 +287,7 @@ describe("local analysis archive", () => {
     mismatchedCrossStateResult.crossState.pressure = true;
     mismatchedCrossStateResult.crossState.evidence.pressure = "高压期仍能暂停并协商";
     mismatchedCrossStateResult.result.relationship.m5.crossStateEvidence = [{ state: "pressure", note: "高压期仍能暂停并协商", evidenceIds: ["event-pressure"] }];
+    mismatchedCrossStateResult.result.report.trace.eventIds.push("event-pressure");
     mismatchedCrossStateResult.resultInputFingerprint = analysisInputFingerprint(mismatchedCrossStateResult);
     const validCrossState = saveArchive(mismatchedCrossStateResult, memoryStorage())[0]!;
     mismatchedCrossStateResult.crossState.evidence.pressure = "高压期会中断协商";
@@ -350,6 +351,7 @@ function makeWorkspace(): AnalysisWorkspaceSnapshot {
 function workspaceWithRequestId(requestId: string): AnalysisWorkspaceSnapshot {
   const workspace = makeWorkspace();
   workspace.result = { ...workspace.result, requestId };
+  workspace.result.report.analysisRunId = requestId;
   return workspace;
 }
 

@@ -124,6 +124,9 @@ export interface AnalysisResponse {
     };
   };
   report: {
+    schemaVersion: "1.0";
+    analysisRunId: string;
+    rulesetDigest: string;
     reportStatus: ReportStatus;
     safetyStatus: SafetyStatus;
     evidenceGrade: EvidenceGrade;
