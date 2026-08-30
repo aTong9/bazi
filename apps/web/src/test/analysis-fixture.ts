@@ -5,7 +5,11 @@ interface AnalysisFixtureOptions {
   safetyStop?: boolean;
   includeOrdinarySectionDuringStop?: boolean;
   gateStatuses?: Partial<Record<RealityGateId, RealityGateStatus>>;
+  pillars?: { year: string; month: string; day: string; hour: string | null };
+  birthTimeStatus?: "exact" | "approximate" | "unknown";
 }
+
+const DEFAULT_PILLARS = { year: "庚申", month: "己丑", day: "甲寅", hour: "庚午" };
 
 function resultItem(value: unknown, status = "supported", confidence = "medium"): ResultItem {
   return { value, status, confidence, conditions: [], ruleIds: [] };
@@ -27,7 +31,10 @@ export function makeM0AnalysisResponse(): M0AnalysisResponse {
 
 export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): AnalysisResponse {
   const isSafetyStop = options.safetyStop ?? false;
+  const pillars = options.pillars ?? DEFAULT_PILLARS;
   const fields: Record<string, ResultItem> = {
+    input_validation: resultItem({ birthTimeStatus: options.birthTimeStatus ?? "exact" }),
+    pillar_element_ten_god_map: resultItem(Object.fromEntries(Object.entries(pillars).map(([position, pillar]) => [position, pillar === null ? null : { stem: { stem: pillar[0] }, branch: { branch: pillar[1] } }]))),
     day_master_and_season: resultItem({ dayMaster: "甲", element: "木", yinYang: "阳", monthBranch: "寅", seasonElement: "木" }),
     day_master_strength: resultItem("balanced_candidate"),
     temperature_state: resultItem({ state: "balanced", evidence: [], candidateElements: [] }),

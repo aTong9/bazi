@@ -395,13 +395,27 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
 }
 
 function workspaceResultMatches(workspace: ArchiveWorkspaceSnapshot): boolean {
-  if (workspace.analysisMode === "structure") return workspace.resultInputFingerprint === m0InputFingerprint(workspace.primarySubject);
+  if (workspace.analysisMode === "structure") return workspace.resultInputFingerprint === m0InputFingerprint(workspace.primarySubject)
+    && subjectResultMatches(workspace.primarySubject, workspace.result.m0.fields);
   return workspace.roleBasis === workspace.result.relationship.roleBasis
     && workspace.hasSecondarySubject === workspace.result.relationship.structuralSupplement.available
     && (workspace.resultInputFingerprint === undefined || workspace.resultInputFingerprint === analysisInputFingerprint(workspace))
+    && subjectResultMatches(workspace.primarySubject, workspace.result.m0.fields)
+    && (!workspace.hasSecondarySubject || subjectResultMatches(workspace.secondarySubject, workspace.result.relationship.structuralSupplement.fields!))
     && (workspace.analysisMode === "profile" || workspaceGatesMatch(workspace))
     && (workspace.analysisMode === "profile" || workspaceCrossStateMatches(workspace))
     && workspaceObservationsMatch(workspace);
+}
+
+function subjectResultMatches(subject: SubjectDraft, fields: Record<string, { value: unknown }>): boolean {
+  const validation = record(fields.input_validation?.value);
+  const pillars = record(fields.pillar_element_ten_god_map?.value);
+  if (!validation || validation.birthTimeStatus !== subject.birthTimeStatus || !pillars) return false;
+  return (["year", "month", "day", "hour"] as const).every((position) => {
+    if (position === "hour" && subject.birthTimeStatus === "unknown") return Object.hasOwn(pillars, position) && pillars[position] === null;
+    const pillar = record(pillars[position]);
+    return record(pillar?.stem)?.stem === subject[position][0] && record(pillar?.branch)?.branch === subject[position][1];
+  });
 }
 
 function parseWorkspaceResult(workspace: ArchiveWorkspaceSnapshot): void {

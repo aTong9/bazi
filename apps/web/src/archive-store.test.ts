@@ -26,7 +26,11 @@ describe("local analysis archive", () => {
     workspace.primarySubject.subjectId = "小林";
     workspace.secondarySubject.subjectId = "阿青";
     workspace.hasSecondarySubject = true;
-    workspace.result.relationship.structuralSupplement = { ...workspace.result.relationship.structuralSupplement, available: true, fields: {} };
+    workspace.result.relationship.structuralSupplement = {
+      ...workspace.result.relationship.structuralSupplement,
+      available: true,
+      fields: makeAnalysisResponse({ pillars: { year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子" } }).m0.fields,
+    };
     workspace.resultInputFingerprint = analysisInputFingerprint(workspace);
     const archive = saveArchive(workspace, memoryStorage())[0]!;
     expect(archive.title).toBe("小林 · 甲寅日 × 阿青 · 乙卯日 · 关系画像");
@@ -67,6 +71,9 @@ describe("local analysis archive", () => {
       method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved", resolvedPillars: "丙寅 癸巳 癸酉 戊午",
       adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
     };
+    const unknownFields = makeAnalysisResponse({ pillars: { year: "庚申", month: "己丑", day: "甲寅", hour: null }, birthTimeStatus: "unknown" }).m0.fields;
+    archive.workspace.result.m0.fields = unknownFields;
+    archive.workspace.result.report.fields = unknownFields;
     archive.workspace.hasSecondarySubject = false;
     archive.workspace.secondarySubject.subjectId = "不应保留的旧另一方";
     archive.workspace.secondarySubject.birthInput = {
@@ -238,6 +245,10 @@ describe("local analysis archive", () => {
     const mismatchedInput = structuredClone(current[0]!);
     mismatchedInput.workspace.primarySubject.subjectId = "被拼接的另一命盘";
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedInput] }), storage)).toThrow("输入与分析结果不一致");
+    const mismatchedPillars = structuredClone(current[0]!);
+    mismatchedPillars.workspace.primarySubject.year = "庚午";
+    mismatchedPillars.workspace.resultInputFingerprint = analysisInputFingerprint(mismatchedPillars.workspace);
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedPillars] }), storage)).toThrow("输入与分析结果不一致");
     const hiddenSubjectField = structuredClone(current[0]!);
     (hiddenSubjectField.workspace.primarySubject as unknown as Record<string, unknown>).privateMemo = "未声明的敏感信息";
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [hiddenSubjectField] }), storage)).toThrow("档案结构无效");
