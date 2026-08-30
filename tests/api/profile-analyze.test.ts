@@ -58,6 +58,12 @@ test("canonical relationship routes expose a bounded profile and safety-stop eva
     const mismatchedSections = structuredClone(profileJson) as unknown as { report: { sections: Array<{ body: string }> } };
     mismatchedSections.report.sections[0]!.body = "replaced finding";
     assert.ok(validateRelationshipResponse(mismatchedSections).some((error) => error.includes("project M3, M4, and M5")));
+    const mismatchedLogs = structuredClone(profileJson) as unknown as { report: { logs: { discardedCandidates: string[] } } };
+    mismatchedLogs.report.logs.discardedCandidates = [];
+    assert.ok(validateRelationshipResponse(mismatchedLogs).some((error) => error.includes("logs must project current adjudication")));
+    const missingBoundary = structuredClone(profileJson) as unknown as { report: { boundaries: unknown[] } };
+    missingBoundary.report.boundaries.pop();
+    assert.ok(validateRelationshipResponse(missingBoundary).some((error) => error.includes("boundaries must retain all canonical safety limits")));
     const evaluation = await fetch(`http://127.0.0.1:${port}/v1/relationship/evaluate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: [{ id: "RG01", status: "fail", evidenceIds: ["incident-1"], note: "safety failure" }] }) });
     assert.equal(evaluation.status, 200);
     const evaluationJson = await evaluation.json() as { relationship: { m5: { reportStatus: string; fit: { grade: string; assessment: string; ordinaryFindings: unknown[] } } }; report: { sections: Array<{ id: string }> } };

@@ -85,6 +85,7 @@ export interface AnalysisResponse {
     roleBasis: RoleBasis;
     dependencyFlags: string[];
     ruleTrace: string[];
+    legacyPayloads: null | { mode: "wrapped_read_only"; payloads: Record<string, unknown> };
     structuralSupplement: {
       available: boolean;
       scope: "structural_auxiliary_only";
@@ -124,6 +125,7 @@ export interface AnalysisResponse {
       crossStateEvidence: CrossStateEvidenceResult[];
       observationPlan: Array<{ gateId: string; observe: string; directive: false }>;
       fit: { grade: EvidenceGrade; assessment: AssessmentFlag; residualRisks: string[]; decisionCodes: string[]; isSuccessProbability: false };
+      ruleTrace: string[];
       boundaries: string[];
     };
   };
@@ -141,6 +143,12 @@ export interface AnalysisResponse {
     observationPlan: Array<{ gateId: string; observe: string; directive: false }>;
     boundaries: Array<{ code: string; hard: true; text: string }>;
     trace: { ruleIds: string[]; sourceIds: string[]; eventIds: string[] };
+    logs: {
+      dedup: string[];
+      conflicts: string[];
+      discardedCandidates: string[];
+      decisions: Array<{ decisionId: string; code: string; outcome: string; ruleIds: string[] }>;
+    };
   };
 }
 

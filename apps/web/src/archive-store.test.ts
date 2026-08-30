@@ -288,6 +288,7 @@ describe("local analysis archive", () => {
     mismatchedCrossStateResult.crossState.evidence.pressure = "高压期仍能暂停并协商";
     mismatchedCrossStateResult.result.relationship.m5.crossStateEvidence = [{ state: "pressure", note: "高压期仍能暂停并协商", evidenceIds: ["event-pressure"] }];
     mismatchedCrossStateResult.result.report.trace.eventIds.push("event-pressure");
+    mismatchedCrossStateResult.result.report.logs.dedup.push("event-pressure counted once");
     mismatchedCrossStateResult.resultInputFingerprint = analysisInputFingerprint(mismatchedCrossStateResult);
     const validCrossState = saveArchive(mismatchedCrossStateResult, memoryStorage())[0]!;
     mismatchedCrossStateResult.crossState.evidence.pressure = "高压期会中断协商";
@@ -325,6 +326,7 @@ describe("local analysis archive", () => {
     ];
     observedChain.realityStatus = "observed_pattern";
     observedChain.evidenceIds = ["ui-run-M4-C01-0", "ui-run-M4-C01-1"];
+    mismatchedObservationResult.result.report.logs.discardedCandidates = [];
     mismatchedObservationResult.result.report.sections.find((section) => section.id === "risk")!.body = `${observedChain.structuralCandidate}（observed_pattern）`;
     const validObservation = saveArchive(mismatchedObservationResult, memoryStorage())[0]!;
     mismatchedObservationResult.observations[1]!.direction = "contradicts";

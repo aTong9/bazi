@@ -37,6 +37,10 @@ describe("API response guards", () => {
     const fields = makeAnalysisResponse();
     delete fields.m0.fields.fixture_field_45;
     expect(() => parseAnalysisResponse(fields)).toThrow("M0 字段无效");
+
+    const legacy = makeAnalysisResponse() as unknown as { relationship: Record<string, unknown> };
+    delete legacy.relationship.legacyPayloads;
+    expect(() => parseAnalysisResponse(legacy)).toThrow("关系模块字段无效");
   });
 
   it("accepts the standalone M0 response and rejects missing trace metadata", () => {
@@ -106,6 +110,16 @@ describe("API response guards", () => {
     const response = JSON.parse(JSON.stringify(makeAnalysisResponse())) as ReturnType<typeof makeAnalysisResponse>;
     response.report.sections[0]!.body = "被替换的关系结论";
     expect(() => parseAnalysisResponse(response)).toThrow("报告正文与当前模块结果不一致");
+  });
+
+  it("binds report governance records to the current analysis", () => {
+    const logs = makeAnalysisResponse();
+    logs.report.logs.discardedCandidates = [];
+    expect(() => parseAnalysisResponse(logs)).toThrow("报告治理记录与当前结果不一致");
+
+    const boundaries = makeAnalysisResponse();
+    boundaries.report.boundaries.pop();
+    expect(() => parseAnalysisResponse(boundaries)).toThrow("报告治理记录与当前结果不一致");
   });
 
   it("applies guards to successful fetch calls", async () => {

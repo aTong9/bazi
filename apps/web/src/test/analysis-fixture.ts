@@ -52,6 +52,7 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
   const reportObservationPlan = isSafetyStop ? [] : gates.filter((gate) => gate.status !== "pass").slice(0, 5).map((gate) => ({ gateId: gate.id, observe: gate.label, directive: false as const }));
   const profileStatements = ["先确认边界"];
   const riskChains = [{ id: "M4-C01", structuralCandidate: "结构风险候选", realityStatus: "unconfirmed", evidenceIds: [], repair: { actions: ["暂停"] }, buffer: { conditions: ["明确同意"] } }];
+  const eventIds = [...new Set(gates.flatMap((gate) => gate.evidenceIds))];
   const reportSections = isSafetyStop
     ? [
         { id: "safety", title: "安全与边界", body: "现实资料触发安全停止；请优先关注安全、同意与现实支持。" },
@@ -77,6 +78,7 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
       roleBasis: "female_traditional",
       dependencyFlags: [],
       ruleTrace: [],
+      legacyPayloads: null,
       structuralSupplement: {
         available: false,
         scope: "structural_auxiliary_only",
@@ -122,6 +124,7 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
           decisionCodes: [],
           isSuccessProbability: false,
         },
+        ruleTrace: [],
         boundaries: ["不是成功概率"],
       },
     },
@@ -137,8 +140,19 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
       sections: reportSections,
       realityGates: gates,
       observationPlan: reportObservationPlan,
-      boundaries: [{ code: "NOT_FATE", hard: true, text: "本报告不是命定结果。" }],
-      trace: { ruleIds: [], sourceIds: [], eventIds: [...new Set(gates.flatMap((gate) => gate.evidenceIds))] },
+      boundaries: [
+        { code: "NOT_FATE", hard: true, text: "本报告不是命定结果。" },
+        { code: "NOT_SUCCESS_PROBABILITY", hard: true, text: "FG 是证据发布等级，不是关系成功概率。" },
+        { code: "NOT_DIRECTIVE", hard: true, text: "报告不替代当事人的同意、安全判断和现实决定。" },
+        { code: "STRUCTURE_NOT_HARM", hard: true, text: "结构风险候选不等于现实伤害事实。" },
+      ],
+      trace: { ruleIds: [], sourceIds: [], eventIds },
+      logs: {
+        dedup: eventIds.map((id) => `${id} counted once`),
+        conflicts: isSafetyStop ? ["SAFETY_STOP_OVERRIDES_ORDINARY_FIT"] : [],
+        discardedCandidates: riskChains.map((chain) => `${chain.id}:unconfirmed_harm`),
+        decisions: isSafetyStop ? [{ decisionId: "11111111-1111-4111-8111-111111111111:safety-stop", code: "SAFETY_STOP_OVERRIDES_ORDINARY_FIT", outcome: "STOP", ruleIds: [] }] : [],
+      },
     },
   };
 }

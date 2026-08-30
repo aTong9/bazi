@@ -118,11 +118,13 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
   const m4 = relationship && record(relationship.m4);
   const m5 = relationship && record(relationship.m5);
   const supplement = relationship && record(relationship.structuralSupplement);
+  const legacyPayloads = relationship && record(relationship.legacyPayloads);
   if (
     !relationship || !m1 || !m2 || !m3 || !m4 || !m5 || !supplement
     || !isOneOf(relationship.status, ["provisional", "dependency_pending"])
     || !isOneOf(relationship.roleBasis, ["female_traditional", "male_traditional", "unspecified"])
     || !isStringArray(relationship.dependencyFlags) || !isStringArray(relationship.ruleTrace)
+    || !(relationship.legacyPayloads === null || (legacyPayloads?.mode === "wrapped_read_only" && Boolean(record(legacyPayloads.payloads))))
     || !isM1(m1) || !isM2(m2) || !isM3(m3) || !isM4(m4) || !isM5(m5)
     || typeof supplement.available !== "boolean"
     || supplement.scope !== "structural_auxiliary_only"
@@ -136,8 +138,9 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
 
   const report = record(response.report);
   const trace = report && record(report.trace);
+  const logs = report && record(report.logs);
   if (
-    !report || !trace
+    !report || !trace || !logs
     || report.schemaVersion !== "1.0"
     || report.analysisRunId !== response.requestId
     || report.rulesetDigest !== response.rulesetDigest
@@ -151,6 +154,8 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
     || !isArrayOf(report.observationPlan, isObservation)
     || !isArrayOf(report.boundaries, isBoundary)
     || !isStringArray(trace.ruleIds) || !isStringArray(trace.sourceIds) || !isStringArray(trace.eventIds)
+    || !isStringArray(logs.dedup) || !isStringArray(logs.conflicts) || !isStringArray(logs.discardedCandidates)
+    || !isArrayOf(logs.decisions, (candidate) => { const decision = record(candidate); return Boolean(decision && hasStrings(decision, ["decisionId", "code", "outcome"]) && isStringArray(decision.ruleIds)); })
   ) {
     throw responseSchemaError("分析响应的报告字段无效");
   }
@@ -186,6 +191,21 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
     ]),
   };
   if (JSON.stringify(trace) !== JSON.stringify(expectedTrace)) throw responseSchemaError("分析报告追踪信息与当前结果不一致");
+  const expectedLogs = {
+    dedup: expectedTrace.eventIds.map((id) => `${id} counted once`),
+    conflicts: report.assessment === "AF08" ? ["CORE_REALITY_GATE_CAP_FG2"] : report.assessment === "AF09" ? ["SAFETY_STOP_OVERRIDES_ORDINARY_FIT"] : [],
+    discardedCandidates: (m4.riskChains as Array<{ id: string; realityStatus: string }>).filter((chain) => chain.realityStatus === "unconfirmed").map((chain) => `${chain.id}:unconfirmed_harm`),
+    decisions: report.assessment === "AF08"
+      ? [{ decisionId: `${response.requestId}:core-gate`, code: "CORE_REALITY_GATE_CAP_FG2", outcome: "CAP_FG2", ruleIds: m5.ruleTrace }]
+      : report.assessment === "AF09" ? [{ decisionId: `${response.requestId}:safety-stop`, code: "SAFETY_STOP_OVERRIDES_ORDINARY_FIT", outcome: "STOP", ruleIds: m5.ruleTrace }] : [],
+  };
+  const expectedBoundaries = [
+    { code: "NOT_FATE", hard: true, text: "本报告不是命定结果。" },
+    { code: "NOT_SUCCESS_PROBABILITY", hard: true, text: "FG 是证据发布等级，不是关系成功概率。" },
+    { code: "NOT_DIRECTIVE", hard: true, text: "报告不替代当事人的同意、安全判断和现实决定。" },
+    { code: "STRUCTURE_NOT_HARM", hard: true, text: "结构风险候选不等于现实伤害事实。" },
+  ];
+  if (JSON.stringify(logs) !== JSON.stringify(expectedLogs) || JSON.stringify(report.boundaries) !== JSON.stringify(expectedBoundaries)) throw responseSchemaError("分析报告治理记录与当前结果不一致");
   if (report.safetyStatus === "safety_stop" && (report.reportStatus !== "stop" || report.evidenceGrade !== "FG0" || report.assessment !== "AF09" || report.sections.some((section) => record(section)?.id !== "safety"))) {
     throw responseSchemaError("安全停止响应仍包含普通分析内容");
   }
@@ -278,6 +298,7 @@ function isM5(value: JsonRecord): boolean {
     && isArrayOf(value.realityGates, isRealityGate)
     && isArrayOf(value.crossStateEvidence, isCrossStateEvidence)
     && isArrayOf(value.observationPlan, isObservation)
+    && isStringArray(value.ruleTrace)
     && Boolean(fit && isOneOf(fit.grade, ["FG0", "FG1", "FG2", "FG3", "FG4"]) && isOneOf(fit.assessment, ["AF01", "AF02", "AF03", "AF04", "AF05", "AF06", "AF07", "AF08", "AF09"]) && isStringArray(fit.residualRisks) && isStringArray(fit.decisionCodes) && fit.isSuccessProbability === false)
     && isStringArray(value.boundaries);
 }

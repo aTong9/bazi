@@ -344,6 +344,7 @@ describe("App analysis provenance", () => {
     const response = makeAnalysisResponse();
     response.relationship.m5.crossStateEvidence = [{ state: "pressure", note: "高压期仍能暂停并协商", evidenceIds: ["event-02"] }];
     response.report.trace.eventIds.push("event-02");
+    response.report.logs.dedup.push("event-02 counted once");
     installBrowserMocks(response);
     let downloadedBlob: Blob | undefined;
     Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn((blob: Blob) => { downloadedBlob = blob; return "blob:evaluate-summary"; }) });
