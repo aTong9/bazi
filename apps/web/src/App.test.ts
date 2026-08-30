@@ -243,23 +243,31 @@ describe("App analysis provenance", () => {
     const backup = await backupBlob!.text();
     expect(JSON.parse(backup)).toMatchObject({ schema: "bazi.relationship.archive-backup.v1", containsSensitiveData: true });
 
+    const importedBackup = JSON.parse(backup) as { archives: Array<{ title: string; savedAt: string }> };
+    importedBackup.archives[0]!.title = "备份中的新名称";
+    importedBackup.archives[0]!.savedAt = "2099-01-01T00:00:00.000Z";
+    const importedRaw = JSON.stringify(importedBackup);
     const fileInput = document.body.querySelector<HTMLInputElement>('input[type="file"]')!;
-    const backupFile = { size: backup.length, text: async () => backup } as File;
+    const backupFile = { size: importedRaw.length, text: async () => importedRaw } as File;
     Object.defineProperty(fileInput, "files", { configurable: true, value: [backupFile] });
+    const cancelImport = vi.fn(() => false);
+    vi.stubGlobal("confirm", cancelImport);
     fileInput.dispatchEvent(new Event("change", { bubbles: true }));
     await flushUi();
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     await flushUi();
-    expect(document.body.textContent).toContain("新增 0，更新 0，跳过 1");
+    expect(cancelImport).toHaveBeenCalledWith(expect.stringContaining("更新 1"));
+    expect(document.body.textContent).toContain("已取消导入，本机档案未更改");
+    expect(localStorage.getItem("bazi.relationship.archives.v1")).not.toContain("备份中的新名称");
 
     const draftLabel = mounted.host.querySelector<HTMLInputElement>("#primary-subject-id")!;
     draftLabel.value = "未保存的新草稿";
     draftLabel.dispatchEvent(new Event("input", { bubbles: true }));
-    const confirm = vi.fn(() => true);
-    vi.stubGlobal("confirm", confirm);
+    const confirmOpen = vi.fn(() => true);
+    vi.stubGlobal("confirm", confirmOpen);
     findButton(document.body, "打开档案").click();
     await flushUi();
-    expect(confirm).toHaveBeenCalledWith("当前输入或看盘尚未保存，仍要打开档案吗？");
+    expect(confirmOpen).toHaveBeenCalledWith("当前输入或看盘尚未保存，仍要打开档案吗？");
     expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
     expect(mounted.host.textContent).toContain("已打开");
     expect(mounted.host.querySelector<HTMLInputElement>("#primary-subject-id")?.value).toBe("小林");

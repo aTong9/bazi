@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deleteArchive, importArchiveBackup, loadArchives, renameArchive, saveArchive, serializeArchiveBackup } from "./archive-store";
+import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup } from "./archive-store";
 import { makeAnalysisResponse } from "./test/analysis-fixture";
 import type { AnalysisWorkspaceSnapshot } from "./types";
 
@@ -112,6 +112,9 @@ describe("local analysis archive", () => {
     expect(older).toMatchObject({ added: 0, updated: 0, skipped: 1 });
 
     const newerBackup = serializeArchiveBackup(saveArchive(makeWorkspace(), source, new Date("2026-08-30T04:00:00Z")));
+    const beforePreview = destination.value();
+    expect(previewArchiveBackup(newerBackup, destination)).toMatchObject({ added: 0, updated: 1, skipped: 0 });
+    expect(destination.value()).toBe(beforePreview);
     const newer = importArchiveBackup(newerBackup, destination);
     expect(newer).toMatchObject({ added: 0, updated: 1, skipped: 0 });
     expect(newer.archives[0]?.savedAt).toBe("2026-08-30T04:00:00.000Z");

@@ -110,6 +110,15 @@ export function importArchiveBackup(
   raw: string,
   storage: Pick<Storage, "getItem" | "setItem"> = localStorage,
 ): ArchiveImportResult {
+  const result = previewArchiveBackup(raw, storage);
+  persist(result.archives, storage);
+  return result;
+}
+
+export function previewArchiveBackup(
+  raw: string,
+  storage: Pick<Storage, "getItem"> = localStorage,
+): ArchiveImportResult {
   const imported = parseBackup(raw);
   const current = loadArchives(storage);
   const merged = new Map(current.map((archive) => [archive.id, archive]));
@@ -134,7 +143,6 @@ export function importArchiveBackup(
   }
   const ordered = [...merged.values()].sort((left, right) => Date.parse(right.savedAt) - Date.parse(left.savedAt));
   const archives = ordered;
-  persist(archives, storage);
   return { archives, added, updated, skipped };
 }
 

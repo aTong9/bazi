@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
-import { deleteArchive, importArchiveBackup, loadArchives, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
+import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
 import { analysisInputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
@@ -341,7 +341,18 @@ async function importArchives(file: File): Promise<void> {
     return;
   }
   try {
-    const imported = importArchiveBackup(await file.text());
+    const raw = await file.text();
+    const preview = previewArchiveBackup(raw);
+    if (!preview.added && !preview.updated) {
+      archiveNotice.value = `无需导入：新增 0，更新 0，跳过 ${preview.skipped}。`;
+      return;
+    }
+    const replacement = preview.updated ? `其中 ${preview.updated} 份本机档案会被较新的备份版本替换。` : "";
+    if (!window.confirm(`备份已通过校验：新增 ${preview.added}，更新 ${preview.updated}，跳过 ${preview.skipped}。${replacement}是否继续？`)) {
+      archiveNotice.value = "已取消导入，本机档案未更改。";
+      return;
+    }
+    const imported = importArchiveBackup(raw);
     archives.value = imported.archives;
     archiveNotice.value = `导入完成：新增 ${imported.added}，更新 ${imported.updated}，跳过 ${imported.skipped}。`;
   } catch (error) {
