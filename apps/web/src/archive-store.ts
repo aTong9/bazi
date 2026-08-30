@@ -209,6 +209,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
   if (!value || typeof value !== "object") throw new Error("备份文件结构无效。");
   if ([READING_SCHEMA, M0_READING_SCHEMA].includes(String((value as Record<string, unknown>).schema))) return [parseReadingPackage(value as Record<string, unknown>)];
   const backup = value as Partial<ArchiveBackup>;
+  if (!hasOnlyKeys(backup, ["schema", "exportedAt", "containsSensitiveData", "archives"])) throw new Error("备份文件包含未声明字段。");
   if (backup.schema !== BACKUP_SCHEMA) throw new Error("备份版本不受支持。");
   if (backup.containsSensitiveData !== true || typeof backup.exportedAt !== "string" || !Number.isFinite(Date.parse(backup.exportedAt))) {
     throw new Error("备份文件元数据无效。");
@@ -232,6 +233,10 @@ function parseBackup(raw: string): AnalysisArchive[] {
 }
 
 function parseReadingPackage(value: Record<string, unknown>): AnalysisArchive {
+  const legacy = value.schema === M0_READING_SCHEMA && value.workspace === undefined;
+  if (!hasOnlyKeys(value, legacy
+    ? ["schema", "exportedAt", "containsSensitiveData", "resultInputFingerprint", "subject", "result"]
+    : ["schema", "exportedAt", "containsSensitiveData", "workspace"])) throw new Error("完整看盘包包含未声明字段。");
   if (value.containsSensitiveData !== true || typeof value.exportedAt !== "string" || !Number.isFinite(Date.parse(value.exportedAt))) {
     throw new Error("完整看盘包元数据无效。");
   }
@@ -264,7 +269,7 @@ function legacyM0Workspace(value: Record<string, unknown>): unknown {
 function isEnvelope(value: unknown): value is ArchiveEnvelope {
   if (!value || typeof value !== "object") return false;
   const envelope = value as Partial<ArchiveEnvelope>;
-  return envelope.version === 1 && isArchiveList(envelope.archives);
+  return hasOnlyKeys(envelope, ["version", "archives"]) && envelope.version === 1 && isArchiveList(envelope.archives);
 }
 
 function isArchiveList(value: unknown): value is AnalysisArchive[] {
@@ -277,7 +282,8 @@ function archiveIdentityMatches(archive: AnalysisArchive): boolean { return arch
 function isArchive(value: unknown): value is AnalysisArchive {
   if (!value || typeof value !== "object") return false;
   const archive = value as Partial<AnalysisArchive>;
-  return typeof archive.id === "string" && archive.id.length > 0 && typeof archive.title === "string" && archive.title.length > 0 && archive.title.length <= 300
+  return hasOnlyKeys(archive, ["id", "title", "titleCustomized", "savedAt", "rulesetDigest", "workspace"])
+    && typeof archive.id === "string" && archive.id.length > 0 && typeof archive.title === "string" && archive.title.length > 0 && archive.title.length <= 300
     && (archive.titleCustomized === undefined || archive.titleCustomized === true)
     && typeof archive.savedAt === "string" && Number.isFinite(Date.parse(archive.savedAt))
     && typeof archive.rulesetDigest === "string" && archive.rulesetDigest === archive.workspace?.result?.rulesetDigest
@@ -289,11 +295,13 @@ function isWorkspace(value: unknown): value is ArchiveWorkspaceSnapshot {
   const workspace = value as Partial<ArchiveWorkspaceSnapshot>;
   if (workspace.analysisMode === "structure") {
     const structure = workspace as Partial<M0WorkspaceSnapshot>;
-    return typeof structure.resultInputFingerprint === "string" && isSubject(structure.primarySubject)
+    return hasOnlyKeys(structure, ["analysisMode", "resultInputFingerprint", "primarySubject", "result"])
+      && typeof structure.resultInputFingerprint === "string" && isSubject(structure.primarySubject)
       && Boolean(structure.result && typeof structure.result === "object");
   }
   const relationship = workspace as Partial<AnalysisWorkspaceSnapshot>;
-  return (relationship.analysisMode === "profile" || relationship.analysisMode === "evaluate")
+  return hasOnlyKeys(relationship, ["analysisMode", "roleBasis", "resultInputFingerprint", "primarySubject", "secondarySubject", "hasSecondarySubject", "gates", "crossState", "observations", "result"])
+    && (relationship.analysisMode === "profile" || relationship.analysisMode === "evaluate")
     && ["female_traditional", "male_traditional", "unspecified"].includes(String(relationship.roleBasis))
     && isSubject(relationship.primarySubject) && isSubject(relationship.secondarySubject)
     && typeof relationship.hasSecondarySubject === "boolean"
@@ -305,7 +313,8 @@ function isWorkspace(value: unknown): value is ArchiveWorkspaceSnapshot {
 function isSubject(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
   const subject = value as Record<string, unknown>;
-  return typeof subject.subjectId === "string" && subject.subjectId.length <= 120
+  return hasOnlyKeys(subject, ["subjectId", "year", "month", "day", "hour", "birthTimeStatus", "dataQuality", "birthInput"])
+    && typeof subject.subjectId === "string" && subject.subjectId.length <= 120
     && ["year", "month", "day", "hour"].every((key) => typeof subject[key] === "string" && JIAZI.includes(String(subject[key])))
     && ["exact", "approximate", "unknown"].includes(String(subject.birthTimeStatus))
     && ["high", "medium", "low", "unknown"].includes(String(subject.dataQuality))
@@ -315,13 +324,15 @@ function isSubject(value: unknown): boolean {
 function isBirthInput(value: unknown): boolean {
   const input = record(value);
   if (!input) return false;
-  if (input.method === "manual_four_pillars") return true;
+  if (input.method === "manual_four_pillars") return hasOnlyKeys(input, ["method"]);
   if (input.method !== "solar_utc8_assist") return false;
   const adapter = record(input.adapter);
-  return typeof input.solarLocalDateTime === "string" && input.solarLocalDateTime.length <= 32
+  return hasOnlyKeys(input, ["method", "solarLocalDateTime", "resolutionStatus", "resolvedPillars", "adapter"])
+    && typeof input.solarLocalDateTime === "string" && input.solarLocalDateTime.length <= 32
     && ["not_calculated", "resolved", "boundary_unresolved", "invalid", "unsupported"].includes(String(input.resolutionStatus))
     && (input.resolvedPillars === null || isPillarSummary(input.resolvedPillars))
-    && Boolean(adapter && typeof adapter.id === "string" && typeof adapter.version === "string"
+    && Boolean(adapter && hasOnlyKeys(adapter, ["id", "version", "civilTimeBasis", "trueSolarTimeApplied"])
+      && typeof adapter.id === "string" && typeof adapter.version === "string"
       && adapter.civilTimeBasis === "UTC+08:00" && adapter.trueSolarTimeApplied === false);
 }
 
@@ -387,7 +398,8 @@ function isGateList(value: unknown): boolean {
   const ids = new Set(value.map((gate) => record(gate)?.id));
   return ids.size === 8 && value.every((gate) => {
     const item = record(gate);
-    return item && /^RG0[1-8]$/u.test(String(item.id)) && typeof item.label === "string" && typeof item.note === "string"
+    return item && hasOnlyKeys(item, ["id", "label", "status", "note"])
+      && /^RG0[1-8]$/u.test(String(item.id)) && typeof item.label === "string" && typeof item.note === "string"
       && ["pass", "conditional", "fail", "unknown", "not_assessed"].includes(String(item.status));
   });
 }
@@ -396,13 +408,15 @@ function isCrossState(value: unknown): boolean {
   const item = record(value);
   const evidence = item && record(item.evidence);
   const keys = ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"];
-  return Boolean(item && evidence && keys.every((key) => typeof item[key] === "boolean" && typeof evidence[key] === "string"));
+  return Boolean(item && evidence && hasOnlyKeys(item, [...keys, "evidence"]) && hasOnlyKeys(evidence, keys)
+    && keys.every((key) => typeof item[key] === "boolean" && typeof evidence[key] === "string"));
 }
 
 function isObservationList(value: unknown): boolean {
   return Array.isArray(value) && value.every((observation) => {
     const item = record(observation);
-    return item && typeof item.chainId === "string" && (item.slot === 0 || item.slot === 1)
+    return item && hasOnlyKeys(item, ["chainId", "slot", "source", "context", "direction", "basisFingerprint", "candidateFingerprint", "basisRequestId"])
+      && typeof item.chainId === "string" && (item.slot === 0 || item.slot === 1)
       && ["self_report", "partner_report", "joint_record", "third_party_record"].includes(String(item.source))
       && typeof item.context === "string" && ["supports", "contradicts"].includes(String(item.direction))
       && ["basisFingerprint", "candidateFingerprint", "basisRequestId"].every((key) => typeof item[key] === "string");
@@ -411,6 +425,11 @@ function isObservationList(value: unknown): boolean {
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function hasOnlyKeys(value: object, allowed: readonly string[]): boolean {
+  const keys = new Set(allowed);
+  return Object.keys(value).every((key) => keys.has(key));
 }
 
 function cloneJson<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }

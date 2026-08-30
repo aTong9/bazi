@@ -211,6 +211,7 @@ describe("local analysis archive", () => {
 
     expect(() => importArchiveBackup("not-json", storage)).toThrow("不是有效的 JSON");
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, schema: "future" }), storage)).toThrow("版本不受支持");
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, hiddenPayload: "不应随备份传播" }), storage)).toThrow("包含未声明字段");
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: Array.from({ length: 21 }, () => current[0]) }), storage)).toThrow("数量超过 20");
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [current[0], current[0]] }), storage)).toThrow("重复档案");
     const invalidResponse = structuredClone(current[0]!);
@@ -222,6 +223,9 @@ describe("local analysis archive", () => {
     const mismatchedInput = structuredClone(current[0]!);
     mismatchedInput.workspace.primarySubject.subjectId = "被拼接的另一命盘";
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedInput] }), storage)).toThrow("输入与分析结果不一致");
+    const hiddenSubjectField = structuredClone(current[0]!);
+    (hiddenSubjectField.workspace.primarySubject as unknown as Record<string, unknown>).privateMemo = "未声明的敏感信息";
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [hiddenSubjectField] }), storage)).toThrow("档案结构无效");
     const mismatchedSupplement = structuredClone(current[0]!);
     mismatchedSupplement.workspace.hasSecondarySubject = true;
     mismatchedSupplement.workspace.resultInputFingerprint = analysisInputFingerprint(mismatchedSupplement.workspace);
