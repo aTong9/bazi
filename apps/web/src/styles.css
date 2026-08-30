@@ -506,6 +506,11 @@
     justify-content: flex-end;
   }
 
+  .result-tools .quiet-button:disabled {
+    cursor: default;
+    opacity: .58;
+  }
+
   .archive-notice {
     margin-bottom: 18px;
     padding: 11px 14px;
