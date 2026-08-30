@@ -260,7 +260,13 @@ async function submitAnalysis(): Promise<void> {
 
 function downloadResult(): void {
   if (!result.value) return;
-  downloadText(`${JSON.stringify(result.value, null, 2)}\n`, "application/json", `bazi-relationship-${result.value.requestId}.json`);
+  const reading = {
+    schema: "bazi.relationship.reading.v1",
+    exportedAt: new Date().toISOString(),
+    containsSensitiveData: true,
+    workspace: currentWorkspace(result.value),
+  };
+  downloadText(`${JSON.stringify(reading, null, 2)}\n`, "application/json", `bazi-relationship-${result.value.requestId}.json`);
 }
 
 function downloadReadableSummary(): void {

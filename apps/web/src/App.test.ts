@@ -169,7 +169,7 @@ describe("App analysis provenance", () => {
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).not.toContain("不应保留的另一方");
   });
 
-  it("downloads the exact response through a connected anchor and then releases the blob URL", async () => {
+  it("downloads a complete versioned reading package and then releases the blob URL", async () => {
     const response = makeAnalysisResponse();
     installBrowserMocks(response);
     let downloadedBlob: Blob | undefined;
@@ -197,7 +197,12 @@ describe("App analysis provenance", () => {
     expect(clickedAnchors[0]?.isConnected).toBe(false);
     expect(document.querySelector('a[href="blob:test-result"]')).toBeNull();
     expect(revokeObjectURL).not.toHaveBeenCalled();
-    expect(JSON.parse(await readBlob(downloadedBlob!))).toEqual(response);
+    expect(JSON.parse(await readBlob(downloadedBlob!))).toMatchObject({
+      schema: "bazi.relationship.reading.v1",
+      containsSensitiveData: true,
+      workspace: { analysisMode: "profile", roleBasis: "female_traditional", result: response },
+    });
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toBeNull();
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:test-result");
   });
