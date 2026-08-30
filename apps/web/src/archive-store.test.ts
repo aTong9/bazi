@@ -263,6 +263,15 @@ describe("local analysis archive", () => {
     const relabeledSafetyGate = structuredClone(current[0]!);
     relabeledSafetyGate.workspace.gates[0]!.label = "普通偏好";
     expect(relationshipArchive(importArchiveBackup(JSON.stringify({ ...valid, archives: [relabeledSafetyGate] }), memoryStorage()).archives[0]!).workspace.gates[0]?.label).toBe("安全、同意与尊重");
+    const mismatchedGateResult = makeWorkspace();
+    mismatchedGateResult.analysisMode = "evaluate";
+    mismatchedGateResult.gates = REALITY_GATES.map((gate) => ({ ...gate, status: "unknown", note: "" }));
+    mismatchedGateResult.result = makeAnalysisResponse({ gateStatuses: Object.fromEntries(REALITY_GATES.map((gate) => [gate.id, "unknown"])) });
+    mismatchedGateResult.resultInputFingerprint = analysisInputFingerprint(mismatchedGateResult);
+    const validEvaluate = saveArchive(mismatchedGateResult, memoryStorage())[0]!;
+    mismatchedGateResult.gates[0] = { ...mismatchedGateResult.gates[0]!, status: "fail", note: "现实安全事实已变化" };
+    mismatchedGateResult.resultInputFingerprint = analysisInputFingerprint(mismatchedGateResult);
+    expect(() => importArchiveBackup(serializeArchiveBackup([{ ...validEvaluate, workspace: mismatchedGateResult }]), memoryStorage())).toThrow("输入与分析结果不一致");
     const mismatchedSupplement = structuredClone(current[0]!);
     mismatchedSupplement.workspace.hasSecondarySubject = true;
     mismatchedSupplement.workspace.resultInputFingerprint = analysisInputFingerprint(mismatchedSupplement.workspace);

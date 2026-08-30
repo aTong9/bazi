@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App.vue";
 import { ARCHIVE_STORAGE_KEY } from "./archive-store";
+import { REALITY_GATES } from "./constants";
 import { analysisInputFingerprint } from "./domain";
 import { makeAnalysisResponse, makeM0AnalysisResponse } from "./test/analysis-fixture";
 import { mountComponent, type MountedComponent } from "./test/mount-component";
@@ -557,7 +558,7 @@ describe("App analysis provenance", () => {
   });
 
   it("requires reevaluation before saving or exporting edited reality observations", async () => {
-    installBrowserMocks(makeAnalysisResponse());
+    installBrowserMocks(makeAnalysisResponse({ gateStatuses: Object.fromEntries(REALITY_GATES.map((gate) => [gate.id, "not_assessed"])) }));
     mounted = mountComponent(App, {});
     await flushUi();
     const evaluateMode = mounted.host.querySelector<HTMLInputElement>('input[value="evaluate"]')!;

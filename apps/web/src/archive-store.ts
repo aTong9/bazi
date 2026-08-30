@@ -398,6 +398,7 @@ function workspaceResultMatches(workspace: ArchiveWorkspaceSnapshot): boolean {
   return workspace.roleBasis === workspace.result.relationship.roleBasis
     && workspace.hasSecondarySubject === workspace.result.relationship.structuralSupplement.available
     && (workspace.resultInputFingerprint === undefined || workspace.resultInputFingerprint === analysisInputFingerprint(workspace))
+    && (workspace.analysisMode === "profile" || workspaceGatesMatch(workspace))
     && workspaceObservationsMatch(workspace);
 }
 
@@ -418,6 +419,18 @@ function workspaceObservationsMatch(workspace: AnalysisWorkspaceSnapshot): boole
     return observation.basisFingerprint === basisFingerprint
       && observation.basisRequestId === workspace.result.requestId
       && observation.candidateFingerprint === candidates.get(observation.chainId);
+  });
+}
+
+function workspaceGatesMatch(workspace: AnalysisWorkspaceSnapshot): boolean {
+  const results = new Map(workspace.result.relationship.m5.realityGates.map((gate) => [gate.id, gate]));
+  return workspace.gates.every((gate) => {
+    const note = gate.note.trim();
+    const unsupported = ["pass", "conditional", "fail"].includes(gate.status) && !note;
+    const safetyFailure = gate.status === "fail" && (gate.id === "RG01" || gate.id === "RG07");
+    const status = unsupported && !safetyFailure ? "unknown" : gate.status;
+    const result = results.get(gate.id);
+    return result?.status === status && (result.note?.trim() ?? "") === note;
   });
 }
 

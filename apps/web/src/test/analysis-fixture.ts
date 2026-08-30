@@ -1,12 +1,11 @@
 import type { AnalysisResponse, M0AnalysisResponse, RealityGateId, RealityGateStatus, ResultItem } from "../types";
+import { REALITY_GATES } from "../constants";
 
 interface AnalysisFixtureOptions {
   safetyStop?: boolean;
   includeOrdinarySectionDuringStop?: boolean;
   gateStatuses?: Partial<Record<RealityGateId, RealityGateStatus>>;
 }
-
-const gateIds: readonly RealityGateId[] = ["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"];
 
 function resultItem(value: unknown, status = "supported", confidence = "medium"): ResultItem {
   return { value, status, confidence, conditions: [], ruleIds: [] };
@@ -35,9 +34,9 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
     moisture_state: resultItem({ state: "balanced", evidence: [], candidateElements: [] }),
     primary_and_auxiliary_use: resultItem({ primary: [], auxiliary: [] }),
   };
-  const gates = gateIds.map((id) => ({
+  const gates = REALITY_GATES.map(({ id, label }) => ({
     id,
-    label: `${id} 现实闸门`,
+    label,
     status: options.gateStatuses?.[id] ?? (isSafetyStop && id === "RG01" ? "fail" : "pass"),
     evidenceIds: id === "RG01" ? ["event-01"] : [],
   }));
