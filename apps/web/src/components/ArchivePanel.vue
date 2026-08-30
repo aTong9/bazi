@@ -8,22 +8,52 @@ const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; delet
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const pendingDeleteId = ref<string | null>(null);
+let returnFocus: HTMLElement | null = null;
 
 watch(() => props.open, async (open) => {
   if (!open) {
     pendingDeleteId.value = null;
+    const target = returnFocus;
+    returnFocus = null;
+    await nextTick();
+    if (target?.isConnected) target.focus({ preventScroll: true });
     return;
   }
+  returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   await nextTick();
-  panel.value?.querySelector<HTMLElement>("button")?.focus();
-});
+  focusableElements()[0]?.focus({ preventScroll: true });
+}, { immediate: true });
 
 function onKeydown(event: KeyboardEvent): void {
-  if (props.open && event.key === "Escape") emit("close");
+  if (!props.open) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    emit("close");
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const elements = focusableElements();
+  const first = elements[0];
+  const last = elements.at(-1);
+  if (!first || !last) return;
+  if (event.shiftKey && (document.activeElement === first || !panel.value?.contains(document.activeElement))) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 onMounted(() => window.addEventListener("keydown", onKeydown));
-onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKeydown);
+  if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+});
+
+function focusableElements(): HTMLElement[] {
+  return [...panel.value?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled):not([tabindex="-1"]), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])') ?? []];
+}
 
 function savedAt(value: string): string {
   return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
@@ -56,7 +86,7 @@ function confirmDelete(id: string): void {
           <div class="archive-transfer">
             <button type="button" class="quiet-button" :disabled="!archives.length" @click="emit('export')">导出全部备份</button>
             <button type="button" class="quiet-button" @click="fileInput?.click()">从备份导入</button>
-            <input ref="fileInput" class="visually-hidden" type="file" accept="application/json,.json" @change="selectBackup" />
+            <input ref="fileInput" class="visually-hidden" type="file" tabindex="-1" accept="application/json,.json" @change="selectBackup" />
           </div>
           <div v-if="archives.length" class="archive-list">
             <article v-for="archive in archives" :key="archive.id">
