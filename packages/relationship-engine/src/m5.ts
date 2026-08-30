@@ -27,6 +27,7 @@ export interface M5Input {
   readonly gateAssessments?: readonly RealityGateAssessment[];
   readonly crossStateValidation?: CrossStateValidation;
   readonly crossStateEvidence?: readonly CrossStateEvidence[];
+  readonly upstreamDependencyPending?: boolean;
   readonly rules?: RelationshipRuleCatalog;
   readonly adjudicationProfile?: M5AdjudicationProfile;
 }
@@ -55,8 +56,9 @@ export function analyzeM5(input: M5Input) {
   const independentCrossStateEvidence = new Set(crossEvidenceIds).size === crossEvidenceIds.length
     && new Set(crossStateEvidence.map((evidence) => evidence.note)).size === crossStateEvidence.length;
   const crossStateValidated = Boolean(crossState && independentCrossStateEvidence && CROSS_STATE_KEYS.every((state) => crossState[state] && evidencedCrossStates.has(state)));
-  const defaultProfile: M5AdjudicationProfile = { explicitEvidenceProfile: false, attraction: "unknown", admissionVerified: false, evidenceLevels: Object.freeze({ PV: evidenceDimensions.PV.level, XV: evidenceDimensions.XV.level, BV: evidenceDimensions.BV.level, FV: evidenceDimensions.FV.level, HV: evidenceDimensions.HV.level }), bridgeLevel: null, crossStateValidated, dependencyPending: false, singlePartyEvidence: false, historicalSafetyFailure: false, currentSafetyImprovement: false, independentNeeds: 0, independentGaps: 0, transformationStatus: "none", functionalFamily: null, historicalCurrentConflict: false };
-  const adjudication = adjudicateM5({ mode: input.mode, gates: realityGates, profile: input.adjudicationProfile ?? defaultProfile });
+  const defaultProfile: M5AdjudicationProfile = { explicitEvidenceProfile: false, attraction: "unknown", admissionVerified: false, evidenceLevels: Object.freeze({ PV: evidenceDimensions.PV.level, XV: evidenceDimensions.XV.level, BV: evidenceDimensions.BV.level, FV: evidenceDimensions.FV.level, HV: evidenceDimensions.HV.level }), bridgeLevel: null, crossStateValidated, dependencyPending: Boolean(input.upstreamDependencyPending), singlePartyEvidence: false, historicalSafetyFailure: false, currentSafetyImprovement: false, independentNeeds: 0, independentGaps: 0, transformationStatus: "none", functionalFamily: null, historicalCurrentConflict: false };
+  const profile = input.adjudicationProfile && input.upstreamDependencyPending ? { ...input.adjudicationProfile, dependencyPending: true } : input.adjudicationProfile ?? defaultProfile;
+  const adjudication = adjudicateM5({ mode: input.mode, gates: realityGates, profile });
   const { grade, assessment } = adjudication;
   const ordinaryFindings = safetyFailure ? [] : input.m4.riskChains.map((chain) => ({ chainId: chain.id, realityStatus: chain.realityStatus }));
   const stageStatus = (dimension: RealityEvidenceDimension) => dimension.status === "not_assessed" ? "not_assessed" as const : dimension.status === "blocked" ? "blocked" as const : "provisional" as const;

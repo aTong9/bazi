@@ -33,7 +33,8 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
   const m2 = analyzeM2({ m02, m09, m10, m1, rules: catalog });
   const m3 = command.unavailableModules?.includes("M3") ? unavailableM3Projection() : analyzeM3({ m02, m09, m10, rules: catalog });
   const m4 = analyzeM4({ m3, rules: catalog, ...(command.observations ? { observations: command.observations } : {}) });
-  const m5 = analyzeM5({ mode: command.relationshipMode ?? "single_chart_relationship_profile", m4, rules: catalog, ...(command.gateAssessments ? { gateAssessments: command.gateAssessments } : {}), ...(command.crossStateValidation ? { crossStateValidation: command.crossStateValidation } : {}), ...(command.crossStateEvidence ? { crossStateEvidence: command.crossStateEvidence } : {}) });
+  const moduleDependencyPending = m1.status === "dependency_pending" || m2.status === "dependency_pending" || m3.dependencyFlags.includes("M3_MODULE_UNAVAILABLE");
+  const m5 = analyzeM5({ mode: command.relationshipMode ?? "single_chart_relationship_profile", m4, upstreamDependencyPending: m0.response.m0.status === "limited" || moduleDependencyPending, rules: catalog, ...(command.gateAssessments ? { gateAssessments: command.gateAssessments } : {}), ...(command.crossStateValidation ? { crossStateValidation: command.crossStateValidation } : {}), ...(command.crossStateEvidence ? { crossStateEvidence: command.crossStateEvidence } : {}) });
   const subjectBResult = command.subjectB ? analyzeM0({ analysisMode: command.analysisMode, subject: command.subjectB, requestedSections: ["m0"] }, catalog) : null;
   if (subjectBResult && !subjectBResult.ok) return subjectBResult;
   const structuralSupplement = Object.freeze({
@@ -48,7 +49,7 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
   const legacyPayloads = command.legacyPayloads ? Object.freeze({ mode: "wrapped_read_only" as const, payloads: command.legacyPayloads }) : null;
   const relationshipRuleTrace = Object.freeze([...new Set([...m1.ruleTrace, ...m2.ruleTrace, ...m3.ruleTrace, ...m4.ruleTrace, ...m5.ruleTrace])].sort());
   const relationshipDependencyFlags = Object.freeze([...new Set([...m0.response.m0.dependencyFlags, ...m1.dependencyFlags, ...m2.dependencyFlags, ...m3.dependencyFlags])]);
-  const relationshipStatus = m1.status === "dependency_pending" || m2.status === "dependency_pending" || m3.dependencyFlags.includes("M3_MODULE_UNAVAILABLE")
+  const relationshipStatus = moduleDependencyPending
     ? "dependency_pending" as const
     : m0.response.m0.status === "limited" ? "limited" as const : "provisional" as const;
   const eventIds = Object.freeze([...new Set([...m5.realityGates.flatMap((gate) => gate.evidenceIds), ...m5.crossStateEvidence.flatMap((evidence) => evidence.evidenceIds)])]);

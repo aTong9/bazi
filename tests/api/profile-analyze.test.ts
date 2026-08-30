@@ -116,6 +116,18 @@ test("canonical relationship routes expose a bounded profile and safety-stop eva
     assert.equal(completeJson.relationship.m5.fit.grade, "FG4");
     assert.equal(completeJson.relationship.m5.crossStateEvidence.length, 5);
     assert.ok(completeJson.report.trace.eventIds.includes("event-cross-steady"));
+
+    const limitedInput = body("female_traditional");
+    limitedInput.subject.data_quality = "low";
+    const limitedCrossEvidence = await evaluate(port, { ...limitedInput, requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: allGates, cross_state_validation: crossStateValidation, cross_state_evidence: crossStateEvidence });
+    assert.equal(limitedCrossEvidence.status, 200);
+    const limitedJson = await limitedCrossEvidence.json() as { relationship: { m5: { reportStatus: string; fit: { grade: string; residualRisks: string[]; decisionCodes: string[] } } }; report: { reportStatus: string; evidenceGrade: string } };
+    assert.equal(limitedJson.relationship.m5.reportStatus, "limited");
+    assert.equal(limitedJson.relationship.m5.fit.grade, "FG2");
+    assert.ok(limitedJson.relationship.m5.fit.residualRisks.includes("UPSTREAM_DEPENDENCY_PENDING"));
+    assert.ok(limitedJson.relationship.m5.fit.decisionCodes.includes("PROVISIONAL_ONLY"));
+    assert.equal(limitedJson.report.reportStatus, "limited");
+    assert.equal(limitedJson.report.evidenceGrade, "FG2");
   } finally { await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve())); await rm(root, { recursive: true, force: true }); }
 });
 function body(role_basis: string) { return { analysis_mode: "test", role_basis, subject: { input_mode: "four_pillars_provided", subject_id: "P", four_pillars: { year: { stem: "庚", branch: "申" }, month: { stem: "癸", branch: "丑" }, day: { stem: "甲", branch: "寅" }, hour: { stem: "丙", branch: "午" } }, birth_time_status: "exact", timezone: "Asia/Shanghai", data_quality: "high", synthetic_fixture: true }, requested_sections: ["m0", "m1", "m2", "m3"] }; }

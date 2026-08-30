@@ -57,6 +57,8 @@ const M5_REASON_LABELS: Readonly<Record<string, string>> = {
   CORE_GATE_CAP_FG2: "核心现实闸门未通过时，证据等级不高于 FG2。",
   CORE_REALITY_GATE_UNKNOWN: "仍有核心现实闸门缺少可核验事实。",
   EVIDENCE_CAP_FG2: "核心现实证据未闭合，证据等级暂时不高于 FG2。",
+  UPSTREAM_DEPENDENCY_PENDING: "命盘输入或上游结构仍受限，当前不能发布完整适配结论。",
+  PROVISIONAL_ONLY: "上游限制解除并重新生成前，证据等级暂时不高于 FG2。",
   MULTIPLE_CONDITIONAL_GATES: "两道或以上现实闸门仍带有成立条件。",
   CONDITIONAL_CAP_FG3: "多项条件尚未稳定满足，证据等级不高于 FG3。",
   CONDITION_FAILURE_POINT_MUST_BE_PUBLISHED: "存在单项条件闸门，需要保留其失败条件。",
