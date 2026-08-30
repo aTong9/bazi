@@ -91,13 +91,13 @@ describe("ArchivePanel", () => {
   });
 
   it("offers native cancellable archive renaming", async () => {
-    const renamed: string[][] = [];
+    const renamed: Array<[string, string]> = [];
     const exported: string[] = [];
     const prompt = vi.spyOn(window, "prompt").mockReturnValueOnce("长期观察").mockReturnValueOnce(null);
     const mounted = mountComponent(ArchivePanel, {
       open: true,
       archives: [makeArchive()],
-      onRename: (id: string, title: string) => renamed.push([id, title]),
+      onRename: (archive: AnalysisArchive, title: string) => renamed.push([archive.id, title]),
       onExportOne: (archive: AnalysisArchive) => exported.push(archive.id),
     });
     await nextTick();

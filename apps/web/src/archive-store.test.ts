@@ -116,11 +116,14 @@ describe("local analysis archive", () => {
     const storage = memoryStorage();
     const first = saveArchive(makeWorkspace(), storage, new Date("2026-08-30T01:00:00Z"));
     saveArchive(workspaceWithRequestId("request-second"), storage, new Date("2026-08-30T02:00:00Z"));
-    const renamed = renameArchive(first[0]!.id, "  小林   长期观察  ", storage, new Date("2026-08-30T03:00:00Z"));
+    const renamed = renameArchive(first[0]!.id, first[0]!.savedAt, "  小林   长期观察  ", storage, new Date("2026-08-30T03:00:00Z"));
     expect(renamed[0]).toMatchObject({ id: first[0]!.id, title: "小林 长期观察", titleCustomized: true, savedAt: "2026-08-30T03:00:00.000Z" });
     const updated = saveArchive(makeWorkspace(), storage, new Date("2026-08-30T04:00:00Z"));
     expect(updated[0]).toMatchObject({ title: "小林 长期观察", titleCustomized: true, savedAt: "2026-08-30T04:00:00.000Z" });
-    expect(() => renameArchive(first[0]!.id, "   ", storage)).toThrow("不能为空");
+    expect(() => renameArchive(first[0]!.id, updated[0]!.savedAt, "   ", storage)).toThrow("不能为空");
+    expect(loadArchives(storage)[0]?.title).toBe("小林 长期观察");
+
+    expect(() => renameArchive(first[0]!.id, first[0]!.savedAt, "旧标签页名称", storage)).toThrow("已在另一标签页更新");
     expect(loadArchives(storage)[0]?.title).toBe("小林 长期观察");
   });
 

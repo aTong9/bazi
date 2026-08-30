@@ -503,11 +503,12 @@ function removeArchive(archive: AnalysisArchive): void {
   }
 }
 
-function renameSavedArchive(id: string, title: string): void {
+function renameSavedArchive(archive: AnalysisArchive, title: string): void {
   try {
-    archives.value = renameArchive(id, title);
+    archives.value = renameArchive(archive.id, archive.savedAt, title);
     archiveNotice.value = "档案已重命名。";
   } catch (error) {
+    refreshArchives();
     archiveNotice.value = error instanceof Error ? error.message : "档案重命名失败。";
   }
 }

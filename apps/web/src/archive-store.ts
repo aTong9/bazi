@@ -105,6 +105,7 @@ export function deleteArchive(id: string, expectedSavedAt: string, storage: Pick
 
 export function renameArchive(
   id: string,
+  expectedSavedAt: string,
   title: string,
   storage: Pick<Storage, "getItem" | "setItem"> = localStorage,
   now = new Date(),
@@ -114,7 +115,8 @@ export function renameArchive(
   if (normalizedTitle.length > 300) throw new Error("档案名称不能超过 300 个字符。");
   const archives = readArchives(storage, true);
   const archive = archives.find((item) => item.id === id);
-  if (!archive) throw new Error("档案不存在。");
+  if (!archive) throw new Error("档案已在另一标签页删除，请刷新档案列表。");
+  if (archive.savedAt !== expectedSavedAt) throw new Error("档案已在另一标签页更新，请重新打开档案列表后再重命名。");
   const renamed = { ...archive, title: normalizedTitle, titleCustomized: true as const, savedAt: now.toISOString() };
   const updated = [renamed, ...archives.filter((item) => item.id !== id)];
   persist(updated, storage);

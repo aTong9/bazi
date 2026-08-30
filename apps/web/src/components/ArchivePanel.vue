@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import type { AnalysisArchive, AnalysisMode } from "@/types";
 
 const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string; recoveryAvailable?: boolean; returnFocusTo?: HTMLElement | null }>();
-const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [archive: AnalysisArchive]; export: []; exportOne: [archive: AnalysisArchive]; exportRecovery: []; clearRecovery: []; import: [file: File] }>();
+const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [archive: AnalysisArchive, title: string]; delete: [archive: AnalysisArchive]; export: []; exportOne: [archive: AnalysisArchive]; exportRecovery: []; clearRecovery: []; import: [file: File] }>();
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const pendingDeleteId = ref<string | null>(null);
@@ -120,7 +120,7 @@ async function confirmRecoveryClear(): Promise<void> {
 
 function requestRename(archive: AnalysisArchive): void {
   const title = window.prompt("修改档案名称", archive.title);
-  if (title !== null) emit("rename", archive.id, title);
+  if (title !== null) emit("rename", archive, title);
 }
 
 function archiveSearchText(archive: AnalysisArchive): string {
