@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
-import { deleteArchive, importArchiveBackup, loadArchives, saveArchive, serializeArchiveBackup } from "@/archive-store";
+import { deleteArchive, importArchiveBackup, loadArchives, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
 import { analysisInputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
@@ -316,6 +316,15 @@ function removeArchive(id: string): void {
   }
 }
 
+function renameSavedArchive(id: string, title: string): void {
+  try {
+    archives.value = renameArchive(id, title);
+    archiveNotice.value = "档案已重命名。";
+  } catch (error) {
+    archiveNotice.value = error instanceof Error ? error.message : "档案重命名失败。";
+  }
+}
+
 function exportArchives(): void {
   if (!archives.value.length) return;
   try {
@@ -541,6 +550,6 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
       <p>关系脉络不是命运判决，也不替代安全、同意和现实决定。</p>
       <span v-if="health">规则快照 {{ health.catalog.rulesetDigest.slice(0, 10) }}</span>
     </footer>
-    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" :return-focus-to="archiveTrigger" @close="archivesOpen = false" @restore="restoreArchive" @delete="removeArchive" @export="exportArchives" @import="importArchives" />
+    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" :return-focus-to="archiveTrigger" @close="archivesOpen = false" @restore="restoreArchive" @rename="renameSavedArchive" @delete="removeArchive" @export="exportArchives" @import="importArchives" />
   </div>
 </template>

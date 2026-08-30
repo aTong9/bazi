@@ -4,7 +4,7 @@ import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import type { AnalysisArchive } from "@/types";
 
 const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string; returnFocusTo?: HTMLElement | null }>();
-const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; delete: [id: string]; export: []; import: [file: File] }>();
+const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [id: string]; export: []; import: [file: File] }>();
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const pendingDeleteId = ref<string | null>(null);
@@ -68,6 +68,11 @@ function confirmDelete(id: string): void {
   emit("delete", id);
   pendingDeleteId.value = null;
 }
+
+function requestRename(archive: AnalysisArchive): void {
+  const title = window.prompt("修改档案名称", archive.title);
+  if (title !== null) emit("rename", archive.id, title);
+}
 </script>
 
 <template>
@@ -94,6 +99,7 @@ function confirmDelete(id: string): void {
               </div>
               <div class="archive-actions">
                 <button type="button" class="primary-button" @click="emit('restore', archive)">打开档案</button>
+                <button type="button" class="quiet-button" @click="requestRename(archive)">重命名</button>
                 <template v-if="pendingDeleteId === archive.id">
                   <span class="archive-delete-confirm" role="group" :aria-label="`确认删除 ${archive.title}`">
                     <button type="button" class="quiet-button danger-button" @click="confirmDelete(archive.id)">确认删除</button>
