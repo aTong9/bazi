@@ -2,7 +2,7 @@
 import { computed } from "vue";
 
 import { CROSS_STATE_LABELS, GRADE_COPY, m5ReasonLabel, STATUS_LABELS } from "@/constants";
-import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
+import { formatBirthInputSource, formatSubjectPillars, formatSubjectReliability, resultValue, shortDigest } from "@/domain";
 import type { AnalysisMode, AnalysisResponse, ObservationDraft, ResultItem, SubjectDraft } from "@/types";
 import ModuleRail from "./ModuleRail.vue";
 import M0EvidenceAppendix from "./M0EvidenceAppendix.vue";
@@ -50,6 +50,7 @@ const secondaryStrength = computed(() => {
   return fields ? resultValue<string>(fields, "day_master_strength") : null;
 });
 const secondaryHasDataQualityLimit = computed(() => props.result.relationship.structuralSupplement.dependencyFlags.some((flag) => flag.startsWith("DATA_QUALITY_")));
+const secondaryHasHourLimit = computed(() => props.result.relationship.structuralSupplement.dependencyFlags.some((flag) => flag.startsWith("HOUR_")));
 const reportSections = computed(() => isSafetyStop.value ? props.result.report.sections.filter((section) => section.id === "safety") : props.result.report.sections);
 const hasUnknownHourLimit = computed(() => props.result.m0.dependencyFlags.includes("HOUR_UNKNOWN") || props.result.relationship.dependencyFlags.includes("M3_HOUR_DEPENDENCY_LIMITED"));
 const hasDataQualityLimit = computed(() => props.result.m0.dependencyFlags.some((flag) => flag.startsWith("DATA_QUALITY_")));
@@ -99,8 +100,10 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
         <div><dt>分析方式</dt><dd>{{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</dd></div>
         <div><dt>主要命盘</dt><dd>{{ primaryLabel }} · {{ primaryPillars }}</dd></div>
         <div v-if="primarySubject"><dt>主要命盘来源</dt><dd>{{ formatBirthInputSource(primarySubject) }}</dd></div>
+        <div v-if="primarySubject"><dt>主要命盘资料状态</dt><dd>{{ formatSubjectReliability(primarySubject) }}</dd></div>
         <div v-if="secondaryPillars"><dt>另一方命盘</dt><dd>{{ secondaryLabel }} · {{ secondaryPillars }}</dd></div>
         <div v-if="secondaryPillars && secondarySubject"><dt>另一方命盘来源</dt><dd>{{ formatBirthInputSource(secondarySubject) }}</dd></div>
+        <div v-if="secondaryPillars && secondarySubject"><dt>另一方命盘资料状态</dt><dd>{{ formatSubjectReliability(secondarySubject) }}</dd></div>
         <div><dt>分析 ID</dt><dd>{{ result.requestId }}</dd></div>
         <div><dt>规则快照</dt><dd>{{ result.rulesetDigest }}</dd></div>
         <div><dt>生成时间</dt><dd>{{ new Date(result.generatedAt).toLocaleString('zh-CN') }}</dd></div>
@@ -158,6 +161,7 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
               <h4>另一方结构补充 <span class="status-pill" :data-status="result.relationship.structuralSupplement.status">{{ label(result.relationship.structuralSupplement.status ?? undefined) }}</span></h4>
               <p>只用于补充双方结构背景，不替代现实行为、同意、安全事实或八道现实闸门。</p>
               <p v-if="secondaryHasDataQualityLimit" class="inline-notice" role="status">另一方资料尚未标记为已核对，本结构补充按受限结果发布。</p>
+              <p v-if="secondaryHasHourLimit" class="inline-notice" role="status">另一方出生时辰不准确，位置关系与部分结构结论按受限结果发布。</p>
             </div>
             <dl>
               <div><dt>日主</dt><dd>{{ secondaryDayMaster?.dayMaster ?? "—" }} · {{ label(secondaryDayMaster?.yinYang) }}{{ secondaryDayMaster?.element }}</dd></div>

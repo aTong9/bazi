@@ -2,7 +2,7 @@
 import { computed } from "vue";
 
 import { STATUS_LABELS } from "@/constants";
-import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
+import { formatBirthInputSource, formatSubjectPillars, formatSubjectReliability, resultValue, shortDigest } from "@/domain";
 import type { M0AnalysisResponse, ResultItem, SubjectDraft } from "@/types";
 import M0EvidenceAppendix from "./M0EvidenceAppendix.vue";
 
@@ -46,6 +46,7 @@ const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档�
         <div><dt>分析方式</dt><dd>原局结构</dd></div>
         <div><dt>主要命盘</dt><dd>{{ subject.subjectId.trim() || '主要命盘' }} · {{ formatSubjectPillars(subject) }}</dd></div>
         <div><dt>输入来源</dt><dd>{{ formatBirthInputSource(subject) }}</dd></div>
+        <div><dt>资料状态</dt><dd>{{ formatSubjectReliability(subject) }}</dd></div>
         <div><dt>分析 ID</dt><dd>{{ result.requestId }}</dd></div>
         <div><dt>规则快照</dt><dd>{{ result.rulesetDigest }}</dd></div>
         <div><dt>生成时间</dt><dd>{{ new Date(result.generatedAt).toLocaleString('zh-CN') }}</dd></div>

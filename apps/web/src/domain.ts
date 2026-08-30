@@ -18,6 +18,12 @@ export function formatBirthInputSource(subject: SubjectDraft): string {
   return `${input.solarLocalDateTime.replace("T", " ")} · ${input.adapter.civilTimeBasis} · ${input.adapter.id} ${input.adapter.version}`;
 }
 
+export function formatSubjectReliability(subject: SubjectDraft): string {
+  const time = { exact: "准确", approximate: "大致", unknown: "未知" }[subject.birthTimeStatus];
+  const quality = { high: "高 · 已核对", medium: "中 · 基本可信", low: "低 · 可能有误", unknown: "未知" }[subject.dataQuality];
+  return `出生时间：${time}；资料质量：${quality}`;
+}
+
 const TIGER_STARTS: Readonly<Record<HeavenlyStem, HeavenlyStem>> = {
   甲: "丙", 己: "丙", 乙: "戊", 庚: "戊", 丙: "庚", 辛: "庚", 丁: "壬", 壬: "壬", 戊: "甲", 癸: "甲",
 };

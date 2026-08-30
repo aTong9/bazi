@@ -152,13 +152,14 @@ describe("AnalysisResult", () => {
       ...result.relationship.structuralSupplement,
       available: true,
       status: "limited",
-      dependencyFlags: ["DATA_QUALITY_LOW"],
+      dependencyFlags: ["DATA_QUALITY_LOW", "HOUR_APPROXIMATE"],
       fields: structuredClone(result.m0.fields),
     };
     const mounted = mountComponent(AnalysisResult, { result, hasSecondarySubject: true });
 
     expect(mounted.host.querySelector(".structural-supplement")?.textContent).toContain("受限");
     expect(mounted.host.querySelector(".structural-supplement .inline-notice")?.textContent).toContain("另一方资料尚未标记为已核对");
+    expect(mounted.host.querySelector(".structural-supplement")?.textContent).toContain("另一方出生时辰不准确");
     expect(mounted.host.querySelector(".structural-supplement")?.textContent).not.toContain("DATA_QUALITY_LOW");
     mounted.unmount();
   });

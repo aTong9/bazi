@@ -357,6 +357,7 @@ describe("App analysis provenance", () => {
     expect(summary).toContain("## 安全与边界");
     expect(summary).toContain("证据等级：FG0");
     expect(summary).toContain("主要命盘来源：1986-05-29 12:00 · UTC+08:00 · lunar-typescript-standard-time 1.8.6");
+    expect(summary).toContain("主要命盘资料状态：出生时间：准确；资料质量：高 · 已核对");
     expect(summary).toContain(`分析 ID：${response.requestId}`);
     expect(summary).toContain(`规则快照：${response.rulesetDigest}`);
     expect(summary).toContain("本报告不是命定结果");

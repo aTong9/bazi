@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { analyzeM0Structure, analyzeRelationship, ApiError, fetchHealth } from "@/api";
 import { ARCHIVE_STORAGE_KEY, archiveId, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "@/archive-store";
 import { CROSS_STATE_LABELS, m5ReasonLabel, REALITY_GATES, STATUS_LABELS } from "@/constants";
-import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, inactiveSecondarySubject, m0InputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
+import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, formatSubjectReliability, inactiveSecondarySubject, m0InputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
 import ArchivePanel from "@/components/ArchivePanel.vue";
 import M0Result from "@/components/M0Result.vue";
@@ -303,7 +303,7 @@ function downloadReadableSummary(): void {
     const analysis = structureResult.value;
     const fields = analysis.m0.fields;
     const value = (key: string) => JSON.stringify(fields[key]?.value ?? null, null, 2);
-    const lines = ["# 原局结构摘要", "", `- 分析方式：原局结构`, `- 主要命盘：${primarySubject.value.subjectId.trim() || "主要命盘"} · ${formatSubjectPillars(primarySubject.value)}`, `- 输入来源：${formatBirthInputSource(primarySubject.value)}`, `- 分析 ID：${analysis.requestId}`, `- 规则快照：${analysis.rulesetDigest}`, `- M0 状态：${STATUS_LABELS[analysis.m0.status] ?? analysis.m0.status}`, "", "## 日主与季节", "", `\`\`\`json\n${value("day_master_and_season")}\n\`\`\``, "", "## 日主强弱", "", `\`\`\`json\n${value("day_master_strength")}\n\`\`\``, "", "## 最终结构摘要", "", `\`\`\`json\n${value("final_structure_summary")}\n\`\`\``, "", "## 阅读边界", "", "- 本结果只描述静态原局结构，不评价具体关系对象。", "- 未知和资料限制不会被补成确定结论。", ""];
+    const lines = ["# 原局结构摘要", "", `- 分析方式：原局结构`, `- 主要命盘：${primarySubject.value.subjectId.trim() || "主要命盘"} · ${formatSubjectPillars(primarySubject.value)}`, `- 输入来源：${formatBirthInputSource(primarySubject.value)}`, `- 资料状态：${formatSubjectReliability(primarySubject.value)}`, `- 分析 ID：${analysis.requestId}`, `- 规则快照：${analysis.rulesetDigest}`, `- M0 状态：${STATUS_LABELS[analysis.m0.status] ?? analysis.m0.status}`, "", "## 日主与季节", "", `\`\`\`json\n${value("day_master_and_season")}\n\`\`\``, "", "## 日主强弱", "", `\`\`\`json\n${value("day_master_strength")}\n\`\`\``, "", "## 最终结构摘要", "", `\`\`\`json\n${value("final_structure_summary")}\n\`\`\``, "", "## 阅读边界", "", "- 本结果只描述静态原局结构，不评价具体关系对象。", "- 未知和资料限制不会被补成确定结论。", ""];
     downloadText(lines.join("\n"), "text/markdown;charset=utf-8", `bazi-m0-${analysis.requestId}.md`);
     return;
   }
@@ -366,9 +366,11 @@ function readableSummary(analysis: AnalysisResponse): string {
     `- 分析方式：${analysisMode.value === "evaluate" ? "现实评估" : "关系画像"}`,
     `- 主要命盘：${primarySubject.value.subjectId.trim() || "主要命盘"} · ${formatSubjectPillars(primarySubject.value)}`,
     `- 主要命盘来源：${formatBirthInputSource(primarySubject.value)}`,
+    `- 主要命盘资料状态：${formatSubjectReliability(primarySubject.value)}`,
     ...(hasSecondarySubject.value ? [
       `- 另一方命盘：${secondarySubject.value.subjectId.trim() || "另一方命盘"} · ${formatSubjectPillars(secondarySubject.value)}`,
       `- 另一方命盘来源：${formatBirthInputSource(secondarySubject.value)}`,
+      `- 另一方命盘资料状态：${formatSubjectReliability(secondarySubject.value)}`,
     ] : []),
     `- 分析 ID：${analysis.requestId}`,
     `- 规则快照：${analysis.rulesetDigest}`,
