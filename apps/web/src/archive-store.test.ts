@@ -325,6 +325,7 @@ describe("local analysis archive", () => {
     ];
     observedChain.realityStatus = "observed_pattern";
     observedChain.evidenceIds = ["ui-run-M4-C01-0", "ui-run-M4-C01-1"];
+    mismatchedObservationResult.result.report.sections.find((section) => section.id === "risk")!.body = `${observedChain.structuralCandidate}（observed_pattern）`;
     const validObservation = saveArchive(mismatchedObservationResult, memoryStorage())[0]!;
     mismatchedObservationResult.observations[1]!.direction = "contradicts";
     expect(() => importArchiveBackup(serializeArchiveBackup([{ ...validObservation, workspace: mismatchedObservationResult }]), memoryStorage())).toThrow("输入与分析结果不一致");

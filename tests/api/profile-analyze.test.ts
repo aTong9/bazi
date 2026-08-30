@@ -55,6 +55,9 @@ test("canonical relationship routes expose a bounded profile and safety-stop eva
     const mismatchedProvenance = structuredClone(profileJson) as unknown as { report: { analysisRunId: string } };
     mismatchedProvenance.report.analysisRunId = "another-analysis";
     assert.ok(validateRelationshipResponse(mismatchedProvenance).some((error) => error.includes("match requestId")));
+    const mismatchedSections = structuredClone(profileJson) as unknown as { report: { sections: Array<{ body: string }> } };
+    mismatchedSections.report.sections[0]!.body = "replaced finding";
+    assert.ok(validateRelationshipResponse(mismatchedSections).some((error) => error.includes("project M3, M4, and M5")));
     const evaluation = await fetch(`http://127.0.0.1:${port}/v1/relationship/evaluate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: [{ id: "RG01", status: "fail", evidenceIds: ["incident-1"], note: "safety failure" }] }) });
     assert.equal(evaluation.status, 200);
     const evaluationJson = await evaluation.json() as { relationship: { m5: { reportStatus: string; fit: { grade: string; assessment: string; ordinaryFindings: unknown[] } } }; report: { sections: Array<{ id: string }> } };

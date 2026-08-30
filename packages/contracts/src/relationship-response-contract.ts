@@ -10,7 +10,7 @@ const validate = ajv.compile(JSON.parse(readFileSync(fileURLToPath(new URL("../s
 
 export function validateRelationshipResponse(value: unknown, expected?: { readonly rulesetDigest?: string; readonly integrationVersion?: string }): readonly string[] {
   if (!validate(value)) return Object.freeze((validate.errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message ?? error.keyword}`));
-  const response = value as { requestId: string; rulesetDigest: string; versionManifest: { integrationVersion: string }; m0: { fields: Record<string, unknown> }; relationship: { status: string; dependencyFlags: string[]; ruleTrace: string[]; m3: { status?: string; repair?: unknown; state?: unknown; synthesis?: unknown }; m5: { mode: string; reportStatus: string; safetyStatus: string; fit: { grade: string; assessment: string }; realityGates: Array<{ id: string; label: string; status: string; evidenceIds: string[] }>; crossStateEvidence: Array<{ evidenceIds: string[] }>; observationPlan?: unknown[] } }; report: { analysisRunId: string; rulesetDigest: string; reportStatus: string; safetyStatus: string; fields: Record<string, unknown>; realityGates: unknown[]; observationPlan: unknown[]; trace: { ruleIds: string[]; sourceIds: string[]; eventIds: string[] }; logs?: { decisions?: Array<{ decisionId?: string }> } }; ruleTrace: string[]; sourceIds: string[] };
+  const response = value as { requestId: string; rulesetDigest: string; versionManifest: { integrationVersion: string }; m0: { fields: Record<string, unknown> }; relationship: { status: string; dependencyFlags: string[]; ruleTrace: string[]; m3: { status?: string; repair?: unknown; state?: unknown; synthesis: { statements: string[] } }; m4: { riskChains: Array<{ structuralCandidate: string; realityStatus: string }> }; m5: { mode: string; reportStatus: string; safetyStatus: string; fit: { grade: string; assessment: string }; realityGates: Array<{ id: string; label: string; status: string; evidenceIds: string[] }>; crossStateEvidence: Array<{ evidenceIds: string[] }>; observationPlan?: unknown[] } }; report: { analysisRunId: string; rulesetDigest: string; reportStatus: string; safetyStatus: string; fields: Record<string, unknown>; sections: unknown[]; realityGates: unknown[]; observationPlan: unknown[]; trace: { ruleIds: string[]; sourceIds: string[]; eventIds: string[] }; logs?: { decisions?: Array<{ decisionId?: string }> } }; ruleTrace: string[]; sourceIds: string[] };
   const errors = [...validateAnalysisReport(response.report)];
   if (expected?.rulesetDigest && response.rulesetDigest !== expected.rulesetDigest) errors.push("rulesetDigest does not match the fixed snapshot");
   if (expected?.integrationVersion && response.versionManifest.integrationVersion !== expected.integrationVersion) errors.push("integrationVersion does not match the fixed snapshot");
@@ -36,6 +36,14 @@ export function validateRelationshipResponse(value: unknown, expected?: { readon
     eventIds: unique([...m5.realityGates.flatMap((gate) => gate.evidenceIds), ...m5.crossStateEvidence.flatMap((evidence) => evidence.evidenceIds)]),
   };
   if (JSON.stringify(response.report.trace) !== JSON.stringify(expectedTrace)) errors.push("report trace must match current module and evidence provenance");
+  const expectedSections = response.report.reportStatus === "stop" || response.report.safetyStatus === "safety_stop"
+    ? [{ id: "safety", title: "安全与边界", body: "现实资料触发安全停止；请优先关注安全、同意与现实支持。" }]
+    : [
+        { id: "profile", title: "关系结构候选", body: response.relationship.m3.synthesis.statements.join("；") || "当前没有足够资料形成结构候选。" },
+        { id: "risk", title: "风险与现实核验", body: response.relationship.m4.riskChains.map((chain) => `${chain.structuralCandidate}（${chain.realityStatus}）`).join("；") || "暂无已确认风险模式。" },
+        { id: "reality", title: "现实闸门", body: m5.realityGates.map((gate) => `${gate.id} ${gate.label}：${gate.status}`).join("；") },
+      ];
+  if (JSON.stringify(response.report.sections) !== JSON.stringify(expectedSections)) errors.push("report sections must project M3, M4, and M5 unchanged");
   if (response.report.logs?.decisions?.some((decision) => !decision.decisionId)) errors.push("every decision record requires decisionId");
   if (response.ruleTrace.length === 0) errors.push("published analysis requires rule trace");
   return Object.freeze(errors);

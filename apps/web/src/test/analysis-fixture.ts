@@ -49,14 +49,17 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
   }));
   const m5ObservationPlan = gates.filter((gate) => gate.status !== "pass").slice(0, 3).map((gate) => ({ gateId: gate.id, observe: gate.label, directive: false as const }));
   const reportObservationPlan = isSafetyStop ? [] : gates.filter((gate) => gate.status !== "pass").slice(0, 5).map((gate) => ({ gateId: gate.id, observe: gate.label, directive: false as const }));
+  const profileStatements = ["先确认边界"];
+  const riskChains = [{ id: "M4-C01", structuralCandidate: "结构风险候选", realityStatus: "unconfirmed", evidenceIds: [], repair: { actions: ["暂停"] }, buffer: { conditions: ["明确同意"] } }];
   const reportSections = isSafetyStop
     ? [
-        { id: "safety", title: "安全与边界", body: "现实安全事实优先，普通适配叙事停止。" },
+        { id: "safety", title: "安全与边界", body: "现实资料触发安全停止；请优先关注安全、同意与现实支持。" },
         ...(options.includeOrdinarySectionDuringStop ? [{ id: "profile", title: "不应显示", body: "ORDINARY-CONTENT-MUST-STAY-HIDDEN" }] : []),
       ]
     : [
-        { id: "profile", title: "关系结构候选", body: "结构候选正文" },
-        { id: "risk", title: "风险与现实核验", body: "现实核验正文" },
+        { id: "profile", title: "关系结构候选", body: profileStatements.join("；") },
+        { id: "risk", title: "风险与现实核验", body: riskChains.map((chain) => `${chain.structuralCandidate}（${chain.realityStatus}）`).join("；") },
+        { id: "reality", title: "现实闸门", body: gates.map((gate) => `${gate.id} ${gate.label}：${gate.status}`).join("；") },
       ];
 
   return {
@@ -93,13 +96,13 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
       m3: {
         status: "provisional",
         state: { activeState: "steady", modifiers: [] },
-        synthesis: { primaryChannels: ["boundary"], statements: ["先确认边界"] },
+        synthesis: { primaryChannels: ["boundary"], statements: profileStatements },
         repair: { trigger: "MISALIGNMENT", steps: ["PAUSE"], stopConditions: ["CONSENT_WITHDRAWN"] },
         boundaries: ["不推断人格"],
       },
       m4: {
         status: "provisional",
-        riskChains: [{ id: "M4-C01", structuralCandidate: "结构风险候选", realityStatus: "unconfirmed", evidenceIds: [], repair: { actions: ["暂停"] }, buffer: { conditions: ["明确同意"] } }],
+        riskChains,
         boundaries: ["候选不等于事实"],
       },
       m5: {

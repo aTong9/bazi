@@ -88,6 +88,12 @@ describe("API response guards", () => {
     expect(() => parseAnalysisResponse(trace)).toThrow("追踪信息与当前结果不一致");
   });
 
+  it("rejects report prose that diverges from M3, M4, or M5", () => {
+    const response = JSON.parse(JSON.stringify(makeAnalysisResponse())) as ReturnType<typeof makeAnalysisResponse>;
+    response.report.sections[0]!.body = "被替换的关系结论";
+    expect(() => parseAnalysisResponse(response)).toThrow("报告正文与当前模块结果不一致");
+  });
+
   it("applies guards to successful fetch calls", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: "ready", catalog: { rulesetDigest: "digest", loadedRecords: 1, compiledRecords: 1, activeModules: ["M0"] } }), { status: 200, headers: { "content-type": "application/json" } }))

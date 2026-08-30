@@ -10,7 +10,7 @@ describe("AnalysisResult", () => {
     const mounted = mountComponent(AnalysisResult, { result: makeAnalysisResponse({ safetyStop: true, includeOrdinarySectionDuringStop: true }) });
 
     expect(mounted.host.querySelector(".safety-only")).not.toBeNull();
-    expect(mounted.host.textContent).toContain("现实安全事实优先");
+    expect(mounted.host.textContent).toContain("现实资料触发安全停止");
     expect(mounted.host.textContent).not.toContain("ORDINARY-CONTENT-MUST-STAY-HIDDEN");
     expect(mounted.host.querySelector(".module-rail")).toBeNull();
     expect(mounted.host.querySelector("#result-m0")).toBeNull();
