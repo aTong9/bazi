@@ -76,9 +76,25 @@ function selectBackup(event: Event): void {
   input.value = "";
 }
 
-function confirmDelete(id: string): void {
+async function requestDelete(id: string, event: MouseEvent): Promise<void> {
+  const actions = (event.currentTarget as HTMLElement).closest(".archive-actions");
+  pendingDeleteId.value = id;
+  await nextTick();
+  actions?.querySelector<HTMLButtonElement>(".archive-delete-confirm .danger-button")?.focus();
+}
+
+async function cancelDelete(event: MouseEvent): Promise<void> {
+  const actions = (event.currentTarget as HTMLElement).closest(".archive-actions");
+  pendingDeleteId.value = null;
+  await nextTick();
+  actions?.querySelector<HTMLButtonElement>(".danger-button")?.focus();
+}
+
+async function confirmDelete(id: string): Promise<void> {
   emit("delete", id);
   pendingDeleteId.value = null;
+  await nextTick();
+  focusableElements()[0]?.focus({ preventScroll: true });
 }
 
 function requestRename(archive: AnalysisArchive): void {
@@ -146,10 +162,10 @@ function archiveSearchText(archive: AnalysisArchive): string {
                 <template v-if="pendingDeleteId === archive.id">
                   <span class="archive-delete-confirm" role="group" :aria-label="`确认删除 ${archive.title}`">
                     <button type="button" class="quiet-button danger-button" @click="confirmDelete(archive.id)">确认删除</button>
-                    <button type="button" class="quiet-button" @click="pendingDeleteId = null">取消</button>
+                    <button type="button" class="quiet-button" @click="cancelDelete">取消</button>
                   </span>
                 </template>
-                <button v-else type="button" class="quiet-button danger-button" @click="pendingDeleteId = archive.id">删除</button>
+                <button v-else type="button" class="quiet-button danger-button" @click="requestDelete(archive.id, $event)">删除</button>
               </div>
             </article>
           </div>

@@ -59,14 +59,18 @@ describe("ArchivePanel", () => {
     await nextTick();
     expect(deleted).toEqual([]);
     expect(findButton("确认删除")).not.toBeNull();
+    expect(document.activeElement).toBe(findButton("确认删除"));
 
     findButton("取消").click();
     await nextTick();
     expect(deleted).toEqual([]);
+    expect(document.activeElement).toBe(findButton("删除"));
     findButton("删除").click();
     await nextTick();
     findButton("确认删除").click();
+    await nextTick();
     expect(deleted).toEqual([archive.id]);
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("关闭看盘档案");
     mounted.unmount();
   });
 
