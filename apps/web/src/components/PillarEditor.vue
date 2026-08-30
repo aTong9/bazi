@@ -123,8 +123,8 @@ function inputIdentity(input: BirthInputRecord): string {
     </label>
 
     <div class="pillar-entry-switch" role="group" :aria-label="`${title}录入方式`">
-      <button type="button" :class="{ active: entryMode === 'manual' }" @click="chooseEntryMode('manual')">手动四柱</button>
-      <button type="button" :class="{ active: entryMode === 'solar' }" @click="chooseEntryMode('solar')">公历排盘辅助</button>
+      <button type="button" :class="{ active: entryMode === 'manual' }" :aria-pressed="entryMode === 'manual'" @click="chooseEntryMode('manual')">手动四柱</button>
+      <button type="button" :class="{ active: entryMode === 'solar' }" :aria-pressed="entryMode === 'solar'" @click="chooseEntryMode('solar')">公历排盘辅助</button>
     </div>
 
     <section v-if="entryMode === 'solar'" class="solar-birth-assist" :aria-labelledby="`${idPrefix}-solar-title`">

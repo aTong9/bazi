@@ -81,8 +81,13 @@ describe("PillarEditor", () => {
       modelValue, idPrefix: "subject-a", title: "主要命盘", description: "测试",
       "onUpdate:modelValue": (value: SubjectDraft) => { Object.assign(modelValue, value); emitted.push(value); },
     });
-    [...mounted.host.querySelectorAll("button")].find((button) => button.textContent?.includes("公历排盘辅助"))!.click();
+    const [manualButton, solarButton] = [...mounted.host.querySelectorAll<HTMLButtonElement>(".pillar-entry-switch button")];
+    expect(manualButton?.getAttribute("aria-pressed")).toBe("true");
+    expect(solarButton?.getAttribute("aria-pressed")).toBe("false");
+    solarButton!.click();
     await nextTick();
+    expect(manualButton?.getAttribute("aria-pressed")).toBe("false");
+    expect(solarButton?.getAttribute("aria-pressed")).toBe("true");
     const input = mounted.host.querySelector<HTMLInputElement>("input[type='datetime-local']")!;
     input.value = "1986-05-29T12:00";
     input.dispatchEvent(new Event("input", { bubbles: true }));
