@@ -314,9 +314,47 @@ describe("App analysis provenance", () => {
     mounted.host.querySelector<HTMLInputElement>('input[value="structure"]')!.click();
     await flushUi();
 
-    expect(confirm).toHaveBeenCalledWith("当前看盘尚未保存，切换分析方式会清除结果，是否继续？");
+    expect(confirm).toHaveBeenCalledWith("当前看盘或相关草稿尚未保存，切换分析方式会清除内容，是否继续？");
     expect(mounted.host.querySelector<HTMLInputElement>('input[value="profile"]')?.checked).toBe(true);
     expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
+  });
+
+  it("keeps unsaved reality-gate evidence when leaving evaluation is cancelled", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
+    mounted = mountComponent(App, {});
+    await flushUi();
+    const evaluate = mounted.host.querySelector<HTMLInputElement>('input[value="evaluate"]')!;
+    evaluate.checked = true;
+    evaluate.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+    const gate = mounted.host.querySelector<HTMLSelectElement>("#gate-RG01")!;
+    gate.value = "pass";
+    gate.dispatchEvent(new Event("change", { bubbles: true }));
+
+    mounted.host.querySelector<HTMLInputElement>('input[value="profile"]')!.click();
+    await flushUi();
+
+    expect(confirm).toHaveBeenCalledWith("当前看盘或相关草稿尚未保存，切换分析方式会清除内容，是否继续？");
+    expect(evaluate.checked).toBe(true);
+    expect(gate.value).toBe("pass");
+  });
+
+  it("does not confirm when cycling empty analysis modes", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
+    mounted = mountComponent(App, {});
+    await flushUi();
+
+    mounted.host.querySelector<HTMLInputElement>('input[value="structure"]')!.click();
+    await flushUi();
+    mounted.host.querySelector<HTMLInputElement>('input[value="profile"]')!.click();
+    await flushUi();
+
+    expect(confirm).not.toHaveBeenCalled();
+    expect(mounted.host.querySelector<HTMLInputElement>('input[value="profile"]')?.checked).toBe(true);
   });
 
   it("protects edited inputs before a reading has been generated", async () => {

@@ -52,6 +52,7 @@ const currentInputFingerprint = computed(() => analysisInputFingerprint({
 }));
 const currentWorkspaceFingerprint = computed(currentDraftFingerprint);
 const safeWorkspaceFingerprint = ref(currentWorkspaceFingerprint.value);
+const safeModeSensitiveFingerprint = ref(modeSensitiveDraftFingerprint());
 const safeResultFingerprint = ref<string | null>(null);
 const activeResult = computed(() => structureResult.value ?? result.value);
 const currentResultFingerprint = computed(() => activeResult.value ? resultVersionFingerprint(activeResult.value) : null);
@@ -167,8 +168,12 @@ function protectUnsavedWork(event: BeforeUnloadEvent): void {
 
 function protectAnalysisModeChange(event: MouseEvent): void {
   const nextMode = (event.currentTarget as HTMLInputElement).value as AnalysisMode;
-  if (nextMode === analysisMode.value || !hasUnsavedResult.value) return;
-  if (!window.confirm("当前看盘尚未保存，切换分析方式会清除结果，是否继续？")) event.preventDefault();
+  if (nextMode === analysisMode.value) return;
+  const clearsEvaluationDraft = analysisMode.value === "evaluate" && nextMode !== "evaluate";
+  const clearsSecondaryDraft = nextMode === "structure" && hasSecondarySubject.value;
+  const hasUnsavedModeSensitiveDraft = modeSensitiveDraftFingerprint() !== safeModeSensitiveFingerprint.value;
+  if (!hasUnsavedResult.value && !(hasUnsavedModeSensitiveDraft && (clearsEvaluationDraft || clearsSecondaryDraft))) return;
+  if (!window.confirm("当前看盘或相关草稿尚未保存，切换分析方式会清除内容，是否继续？")) event.preventDefault();
 }
 
 async function refreshHealth(): Promise<void> {
@@ -359,6 +364,7 @@ function saveCurrentAnalysis(): void {
   try {
     archives.value = saveArchive(structureResult.value ? currentM0Workspace(structureResult.value) : currentWorkspace(result.value!));
     safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
+    safeModeSensitiveFingerprint.value = modeSensitiveDraftFingerprint();
     safeResultFingerprint.value = resultVersionFingerprint(analysis);
     archiveNotice.value = "本次看盘已保存到这台设备。";
   } catch (error) {
@@ -377,6 +383,15 @@ function currentDraftFingerprint(): string {
     gates: gates.value,
     crossState: crossState.value,
   }), observations.value]);
+}
+
+function modeSensitiveDraftFingerprint(): string {
+  return JSON.stringify({
+    secondarySubject: hasSecondarySubject.value ? secondarySubject.value : null,
+    gates: gates.value,
+    crossState: crossState.value,
+    observations: observations.value,
+  });
 }
 
 function workspaceFingerprint(workspace: ArchiveWorkspaceSnapshot): string {
@@ -416,6 +431,7 @@ async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   }
   await nextTick();
   safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
+  safeModeSensitiveFingerprint.value = modeSensitiveDraftFingerprint();
   resultFingerprint = currentInputFingerprint.value;
   if (workspace.analysisMode === "structure") {
     structureResult.value = workspace.result;
@@ -554,6 +570,7 @@ function resetWorkspace(): void {
   safeResultFingerprint.value = null;
   errorMessage.value = "";
   safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
+  safeModeSensitiveFingerprint.value = modeSensitiveDraftFingerprint();
   window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
 }
 

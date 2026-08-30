@@ -197,12 +197,12 @@ npm run preview
 截至 2026-08-30：
 
 - `npm run test:core`：81 个 Node runner 用例通过；
-- `npm run test:web`：9 个前端测试文件、67 个 Vitest 用例通过；
+- `npm run test:web`：9 个前端测试文件、69 个 Vitest 用例通过；
 - `npm run test:pages`：6 个 Pages 规则包、运行时等价性、离线缓存、打印契约和产物用例通过；
 - `npm run test:evidence`：407 项权威矩阵全部通过；
 - `npm run typecheck`、`npm run build:web` 和静态 Web 集成测试通过。
 
-148 个通用 runner 用例、6 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
+150 个通用 runner 用例、6 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
 
 前端自动化至少覆盖：
 
