@@ -572,6 +572,28 @@
     opacity: .45;
   }
 
+  .archive-search {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 24px;
+    color: var(--ink-600);
+    font-size: 12px;
+  }
+
+  .archive-search input {
+    min-height: 44px;
+    padding: 0 13px;
+    border: 1px solid var(--ink-300);
+    border-radius: 3px;
+    background: var(--paper);
+    color: var(--ink-900);
+  }
+
+  .archive-search input:focus {
+    border-color: var(--teal-700);
+    outline: 3px solid color-mix(in srgb, var(--teal-700) 18%, transparent);
+  }
+
   .archive-list {
     display: grid;
     border-top: 1px solid var(--ink-200);

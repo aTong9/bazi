@@ -28,15 +28,15 @@ describe("ArchivePanel", () => {
     await nextTick();
 
     const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
-    const buttons = [...dialog.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")];
-    expect(document.activeElement).toBe(buttons[0]);
-    buttons.at(-1)!.focus();
-    buttons.at(-1)!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
-    expect(document.activeElement).toBe(buttons[0]);
-    buttons[0]!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
-    expect(document.activeElement).toBe(buttons.at(-1));
+    const focusables = [...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled):not([tabindex="-1"])')];
+    expect(document.activeElement).toBe(focusables[0]);
+    focusables.at(-1)!.focus();
+    focusables.at(-1)!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(focusables[0]);
+    focusables[0]!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(focusables.at(-1));
 
-    buttons.at(-1)!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    focusables.at(-1)!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
     await nextTick();
     await nextTick();
     await new Promise((resolve) => window.setTimeout(resolve, 50));
@@ -84,6 +84,28 @@ describe("ArchivePanel", () => {
     findButton("重命名").click();
     expect(renamed).toEqual([["archive-test", "长期观察"]]);
     prompt.mockRestore();
+    mounted.unmount();
+  });
+
+  it("filters archives by title, subject label, or four pillars", async () => {
+    const second = makeArchive();
+    second.id = "archive-second";
+    second.title = "阿青的长期观察";
+    second.workspace.primarySubject = { ...second.workspace.primarySubject, subjectId: "阿青", day: "乙卯" };
+    const mounted = mountComponent(ArchivePanel, { open: true, archives: [makeArchive(), second] });
+    await nextTick();
+    const search = document.body.querySelector<HTMLInputElement>('input[type="search"]')!;
+
+    search.value = "乙卯";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(document.body.querySelectorAll(".archive-list article")).toHaveLength(1);
+    expect(document.body.textContent).toContain("阿青的长期观察");
+
+    search.value = "不存在";
+    search.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(document.body.textContent).toContain("没有匹配的档案");
     mounted.unmount();
   });
 });

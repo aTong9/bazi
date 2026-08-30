@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 import type { AnalysisArchive } from "@/types";
 
@@ -8,6 +8,11 @@ const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; renam
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const pendingDeleteId = ref<string | null>(null);
+const query = ref("");
+const filteredArchives = computed(() => {
+  const needle = query.value.trim().toLocaleLowerCase("zh-CN");
+  return needle ? props.archives.filter((archive) => archiveSearchText(archive).includes(needle)) : props.archives;
+});
 let returnFocus: HTMLElement | null = null;
 
 watch(() => props.open, async (open) => {
@@ -73,6 +78,12 @@ function requestRename(archive: AnalysisArchive): void {
   const title = window.prompt("修改档案名称", archive.title);
   if (title !== null) emit("rename", archive.id, title);
 }
+
+function archiveSearchText(archive: AnalysisArchive): string {
+  const { primarySubject, secondarySubject, hasSecondarySubject } = archive.workspace;
+  const subjectText = (subject: typeof primarySubject) => [subject.subjectId, subject.year, subject.month, subject.day, subject.hour].join(" ");
+  return [archive.title, subjectText(primarySubject), hasSecondarySubject ? subjectText(secondarySubject) : ""].join(" ").toLocaleLowerCase("zh-CN");
+}
 </script>
 
 <template>
@@ -91,8 +102,12 @@ function requestRename(archive: AnalysisArchive): void {
             <button type="button" class="quiet-button" @click="fileInput?.click()">从备份导入</button>
             <input ref="fileInput" class="visually-hidden" type="file" tabindex="-1" accept="application/json,.json" @change="selectBackup" />
           </div>
-          <div v-if="archives.length" class="archive-list">
-            <article v-for="archive in archives" :key="archive.id">
+          <label v-if="archives.length" class="archive-search">
+            <span>搜索档案</span>
+            <input v-model="query" type="search" placeholder="名称、命盘称呼或四柱" autocomplete="off" />
+          </label>
+          <div v-if="filteredArchives.length" class="archive-list">
+            <article v-for="archive in filteredArchives" :key="archive.id">
               <div>
                 <h3>{{ archive.title }}</h3>
                 <p>{{ savedAt(archive.savedAt) }} · 快照 {{ archive.rulesetDigest.slice(0, 10) }}</p>
@@ -109,6 +124,11 @@ function requestRename(archive: AnalysisArchive): void {
                 <button v-else type="button" class="quiet-button danger-button" @click="pendingDeleteId = archive.id">删除</button>
               </div>
             </article>
+          </div>
+          <div v-else-if="archives.length" class="archive-empty">
+            <span aria-hidden="true">寻</span>
+            <h3>没有匹配的档案</h3>
+            <p>换一个名称、称呼或四柱试试。</p>
           </div>
           <div v-else class="archive-empty">
             <span aria-hidden="true">册</span>
