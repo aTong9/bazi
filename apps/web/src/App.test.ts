@@ -28,6 +28,18 @@ afterEach(() => {
 });
 
 describe("App analysis provenance", () => {
+  it("does not choose a traditional spouse-star role for the user", async () => {
+    const fetchMock = installBrowserMocks(makeAnalysisResponse());
+    mounted = mountComponent(App, {});
+    await flushUi();
+
+    expect(mounted.host.querySelector<HTMLInputElement>('input[value="unspecified"]')?.checked).toBe(true);
+    await submit(mounted.host);
+    const request = JSON.parse(String(fetchMock.mock.calls.find(([input]) => input === "/v1/relationship/profile")?.[1]?.body));
+    expect(request.role_basis).toBe("unspecified");
+    expect(mounted.host.querySelector("#result-m1 .inline-notice")?.textContent).toContain("未指定传统角色口径");
+  });
+
   it("marks a result produced by an older ruleset without changing it", async () => {
     const response = makeAnalysisResponse();
     response.rulesetDigest = "older-ruleset";
@@ -312,7 +324,7 @@ describe("App analysis provenance", () => {
     expect(JSON.parse(await readBlob(downloadedBlob!))).toMatchObject({
       schema: "bazi.relationship.reading.v1",
       containsSensitiveData: true,
-      workspace: { analysisMode: "profile", roleBasis: "female_traditional", result: response },
+      workspace: { analysisMode: "profile", roleBasis: "unspecified", result: { requestId: response.requestId, relationship: { roleBasis: "unspecified" } } },
     });
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toBeNull();
     await new Promise((resolve) => window.setTimeout(resolve, 0));
@@ -695,8 +707,20 @@ describe("App analysis provenance", () => {
 });
 
 function installBrowserMocks(response: ReturnType<typeof makeAnalysisResponse>) {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
-    const body = input === "/health" ? health : input === "/v1/m0/analyze" ? makeM0AnalysisResponse() : response;
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (input === "/health") return new Response(JSON.stringify(health), { status: 200, headers: { "content-type": "application/json" } });
+    if (input === "/v1/m0/analyze") return new Response(JSON.stringify(makeM0AnalysisResponse()), { status: 200, headers: { "content-type": "application/json" } });
+    const body = structuredClone(response);
+    if (input === "/v1/relationship/profile" || input === "/v1/relationship/evaluate") {
+      const roleBasis = (JSON.parse(String(init?.body)) as { role_basis: "female_traditional" | "male_traditional" | "unspecified" }).role_basis;
+      body.relationship.roleBasis = roleBasis;
+      if (roleBasis === "unspecified") {
+        body.relationship.status = "dependency_pending";
+        body.relationship.dependencyFlags = ["M1_TRADITIONAL_ROLE_BASIS_REQUIRED"];
+        body.relationship.m1.status = "dependency_pending";
+        body.relationship.m1.synthesis = { primarySignals: [], statements: [] };
+      }
+    }
     return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
   });
   vi.stubGlobal("fetch", fetchMock);

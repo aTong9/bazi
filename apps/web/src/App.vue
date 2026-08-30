@@ -17,7 +17,7 @@ import { isCurrentCalendarAdapter } from "../../../packages/calendar/src/resolve
 const primarySubject = ref<SubjectDraft>(createSubject("主命盘"));
 const secondarySubject = ref<SubjectDraft>(inactiveSecondarySubject());
 const analysisMode = ref<AnalysisMode>("profile");
-const roleBasis = ref<RoleBasis>("female_traditional");
+const roleBasis = ref<RoleBasis>("unspecified");
 const hasSecondarySubject = ref(false);
 const gates = ref<RealityGateDraft[]>(REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" })));
 const crossState = ref<CrossStateDraft>(createCrossState());
@@ -661,6 +661,7 @@ function resetWorkspace(): void {
   activeRequest?.abort();
   primarySubject.value = createSubject("主命盘");
   secondarySubject.value = inactiveSecondarySubject();
+  roleBasis.value = "unspecified";
   gates.value = REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
   crossState.value = createCrossState();
   observations.value = [];
