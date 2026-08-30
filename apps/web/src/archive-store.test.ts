@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "./archive-store";
+import { REALITY_GATES } from "./constants";
 import { analysisInputFingerprint, m0InputFingerprint, riskCandidateFingerprint } from "./domain";
 import { makeAnalysisResponse, makeM0AnalysisResponse } from "./test/analysis-fixture";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, M0WorkspaceSnapshot } from "./types";
@@ -259,6 +260,9 @@ describe("local analysis archive", () => {
       adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
     };
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedSolarSource] }), storage)).toThrow("档案结构无效");
+    const relabeledSafetyGate = structuredClone(current[0]!);
+    relabeledSafetyGate.workspace.gates[0]!.label = "普通偏好";
+    expect(relationshipArchive(importArchiveBackup(JSON.stringify({ ...valid, archives: [relabeledSafetyGate] }), memoryStorage()).archives[0]!).workspace.gates[0]?.label).toBe("安全、同意与尊重");
     const mismatchedSupplement = structuredClone(current[0]!);
     mismatchedSupplement.workspace.hasSecondarySubject = true;
     mismatchedSupplement.workspace.resultInputFingerprint = analysisInputFingerprint(mismatchedSupplement.workspace);
@@ -292,7 +296,7 @@ function makeWorkspace(): AnalysisWorkspaceSnapshot {
     primarySubject: { subjectId: "主命盘", year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } },
     secondarySubject: { subjectId: "另一方", year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } },
     hasSecondarySubject: false,
-    gates: ["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"].map((id, index) => ({ id: id as `RG0${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`, label: `闸门 ${index + 1}`, status: "not_assessed", note: "" })),
+    gates: REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" })),
     crossState: { steady: false, pressure: false, repair: false, turningPoint: false, counterevidenceReviewed: false, evidence: { steady: "", pressure: "", repair: "", turningPoint: "", counterevidenceReviewed: "" } },
     observations: [],
     result: makeAnalysisResponse(),

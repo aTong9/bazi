@@ -1,4 +1,5 @@
 import { parseAnalysisResponse, parseM0AnalysisResponse } from "./api";
+import { REALITY_GATES } from "./constants";
 import { analysisInputFingerprint, hourOptions, inactiveSecondarySubject, JIAZI, m0InputFingerprint, monthOptions, riskCandidateFingerprint } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, ArchiveWorkspaceSnapshot, M0WorkspaceSnapshot, SubjectDraft } from "./types";
 import { formatFourPillars, isCurrentCalendarAdapter, resolveSolarBirth } from "../../../packages/calendar/src/resolve-solar-birth";
@@ -379,6 +380,7 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
     return value;
   }
   value.workspace.secondarySubject = value.workspace.hasSecondarySubject ? normalizeSubject(value.workspace.secondarySubject) : inactiveSecondarySubject();
+  value.workspace.gates = value.workspace.gates.map((gate) => ({ ...gate, label: REALITY_GATES.find((canonical) => canonical.id === gate.id)!.label }));
   for (const state of ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const) {
     if (value.workspace.analysisMode === "profile") value.workspace.crossState[state] = false;
     if (!value.workspace.crossState[state]) value.workspace.crossState.evidence[state] = "";
