@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { validateAnalysisReport } from "./analysis-report-contract.js";
+import { reportStatusLabel } from "../../reporting/src/status-labels.js";
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const reportSchema = JSON.parse(readFileSync(fileURLToPath(new URL("../schemas/analysis-report.schema.json", import.meta.url)), "utf8")) as object;
@@ -56,8 +57,8 @@ export function validateRelationshipResponse(value: unknown, expected?: { readon
     ? [{ id: "safety", title: "安全与边界", body: "现实资料触发安全停止；请优先关注安全、同意与现实支持。" }]
     : [
         { id: "profile", title: "关系结构候选", body: response.relationship.m3.synthesis.statements.join("；") || "当前没有足够资料形成结构候选。" },
-        { id: "risk", title: "风险与现实核验", body: response.relationship.m4.riskChains.map((chain) => `${chain.structuralCandidate}（${chain.realityStatus}）`).join("；") || "暂无已确认风险模式。" },
-        { id: "reality", title: "现实闸门", body: m5.realityGates.map((gate) => `${gate.id} ${gate.label}：${gate.status}`).join("；") },
+        { id: "risk", title: "风险与现实核验", body: response.relationship.m4.riskChains.map((chain) => `${chain.structuralCandidate}（${reportStatusLabel(chain.realityStatus)}）`).join("；") || "暂无已确认风险模式。" },
+        { id: "reality", title: "现实闸门", body: m5.realityGates.map((gate) => `${gate.id} ${gate.label}：${reportStatusLabel(gate.status)}`).join("；") },
       ];
   if (JSON.stringify(response.report.sections) !== JSON.stringify(expectedSections)) errors.push("report sections must project M3, M4, and M5 unchanged");
   if (response.ruleTrace.length === 0) errors.push("published analysis requires rule trace");

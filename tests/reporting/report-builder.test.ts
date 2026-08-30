@@ -22,6 +22,8 @@ test("ReportBuilder projects adjudicated data without changing status, confidenc
   assert.deepEqual(report.trace.ruleIds, base.ruleIds);
   assert.ok(report.boundaries.every((boundary) => boundary.hard === true));
   assert.equal(report.observationPlan[0]?.directive, false);
+  assert.equal(report.sections.find((section) => section.id === "risk")?.body, "压力下表达可能收缩（未经现实核验）");
+  assert.ok(report.sections.find((section) => section.id === "reality")?.body.includes("RG01 现实闸门 RG01：未评估"));
   assert.deepEqual(validateAnalysisReport(report), []);
 });
 

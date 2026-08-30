@@ -1,3 +1,5 @@
+import { reportStatusLabel } from "./status-labels.js";
+
 type ReportStatus = "complete" | "limited" | "stop";
 type SafetyStatus = "standard" | "safety_stop" | "insufficient_data" | "core_gate_stop";
 type FitGrade = "FG0" | "FG1" | "FG2" | "FG3" | "FG4";
@@ -29,8 +31,8 @@ export function buildAnalysisReport(input: ReportProjectionInput) {
     ? [{ id: "safety" as const, title: "安全与边界", body: input.safetyReason ?? "现实资料触发安全停止；普通适配叙事已停止。" }]
     : [
         { id: "profile" as const, title: "关系结构候选", body: input.profileStatements.join("；") || "当前没有足够资料形成结构候选。" },
-        { id: "risk" as const, title: "风险与现实核验", body: input.riskChains.map((chain) => `${chain.candidate}（${chain.realityStatus}）`).join("；") || "暂无已确认风险模式。" },
-        { id: "reality" as const, title: "现实闸门", body: input.realityGates.map((gate) => `${gate.id} ${gate.label}：${gate.status}`).join("；") },
+        { id: "risk" as const, title: "风险与现实核验", body: input.riskChains.map((chain) => `${chain.candidate}（${reportStatusLabel(chain.realityStatus)}）`).join("；") || "暂无已确认风险模式。" },
+        { id: "reality" as const, title: "现实闸门", body: input.realityGates.map((gate) => `${gate.id} ${gate.label}：${reportStatusLabel(gate.status)}`).join("；") },
       ];
   for (const section of sections) {
     const violations = validateReportLanguage(section.body);
