@@ -97,6 +97,27 @@ async function confirmDelete(id: string): Promise<void> {
   focusableElements()[0]?.focus({ preventScroll: true });
 }
 
+async function requestRecoveryClear(event: MouseEvent): Promise<void> {
+  const actions = (event.currentTarget as HTMLElement).closest(".archive-recovery");
+  pendingRecoveryClear.value = true;
+  await nextTick();
+  actions?.querySelector<HTMLButtonElement>(".danger-button")?.focus();
+}
+
+async function cancelRecoveryClear(event: MouseEvent): Promise<void> {
+  const actions = (event.currentTarget as HTMLElement).closest(".archive-recovery");
+  pendingRecoveryClear.value = false;
+  await nextTick();
+  actions?.querySelector<HTMLButtonElement>(".danger-button")?.focus();
+}
+
+async function confirmRecoveryClear(): Promise<void> {
+  emit("clearRecovery");
+  pendingRecoveryClear.value = false;
+  await nextTick();
+  focusableElements()[0]?.focus({ preventScroll: true });
+}
+
 function requestRename(archive: AnalysisArchive): void {
   const title = window.prompt("修改档案名称", archive.title);
   if (title !== null) emit("rename", archive.id, title);
@@ -129,10 +150,10 @@ function archiveSearchText(archive: AnalysisArchive): string {
           <div v-if="recoveryAvailable" class="archive-transfer archive-recovery" role="group" aria-label="损坏档案恢复">
             <button type="button" class="quiet-button" @click="emit('exportRecovery')">导出原始存储</button>
             <template v-if="pendingRecoveryClear">
-              <button type="button" class="quiet-button danger-button" @click="emit('clearRecovery'); pendingRecoveryClear = false">确认清除</button>
-              <button type="button" class="quiet-button" @click="pendingRecoveryClear = false">取消</button>
+              <button type="button" class="quiet-button danger-button" @click="confirmRecoveryClear">确认清除</button>
+              <button type="button" class="quiet-button" @click="cancelRecoveryClear">取消</button>
             </template>
-            <button v-else type="button" class="quiet-button danger-button" @click="pendingRecoveryClear = true">清除损坏数据</button>
+            <button v-else type="button" class="quiet-button danger-button" @click="requestRecoveryClear">清除损坏数据</button>
           </div>
           <div v-if="archives.length" class="archive-filters">
             <label class="archive-search">

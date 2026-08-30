@@ -45,13 +45,16 @@ describe("ArchivePanel", () => {
     mounted.unmount();
   });
 
-  it("requires a cancellable second action before deleting an archive", async () => {
+  it("keeps focus through cancellable destructive actions", async () => {
     const deleted: string[] = [];
+    let cleared = 0;
     const archive = makeArchive();
     const mounted = mountComponent(ArchivePanel, {
       open: true,
       archives: [archive],
+      recoveryAvailable: true,
       onDelete: (id: string) => deleted.push(id),
+      onClearRecovery: () => { cleared += 1; },
     });
     await nextTick();
 
@@ -70,6 +73,19 @@ describe("ArchivePanel", () => {
     findButton("确认删除").click();
     await nextTick();
     expect(deleted).toEqual([archive.id]);
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("关闭看盘档案");
+
+    findButton("清除损坏数据").click();
+    await nextTick();
+    expect(document.activeElement).toBe(findButton("确认清除"));
+    findButton("取消").click();
+    await nextTick();
+    expect(document.activeElement).toBe(findButton("清除损坏数据"));
+    findButton("清除损坏数据").click();
+    await nextTick();
+    findButton("确认清除").click();
+    await nextTick();
+    expect(cleared).toBe(1);
     expect(document.activeElement?.getAttribute("aria-label")).toBe("关闭看盘档案");
     mounted.unmount();
   });
