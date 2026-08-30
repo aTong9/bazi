@@ -414,13 +414,24 @@ function workspaceObservationsMatch(workspace: AnalysisWorkspaceSnapshot): boole
   const basisFingerprint = workspace.resultInputFingerprint ?? analysisInputFingerprint(workspace);
   const candidates = new Map(workspace.result.relationship.m4.riskChains.map((chain) => [chain.id, riskCandidateFingerprint(chain)]));
   const slots = new Set<string>();
-  return workspace.observations.every((observation) => {
+  const bindingsMatch = workspace.observations.every((observation) => {
     const slot = `${observation.chainId}:${observation.slot}`;
     if (slots.has(slot)) return false;
     slots.add(slot);
     return observation.basisFingerprint === basisFingerprint
       && observation.basisRequestId === workspace.result.requestId
       && observation.candidateFingerprint === candidates.get(observation.chainId);
+  });
+  if (!bindingsMatch) return false;
+  return workspace.result.relationship.m4.riskChains.every((chain) => {
+    const evidence = workspace.observations.filter((item) => item.chainId === chain.id && item.context.trim());
+    const supports = evidence.filter((item) => item.direction === "supports");
+    const contradicts = evidence.filter((item) => item.direction === "contradicts");
+    const independentSupport = new Set(supports.map((item) => `${item.source}\u0000${item.context.trim()}`)).size;
+    const realityStatus = contradicts.length && supports.length ? "mixed_evidence" : contradicts.length ? "contradicted" : independentSupport >= 2 ? "observed_pattern" : "unconfirmed";
+    return chain.realityStatus === realityStatus
+      && chain.evidenceIds.length === evidence.length
+      && chain.evidenceIds.every((id, index) => id.endsWith(`-${chain.id}-${evidence[index]!.slot}`));
   });
 }
 

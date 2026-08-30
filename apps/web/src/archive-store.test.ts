@@ -303,6 +303,19 @@ describe("local analysis archive", () => {
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [duplicatedObservation] }), storage)).toThrow("输入与分析结果不一致");
     duplicatedObservation.workspace.observations = [{ ...observation, basisRequestId: "another-request" }];
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [duplicatedObservation] }), storage)).toThrow("输入与分析结果不一致");
+    const mismatchedObservationResult = structuredClone(relationshipArchive(validEvaluate).workspace);
+    const observedChain = mismatchedObservationResult.result.relationship.m4.riskChains[0]!;
+    const observedCandidate = riskCandidateFingerprint(observedChain);
+    const observationBinding = { basisFingerprint: mismatchedObservationResult.resultInputFingerprint!, basisRequestId: mismatchedObservationResult.result.requestId, candidateFingerprint: observedCandidate };
+    mismatchedObservationResult.observations = [
+      { ...observation, ...observationBinding, context: "本人连续两次记录到相同模式" },
+      { ...observation, ...observationBinding, slot: 1, source: "partner_report", context: "对方独立确认相同模式" },
+    ];
+    observedChain.realityStatus = "observed_pattern";
+    observedChain.evidenceIds = ["ui-run-M4-C01-0", "ui-run-M4-C01-1"];
+    const validObservation = saveArchive(mismatchedObservationResult, memoryStorage())[0]!;
+    mismatchedObservationResult.observations[1]!.direction = "contradicts";
+    expect(() => importArchiveBackup(serializeArchiveBackup([{ ...validObservation, workspace: mismatchedObservationResult }]), memoryStorage())).toThrow("输入与分析结果不一致");
     expect(storage.value()).toBe(before);
   });
 });
