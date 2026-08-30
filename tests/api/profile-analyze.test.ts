@@ -68,6 +68,15 @@ test("canonical relationship routes expose a bounded profile and safety-stop eva
     const missingCrossEvidence = await evaluate(port, { ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: allGates, cross_state_validation: crossStateValidation });
     assert.equal(missingCrossEvidence.status, 400);
 
+    const duplicateObservations = await evaluate(port, { ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], observations: [
+      { id: "same-observation", chainId: "M4-C01", source: "self", context: "first fact", direction: "supports" },
+      { id: "same-observation", chainId: "M4-C01", source: "partner", context: "conflicting fact", direction: "supports" },
+    ] });
+    assert.equal(duplicateObservations.status, 400);
+    const duplicateObservationJson = await duplicateObservations.json() as { issues: Array<{ code: string; message: string }> };
+    assert.equal(duplicateObservationJson.issues[0]?.code, "E_REQUEST_SCHEMA");
+    assert.match(duplicateObservationJson.issues[0]?.message ?? "", /duplicate ids/u);
+
     const crossStateEvidence = (["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const)
       .map((state) => ({ state, note: `observed ${state}`, evidenceIds: [`event-cross-${state}`] }));
     const completeCrossEvidence = await evaluate(port, { ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: allGates, cross_state_validation: crossStateValidation, cross_state_evidence: crossStateEvidence });

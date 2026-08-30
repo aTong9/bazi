@@ -125,6 +125,8 @@ apps/web/
 
 普通开发构建通过 browser-safe DTO 和运行时 guard 验证 API 响应。Pages 构建则在编译期把契约 Schema 转成浏览器资源，并使用 Web Crypto 校验规则包摘要；最终产物不得包含 Node external stub。
 
+API 与 Pages 浏览器运行时共用同一请求解析器。现实观察在进入 M4 前必须具有唯一 ID，且 ID、来源和事实情境不能只包含空白字符；重复 ID 会返回 `E_REQUEST_SCHEMA`，不会落入 M4 冲突异常或被计为独立证据。
+
 ## 5. 本地开发拓扑
 
 运行时版本与根 `package.json` 一致：Node.js `>=22.13 <26`。22.13 是 `node:sqlite` 无需实验标志即可加载的最低 22.x 版本；当前锁文件和 CI 使用 npm workspace，本地推荐 npm `10+`。

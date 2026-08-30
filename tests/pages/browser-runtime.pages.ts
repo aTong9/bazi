@@ -36,6 +36,13 @@ test("browser and SQLite runtimes return the same business result", async () => 
       const sqliteResult = analyzeProfile(parsed.command, sqliteCatalog);
       assert.deepEqual(withoutRunIdentity(browserResult), withoutRunIdentity(sqliteResult));
     }
+    const invalid = evaluatedPayload();
+    invalid.observations[1] = { ...invalid.observations[1]!, id: invalid.observations[0]!.id };
+    const rejected = toAnalyzeProfileCommand("/v1/relationship/evaluate", invalid);
+    assert.equal(rejected.ok, false);
+    if (rejected.ok) throw new Error("duplicate observations unexpectedly parsed");
+    assert.equal(rejected.status, 400);
+    assert.match(rejected.body.issues[0]?.message ?? "", /duplicate ids/u);
   } finally {
     sqliteCatalog.close();
   }

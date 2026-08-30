@@ -44,6 +44,11 @@ export function parseProfileAnalyzeRequest(value: unknown): ParsedProfileRequest
   const unsupportedGate = wire.reality_gates?.find((gate) => isNonNeutral(gate.status) && (!gate.note?.trim() || !gate.evidenceIds.some((id) => id.trim())));
   if (unsupportedGate) return { valid: false, errors: [`/reality_gates/${unsupportedGate.id} non-neutral status requires a factual note and evidenceIds`] };
 
+  const observations = wire.observations ?? [];
+  if (new Set(observations.map((item) => item.id)).size !== observations.length) return { valid: false, errors: ["/observations contains duplicate ids"] };
+  const blankObservation = observations.find((item) => !item.id.trim() || !item.source.trim() || !item.context.trim());
+  if (blankObservation) return { valid: false, errors: [`/observations/${blankObservation.id || "?"} requires non-blank id, source, and factual context`] };
+
   const crossEvidence = wire.cross_state_evidence ?? [];
   if (new Set(crossEvidence.map((item) => item.state)).size !== crossEvidence.length) return { valid: false, errors: ["/cross_state_evidence contains duplicate states"] };
   const crossEvidenceByState = new Map(crossEvidence.map((item) => [item.state, item]));
