@@ -48,6 +48,22 @@ describe("AnalysisResult", () => {
     mounted.unmount();
   });
 
+  it("shows only M4 observations already applied to the current result", () => {
+    const result = makeAnalysisResponse();
+    const observations = [{
+      chainId: "M4-C01", slot: 0 as const, source: "joint_record" as const, context: "两次争执后都能在约定时间复盘", direction: "supports" as const,
+      basisFingerprint: "input", candidateFingerprint: "candidate", basisRequestId: result.requestId,
+    }];
+    const applied = mountComponent(AnalysisResult, { result, observations });
+    expect(applied.host.querySelector(".risk-evidence")?.textContent).toContain("双方共同记录 · 支持候选");
+    expect(applied.host.querySelector(".risk-evidence")?.textContent).toContain("两次争执后都能在约定时间复盘");
+    applied.unmount();
+
+    const stale = mountComponent(AnalysisResult, { result, observations, actionsDisabled: true });
+    expect(stale.host.querySelector(".risk-evidence")).toBeNull();
+    stale.unmount();
+  });
+
   it("shows the reviewed input summary and emits a print request", () => {
     let printRequests = 0;
     const result = makeAnalysisResponse();

@@ -833,6 +833,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             :can-add-observations="isEvaluate"
             :save-state="resultSaveState"
             :actions-disabled="hasUnappliedObservationChanges"
+            :observations="observations"
             @save="saveCurrentAnalysis"
             @print="printResult"
             @download-summary="downloadReadableSummary"

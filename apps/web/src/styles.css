@@ -1987,6 +1987,11 @@
     border-bottom-color: var(--ink-950);
   }
 
+  .risk-evidence { margin: 12px 0 0; border-top: 1px solid var(--ink-150); }
+  .risk-evidence > div { padding-top: 10px; }
+  .risk-evidence dt { color: var(--teal-700); font-size: 10px; font-weight: 700; }
+  .risk-evidence dd { margin: 4px 0 0; color: var(--ink-700); font-size: 11px; line-height: 1.55; }
+
   .result-gates {
     display: grid;
     grid-template-columns: 1fr 1fr;

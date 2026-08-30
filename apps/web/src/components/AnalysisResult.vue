@@ -3,7 +3,7 @@ import { computed } from "vue";
 
 import { GRADE_COPY, STATUS_LABELS } from "@/constants";
 import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
-import type { AnalysisMode, AnalysisResponse, ResultItem, SubjectDraft } from "@/types";
+import type { AnalysisMode, AnalysisResponse, ObservationDraft, ResultItem, SubjectDraft } from "@/types";
 import ModuleRail from "./ModuleRail.vue";
 import M0EvidenceAppendix from "./M0EvidenceAppendix.vue";
 
@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<{
   analysisMode?: AnalysisMode;
   saveState?: "new" | "saved" | "dirty";
   actionsDisabled?: boolean;
+  observations?: readonly ObservationDraft[];
 }>(), {
   canAddObservations: false,
   primarySubject: null,
@@ -24,6 +25,7 @@ const props = withDefaults(defineProps<{
   analysisMode: "profile",
   saveState: "new",
   actionsDisabled: false,
+  observations: () => [],
 });
 const emit = defineEmits<{ download: []; downloadSummary: []; print: []; save: [] }>();
 
@@ -54,9 +56,11 @@ const primaryLabel = computed(() => props.primarySubject?.subjectId.trim() || "�
 const secondaryLabel = computed(() => props.secondarySubject?.subjectId.trim() || "另一方命盘");
 const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档案" : props.saveState === "dirty" ? "更新档案" : "保存到档案");
 const crossStateLabels = { steady: "日常状态", pressure: "压力状态", repair: "修复之后", turningPoint: "关系转折", counterevidenceReviewed: "反例复核" } as const;
+const observationSourceLabels = { self_report: "本人观察", partner_report: "另一方观察", joint_record: "双方共同记录", third_party_record: "第三方事实记录" } as const;
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
+function chainObservations(chainId: string): readonly ObservationDraft[] { return props.actionsDisabled ? [] : props.observations.filter((observation) => observation.chainId === chainId && observation.context.trim()); }
 function list(values: readonly string[] | undefined, fallback = "当前没有形成稳定陈述。"): string[] {
   const filtered = values?.filter(Boolean).slice(0, 5) ?? [];
   return filtered.length ? filtered : [fallback];
@@ -196,6 +200,12 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
             <div><code>{{ chain.id }}</code><span class="status-pill" :data-status="chain.realityStatus">{{ label(chain.realityStatus) }}</span></div>
             <p>{{ chain.structuralCandidate }}</p>
             <small>保护条件：{{ chain.buffer.conditions.join("、") }}</small>
+            <dl v-if="chainObservations(chain.id).length" class="risk-evidence">
+              <div v-for="observation in chainObservations(chain.id)" :key="observation.slot">
+                <dt>{{ observationSourceLabels[observation.source] }} · {{ observation.direction === 'supports' ? '支持候选' : '构成反证' }}</dt>
+                <dd>{{ observation.context }}</dd>
+              </div>
+            </dl>
           </article>
           <a v-if="canAddObservations" class="observation-link" href="#observation-inputs">补充独立现实观察，再次评估</a>
         </div>
