@@ -461,9 +461,20 @@ function observationContentFingerprint(): string {
 }
 
 async function restoreArchive(archive: AnalysisArchive): Promise<void> {
+  refreshArchives();
+  if (archiveRecoveryRaw.value) return;
+  const latest = archives.value.find((item) => item.id === archive.id);
+  if (!latest) {
+    archiveNotice.value = "档案已在另一标签页删除，未打开旧副本。";
+    return;
+  }
+  if (latest.savedAt !== archive.savedAt) {
+    archiveNotice.value = "档案已在另一标签页更新，请确认最新版本后再打开。";
+    return;
+  }
   if (hasUnsavedWork.value && !window.confirm("当前输入或看盘尚未保存，仍要打开档案吗？")) return;
   activeRequest?.abort();
-  const workspace = cloneJson(archive.workspace);
+  const workspace = cloneJson(latest.workspace);
   analysisMode.value = workspace.analysisMode;
   primarySubject.value = workspace.primarySubject;
   if (workspace.analysisMode === "structure") {
@@ -494,7 +505,7 @@ async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   }
   safeResultFingerprint.value = resultVersionFingerprint(workspace.result);
   archivesOpen.value = false;
-  archiveNotice.value = `已打开“${archive.title}”。`;
+  archiveNotice.value = `已打开“${latest.title}”。`;
   await nextTick();
   document.querySelector<HTMLElement>(".result-mast h2")?.focus({ preventScroll: true });
 }

@@ -523,20 +523,30 @@ describe("App analysis provenance", () => {
 
     envelope.archives[0]!.savedAt = "2099-01-02T00:00:00.000Z";
     localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
+    const confirmRestore = vi.fn(() => true);
+    vi.stubGlobal("confirm", confirmRestore);
+    findButton(document.body, "打开档案").click();
+    await flushUi();
+    expect(confirmRestore).not.toHaveBeenCalled();
+    expect(document.body.textContent).toContain("请确认最新版本后再打开");
+    expect(document.body.querySelector("#archive-panel")).not.toBeNull();
+
+    envelope.archives[0]!.savedAt = "2099-01-03T00:00:00.000Z";
+    localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
     vi.spyOn(window, "prompt").mockReturnValueOnce("旧标签页名称");
     findButton(document.body, "重命名").click();
     await flushUi();
     expect(document.body.textContent).toContain("档案已在另一标签页更新");
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).not.toContain("旧标签页名称");
 
-    envelope.archives[0]!.savedAt = "2099-01-03T00:00:00.000Z";
+    envelope.archives[0]!.savedAt = "2099-01-04T00:00:00.000Z";
     localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
     findButton(document.body, "删除").click();
     await flushUi();
     findButton(document.body, "确认删除").click();
     await flushUi();
     expect(document.body.textContent).toContain("档案已在另一标签页更新");
-    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain("2099-01-03T00:00:00.000Z");
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain("2099-01-04T00:00:00.000Z");
 
     localStorage.clear();
     window.dispatchEvent(new StorageEvent("storage", { key: ARCHIVE_STORAGE_KEY }));
