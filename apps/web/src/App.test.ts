@@ -299,6 +299,10 @@ describe("App analysis provenance", () => {
     note.value = "双方能自由表达并撤回同意";
     note.dispatchEvent(new Event("input", { bubbles: true }));
     await submit(mounted.host);
+    const observation = mounted.host.querySelector<HTMLInputElement>('.observation-context input[aria-label*="M4-C01"]')!;
+    observation.value = "两次压力情境中都能在暂停后恢复协商";
+    observation.dispatchEvent(new Event("input", { bubbles: true }));
+    await submit(mounted.host);
 
     findButton(mounted.host, "下载可读摘要").click();
     const summary = await readBlob(downloadedBlob!);
@@ -306,6 +310,8 @@ describe("App analysis provenance", () => {
     expect(summary).toContain("RG01 安全、同意与尊重：通过｜事实依据：双方能自由表达并撤回同意");
     expect(summary).toContain("## 跨情境核验");
     expect(summary).toContain("压力态：高压期仍能暂停并协商");
+    expect(summary).toContain("## 独立现实观察");
+    expect(summary).toContain("M4-C01 · 观察 1 · 本人观察 · 支持候选：两次压力情境中都能在暂停后恢复协商");
   });
 
   it("opens the system print flow for the adjudicated reading", async () => {

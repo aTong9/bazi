@@ -331,6 +331,17 @@ function readableSummary(analysis: AnalysisResponse): string {
       "",
     ] : []),
   ] : [];
+  const recordedObservations = safetyStop ? [] : observations.value.filter((observation) => observation.context.trim());
+  const observationEvidence = recordedObservations.length ? [
+    "## 独立现实观察",
+    "",
+    ...recordedObservations.map((observation) => {
+      const source = { self_report: "本人观察", partner_report: "另一方观察", joint_record: "双方共同记录", third_party_record: "第三方事实记录" }[observation.source];
+      const direction = observation.direction === "supports" ? "支持候选" : "构成反证";
+      return `- ${observation.chainId} · 观察 ${observation.slot + 1} · ${source} · ${direction}：${observation.context.trim()}`;
+    }),
+    "",
+  ] : [];
   const lines = [
     "# 关系脉络看盘摘要",
     "",
@@ -349,6 +360,7 @@ function readableSummary(analysis: AnalysisResponse): string {
     "",
     ...sections.flatMap((section) => [`## ${section.title}`, "", section.body, ""]),
     ...realityEvidence,
+    ...observationEvidence,
     ...(safetyStop || !analysis.report.observationPlan.length ? [] : [
       "## 下一步可观察",
       "",
