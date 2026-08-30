@@ -115,7 +115,7 @@ apps/web/
 
 ## 5. 本地开发拓扑
 
-运行时版本与根 `package.json` 一致：Node.js `>=22.12 <26`。当前锁文件和 CI 使用 npm workspace；本地推荐 npm `10+`。
+运行时版本与根 `package.json` 一致：Node.js `>=22.13 <26`。22.13 是 `node:sqlite` 无需实验标志即可加载的最低 22.x 版本；当前锁文件和 CI 使用 npm workspace，本地推荐 npm `10+`。
 
 ```text
 浏览器 http://127.0.0.1:5173
