@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
-import type { AnalysisArchive } from "@/types";
+import type { AnalysisArchive, AnalysisMode } from "@/types";
 
 const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string; recoveryAvailable?: boolean; returnFocusTo?: HTMLElement | null }>();
 const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [id: string]; export: []; exportOne: [archive: AnalysisArchive]; exportRecovery: []; clearRecovery: []; import: [file: File] }>();
@@ -10,9 +10,10 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const pendingDeleteId = ref<string | null>(null);
 const pendingRecoveryClear = ref(false);
 const query = ref("");
+const mode = ref<"all" | AnalysisMode>("all");
 const filteredArchives = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase("zh-CN");
-  return needle ? props.archives.filter((archive) => archiveSearchText(archive).includes(needle)) : props.archives;
+  return props.archives.filter((archive) => (mode.value === "all" || archive.workspace.analysisMode === mode.value) && (!needle || archiveSearchText(archive).includes(needle)));
 });
 let returnFocus: HTMLElement | null = null;
 
@@ -64,6 +65,10 @@ function savedAt(value: string): string {
   return new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
+function modeLabel(value: AnalysisMode): string {
+  return value === "structure" ? "原局结构" : value === "evaluate" ? "现实评估" : "关系画像";
+}
+
 function selectBackup(event: Event): void {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -113,15 +118,26 @@ function archiveSearchText(archive: AnalysisArchive): string {
             </template>
             <button v-else type="button" class="quiet-button danger-button" @click="pendingRecoveryClear = true">清除损坏数据</button>
           </div>
-          <label v-if="archives.length" class="archive-search">
-            <span>搜索档案</span>
-            <input v-model="query" type="search" placeholder="名称、命盘称呼或四柱" autocomplete="off" />
-          </label>
+          <div v-if="archives.length" class="archive-filters">
+            <label class="archive-search">
+              <span>搜索档案</span>
+              <input v-model="query" type="search" placeholder="名称、命盘称呼或四柱" autocomplete="off" />
+            </label>
+            <label class="archive-search">
+              <span>看盘类型</span>
+              <select v-model="mode">
+                <option value="all">全部类型</option>
+                <option value="structure">原局结构</option>
+                <option value="profile">关系画像</option>
+                <option value="evaluate">现实评估</option>
+              </select>
+            </label>
+          </div>
           <div v-if="filteredArchives.length" class="archive-list">
             <article v-for="archive in filteredArchives" :key="archive.id">
               <div>
                 <h3>{{ archive.title }}</h3>
-                <p>{{ savedAt(archive.savedAt) }} · 快照 {{ archive.rulesetDigest.slice(0, 10) }}</p>
+                <p><span class="archive-mode">{{ modeLabel(archive.workspace.analysisMode) }}</span> · {{ savedAt(archive.savedAt) }} · 快照 {{ archive.rulesetDigest.slice(0, 10) }}</p>
               </div>
               <div class="archive-actions">
                 <button type="button" class="primary-button" @click="emit('restore', archive)">打开档案</button>
@@ -140,7 +156,7 @@ function archiveSearchText(archive: AnalysisArchive): string {
           <div v-else-if="archives.length" class="archive-empty">
             <span aria-hidden="true">寻</span>
             <h3>没有匹配的档案</h3>
-            <p>换一个名称、称呼或四柱试试。</p>
+            <p>换一个名称、称呼、四柱或看盘类型试试。</p>
           </div>
           <div v-else class="archive-empty">
             <span aria-hidden="true">册</span>

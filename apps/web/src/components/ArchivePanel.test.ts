@@ -28,7 +28,7 @@ describe("ArchivePanel", () => {
     await nextTick();
 
     const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
-    const focusables = [...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled):not([tabindex="-1"])')];
+    const focusables = [...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled):not([tabindex="-1"]), select:not(:disabled)')];
     expect(document.activeElement).toBe(focusables[0]);
     focusables.at(-1)!.focus();
     focusables.at(-1)!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
@@ -110,6 +110,28 @@ describe("ArchivePanel", () => {
     search.dispatchEvent(new Event("input", { bubbles: true }));
     await nextTick();
     expect(document.body.textContent).toContain("没有匹配的档案");
+    mounted.unmount();
+  });
+
+  it("filters archives by analysis mode and labels each result", async () => {
+    const profile = makeArchive();
+    const evaluate = makeArchive();
+    evaluate.id = "archive-evaluate";
+    evaluate.title = "现实核验";
+    evaluate.workspace.analysisMode = "evaluate";
+    const mounted = mountComponent(ArchivePanel, { open: true, archives: [profile, evaluate] });
+    await nextTick();
+
+    expect(document.body.querySelectorAll(".archive-list article")).toHaveLength(2);
+    expect(document.body.textContent).toContain("关系画像");
+    expect(document.body.textContent).toContain("现实评估");
+    const select = document.body.querySelector<HTMLSelectElement>(".archive-filters select")!;
+    select.value = "evaluate";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await nextTick();
+    expect(document.body.querySelectorAll(".archive-list article")).toHaveLength(1);
+    expect(document.body.textContent).toContain("现实核验");
+    expect(document.body.textContent).not.toContain("小林 · 甲寅日 · 关系画像");
     mounted.unmount();
   });
 });

@@ -573,6 +573,12 @@
     opacity: .45;
   }
 
+  .archive-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 160px;
+    gap: 12px;
+  }
+
   .archive-search {
     display: grid;
     gap: 8px;
@@ -581,7 +587,8 @@
     font-size: 12px;
   }
 
-  .archive-search input {
+  .archive-search input,
+  .archive-search select {
     min-height: 44px;
     padding: 0 13px;
     border: 1px solid var(--ink-300);
@@ -590,10 +597,13 @@
     color: var(--ink-900);
   }
 
-  .archive-search input:focus {
+  .archive-search input:focus,
+  .archive-search select:focus {
     border-color: var(--teal-700);
     outline: 3px solid color-mix(in srgb, var(--teal-700) 18%, transparent);
   }
+
+  .archive-mode { color: var(--teal-700); font-weight: 700; }
 
   .archive-list {
     display: grid;
