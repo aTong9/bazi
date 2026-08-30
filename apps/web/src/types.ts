@@ -126,7 +126,7 @@ export interface AnalysisResponse {
 }
 
 export interface ApiIssue { code: string; message: string; jsonPointer?: string }
-export interface ApiErrorBody { issues?: ApiIssue[] }
+export interface ApiErrorBody { issues?: readonly ApiIssue[] }
 export interface HealthResponse {
   status: "ready";
   catalog: { rulesetDigest: string; loadedRecords: number; compiledRecords: number; activeModules: string[] };

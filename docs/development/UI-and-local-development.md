@@ -111,7 +111,7 @@ apps/web/
 - `AnalysisResult.vue`：安全优先的报告投影和 M0—M5 详细依据；
 - `styles.css`：桌面、平板、390px 手机、键盘焦点和 reduced-motion 行为。
 
-浏览器工程不得直接导入需要 `node:fs`、SQLite 或 Ajv 文件加载的后端契约代码。它通过 browser-safe DTO 和运行时 guard 验证实际响应。
+普通开发构建通过 browser-safe DTO 和运行时 guard 验证 API 响应。Pages 构建则在编译期把契约 Schema 转成浏览器资源，并使用 Web Crypto 校验规则包摘要；最终产物不得包含 Node external stub。
 
 ## 5. 本地开发拓扑
 
@@ -164,12 +164,13 @@ npm run preview
 
 截至 2026-08-30：
 
-- `npm run test:core`：73 个 Node runner 用例通过；
-- `npm run test:web`：4 个前端测试文件、19 个 Vitest 用例通过；
+- `npm run test:core`：76 个 Node runner 用例通过；
+- `npm run test:web`：6 个前端测试文件、28 个 Vitest 用例通过；
+- `npm run test:pages`：3 个 Pages 规则包、运行时等价性和产物用例通过；
 - `npm run test:evidence`：407 项权威矩阵全部通过；
 - `npm run typecheck`、`npm run build:web` 和静态 Web 集成测试通过。
 
-92 个通用 runner 用例与 407 项权威矩阵是两套不同口径：前者验证代码和组件行为，后者绑定原始测试矩阵 ID，不能相加为一个测试总数。
+104 个通用 runner 用例、3 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
 
 前端自动化至少覆盖：
 
@@ -217,7 +218,28 @@ npm run check
 
 本轮浏览器证据不包含“下载完整 JSON”按钮触发后的文件落盘事件，因此下载事件不计入已验收项。
 
-## 8. 明确不在当前 UI 内的能力
+## 8. GitHub Pages 浏览器运行时
+
+公开地址：[https://atong9.github.io/bazi/](https://atong9.github.io/bazi/)
+
+```text
+GitHub Pages /bazi/
+  ├── Vue 静态界面
+  ├── browser-catalog.json（10,918 条运行记录）
+  └── 浏览器内 M0—M5 确定性分析引擎
+```
+
+构建与完整自检：
+
+```bash
+npm run check:pages
+```
+
+构建步骤会生成规则包、使用 `/bazi/` 基础路径编译前端，并产生 `404.html` 和 `.nojekyll`。Pages 专项测试验证规则包摘要/数量/45 项 M19 输出契约、浏览器与 SQLite 三条代表性业务路径结果等价、深链接 fallback，以及最终脚本不含 Node external stub。
+
+隐私与限制：分析请求不发送到本项目 API，页面刷新后输入也不会由应用持久化；但 GitHub 作为静态托管方仍会收到资源请求的常规网络元数据。Pages 不提供 Node API、自定义服务端响应头、数据库或服务端保存功能。本地 API 与同源静态托管契约继续通过 `npm run preview` 验证。
+
+## 9. 明确不在当前 UI 内的能力
 
 - 公历或农历生日到四柱的自动排盘；
 - 真太阳时、地点和节气边界换算；

@@ -2,6 +2,8 @@
 
 本仓库是一个本地优先的 M0—M5 八字关系分析工作台。后端使用 Node.js、TypeScript、SQLite 与确定性规则快照，前端使用 Vue 3 与 Vite；界面提供单盘关系画像、具体关系现实评估、双盘结构补充、八道现实闸门、安全停止，以及规则快照/命中摘要和完整 JSON 导出入口。
 
+在线版本：[https://atong9.github.io/bazi/](https://atong9.github.io/bazi/)。GitHub Pages 版在浏览器内执行同一套确定性分析引擎，出生资料和关系证据不会提交给本项目的 API；GitHub 仍会接收普通静态资源请求所包含的网络元数据。
+
 ## 本地运行
 
 环境要求：Node.js `22.12` 至 `25.x`，npm `10+`。首次启动会编译规则快照，耗时会比后续启动稍长。
@@ -50,6 +52,14 @@ BAZI_SNAPSHOT_PATH=rulesets/<digest> npm start
 - `BAZI_SNAPSHOT_PATH`：生产运行时规则快照，`npm start` 必填；
 - `BAZI_WEB_ROOT`：前端构建目录，默认 `apps/web/dist`。
 
+## GitHub Pages 构建
+
+```bash
+npm run check:pages
+```
+
+该命令生成浏览器专用的完整运行目录 `apps/web/dist`：包含 10,918 条运行记录、`/bazi/` 基础路径、SPA 的 `404.html` fallback 和 `.nojekyll`。`master` 更新后，[部署工作流](./.github/workflows/deploy-pages.yml)会发布该目录。Pages 没有 Node API、自定义服务端安全响应头或服务端持久化；需要验证 API 托管契约时仍应使用 `npm run preview`。
+
 ## 验证与测试
 
 ```bash
@@ -64,7 +74,7 @@ npm run release:check
 - `npm run test:core` / `npm run test:web`：只运行后端或前端测试；
 - `npm run typecheck:core` / `npm run typecheck:web`：只检查对应工程。
 
-截至 2026-08-30，通用测试 runner 共执行 92 个测试用例（Node 核心 73、Web 19）；它们负责代码、契约、静态托管和组件行为。另有 407 项权威开发矩阵，由 `npm run test:evidence` 独立绑定并全部通过。两组数字用途不同，不能相加为一个测试总数。桌面、手机和生产同源路径的浏览器验收记录见 [用户界面与本地开发说明](./docs/development/UI-and-local-development.md)。
+截至 2026-08-30，通用测试 runner 共执行 104 个测试用例（Node 核心 76、Web 28）；另有 3 个 Pages 产物/等价性专项测试和 407 项权威开发矩阵。各组口径不同，不合并成一个测试总数。桌面、手机和生产同源路径的浏览器验收记录见 [用户界面与本地开发说明](./docs/development/UI-and-local-development.md)。
 
 ## 当前产品边界
 

@@ -1,6 +1,7 @@
 import type { AnalysisResponse, ApiErrorBody, HealthResponse } from "./types";
 
 type JsonRecord = Record<string, unknown>;
+const useBrowserRuntime = import.meta.env.VITE_ANALYSIS_RUNTIME === "browser";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -15,12 +16,22 @@ export class ApiError extends Error {
 }
 
 export async function fetchHealth(signal?: AbortSignal): Promise<HealthResponse> {
+  if (useBrowserRuntime) {
+    const { fetchBrowserHealth } = await import("./browser-runtime");
+    return parseHealthResponse(await fetchBrowserHealth(signal));
+  }
   const response = await fetch("/health", { headers: { accept: "application/json" }, ...(signal ? { signal } : {}) });
   if (!response.ok) throw new ApiError(response.status, await safeJson(response));
   return parseHealthResponse(await safeSuccessJson(response));
 }
 
 export async function analyzeRelationship(endpoint: "/v1/relationship/profile" | "/v1/relationship/evaluate", payload: unknown, signal?: AbortSignal): Promise<AnalysisResponse> {
+  if (useBrowserRuntime) {
+    const { analyzeRelationshipInBrowser } = await import("./browser-runtime");
+    const result = await analyzeRelationshipInBrowser(endpoint, payload, signal);
+    if (!result.ok) throw new ApiError(result.status, result.body);
+    return parseAnalysisResponse(result.body);
+  }
   const response = await fetch(endpoint, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },

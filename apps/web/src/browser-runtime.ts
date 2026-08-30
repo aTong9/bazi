@@ -30,7 +30,7 @@ export type BrowserAnalysisResult =
 
 export type BrowserCommandResult =
   | { readonly ok: true; readonly command: AnalyzeProfileCommand }
-  | BrowserAnalysisResult;
+  | Extract<BrowserAnalysisResult, { readonly ok: false }>;
 
 let catalogPromise: Promise<CatalogSnapshot> | undefined;
 
@@ -107,7 +107,7 @@ export async function openBrowserCatalogPack(value: unknown): Promise<CatalogSna
     getRecord: (id: string) => recordsById.get(id) ?? null,
     getModuleRecords: (moduleId: string) => recordsByModule.get(moduleId) ?? emptyRecords,
     getOutputContracts: () => outputContracts,
-    queryRecords: ({ moduleId, outputSlot, limit, cursor = 0 }) => {
+    queryRecords: ({ moduleId, outputSlot, limit, cursor = 0 }: Parameters<CatalogSnapshot["queryRecords"]>[0]) => {
       if (!Number.isInteger(limit) || limit < 1 || limit > 500) throw new Error("query limit must be an integer from 1 to 500");
       if (!Number.isInteger(cursor) || cursor < 0) throw new Error("query cursor must be a non-negative integer");
       const candidates = (recordsByModule.get(moduleId) ?? emptyRecords)
@@ -121,7 +121,8 @@ export async function openBrowserCatalogPack(value: unknown): Promise<CatalogSna
 
 async function loadBrowserCatalog(): Promise<CatalogSnapshot> {
   if (!catalogPromise) {
-    catalogPromise = fetch(`${import.meta.env.BASE_URL}browser-catalog.json`, {
+    const baseUrl = (import.meta as ImportMeta & { readonly env: { readonly BASE_URL: string } }).env.BASE_URL;
+    catalogPromise = fetch(`${baseUrl}browser-catalog.json`, {
       headers: { accept: "application/json" },
       cache: "no-cache",
     }).then(async (response) => {
