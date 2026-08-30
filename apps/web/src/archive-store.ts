@@ -1,5 +1,5 @@
 import { parseAnalysisResponse } from "./api";
-import { analysisInputFingerprint, JIAZI } from "./domain";
+import { analysisInputFingerprint, JIAZI, riskCandidateFingerprint } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, SubjectDraft } from "./types";
 
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
@@ -279,7 +279,23 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
 
 function workspaceResultMatches(workspace: AnalysisWorkspaceSnapshot): boolean {
   return workspace.roleBasis === workspace.result.relationship.roleBasis
-    && (workspace.resultInputFingerprint === undefined || workspace.resultInputFingerprint === analysisInputFingerprint(workspace));
+    && (workspace.resultInputFingerprint === undefined || workspace.resultInputFingerprint === analysisInputFingerprint(workspace))
+    && workspaceObservationsMatch(workspace);
+}
+
+function workspaceObservationsMatch(workspace: AnalysisWorkspaceSnapshot): boolean {
+  if (workspace.analysisMode === "profile") return workspace.observations.length === 0;
+  const basisFingerprint = workspace.resultInputFingerprint ?? analysisInputFingerprint(workspace);
+  const candidates = new Map(workspace.result.relationship.m4.riskChains.map((chain) => [chain.id, riskCandidateFingerprint(chain)]));
+  const slots = new Set<string>();
+  return workspace.observations.every((observation) => {
+    const slot = `${observation.chainId}:${observation.slot}`;
+    if (slots.has(slot)) return false;
+    slots.add(slot);
+    return observation.basisFingerprint === basisFingerprint
+      && observation.basisRequestId === workspace.result.requestId
+      && observation.candidateFingerprint === candidates.get(observation.chainId);
+  });
 }
 
 function normalizeSubject(subject: SubjectDraft): SubjectDraft {

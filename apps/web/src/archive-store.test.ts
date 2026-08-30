@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup } from "./archive-store";
-import { analysisInputFingerprint } from "./domain";
+import { analysisInputFingerprint, riskCandidateFingerprint } from "./domain";
 import { makeAnalysisResponse } from "./test/analysis-fixture";
 import type { AnalysisWorkspaceSnapshot } from "./types";
 
@@ -158,6 +158,24 @@ describe("local analysis archive", () => {
     const mismatchedInput = structuredClone(current[0]!);
     mismatchedInput.workspace.primarySubject.subjectId = "被拼接的另一命盘";
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedInput] }), storage)).toThrow("输入与分析结果不一致");
+    const duplicatedObservation = structuredClone(current[0]!);
+    duplicatedObservation.workspace.analysisMode = "evaluate";
+    duplicatedObservation.workspace.resultInputFingerprint = analysisInputFingerprint(duplicatedObservation.workspace);
+    const chain = duplicatedObservation.workspace.result.relationship.m4.riskChains[0]!;
+    const observation = {
+      chainId: chain.id,
+      slot: 0 as const,
+      source: "self_report" as const,
+      context: "压力下的现实观察",
+      direction: "supports" as const,
+      basisFingerprint: duplicatedObservation.workspace.resultInputFingerprint,
+      candidateFingerprint: riskCandidateFingerprint(chain),
+      basisRequestId: duplicatedObservation.workspace.result.requestId,
+    };
+    duplicatedObservation.workspace.observations = [observation, { ...observation, context: "重复占用同一观察槽" }];
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [duplicatedObservation] }), storage)).toThrow("输入与分析结果不一致");
+    duplicatedObservation.workspace.observations = [{ ...observation, basisRequestId: "another-request" }];
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [duplicatedObservation] }), storage)).toThrow("输入与分析结果不一致");
     expect(storage.value()).toBe(before);
   });
 });
