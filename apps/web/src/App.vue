@@ -401,12 +401,18 @@ function saveCurrentAnalysis(): void {
     return;
   }
   try {
-    archives.value = saveArchive(structureResult.value ? currentM0Workspace(structureResult.value) : currentWorkspace(result.value!));
+    archives.value = saveArchive(
+      structureResult.value ? currentM0Workspace(structureResult.value) : currentWorkspace(result.value!),
+      localStorage,
+      new Date(),
+      currentArchive.value?.savedAt ?? null,
+    );
     safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
     safeModeSensitiveFingerprint.value = modeSensitiveDraftFingerprint();
     safeResultFingerprint.value = resultVersionFingerprint(analysis);
     archiveNotice.value = "本次看盘已保存到这台设备。";
   } catch (error) {
+    refreshArchives();
     archiveNotice.value = error instanceof Error ? error.message : "浏览器没有足够的本地存储空间，未能保存档案。";
   }
 }

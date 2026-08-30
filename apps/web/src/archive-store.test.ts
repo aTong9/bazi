@@ -16,6 +16,8 @@ describe("local analysis archive", () => {
     expect(archives[0]?.title).toBe("主命盘 · 甲寅日 · 关系画像");
     expect(archives[0]?.workspace).toEqual(workspace);
     expect(archives[0]?.workspace).not.toBe(workspace);
+    expect(() => saveArchive(workspace, storage, new Date("2026-08-30T03:00:00Z"), "2026-08-30T01:00:00.000Z")).toThrow("已在另一标签页更新");
+    expect(loadArchives(storage)[0]?.savedAt).toBe("2026-08-30T02:00:00.000Z");
   });
 
   it("names a two-chart archive with both user labels", () => {

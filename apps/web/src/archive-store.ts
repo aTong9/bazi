@@ -71,12 +71,16 @@ export function saveArchive(
   workspace: ArchiveWorkspaceSnapshot,
   storage: Pick<Storage, "getItem" | "setItem"> = localStorage,
   now = new Date(),
+  expectedSavedAt?: string | null,
 ): AnalysisArchive[] {
   if (!isWorkspace(workspace)) throw new Error("当前工作区无法保存为有效档案。");
   parseWorkspaceResult(workspace);
   if (!workspaceResultMatches(workspace)) throw new Error("当前工作区输入与分析结果不一致，请重新生成分析。");
   const current = readArchives(storage, true);
   const existing = current.find((item) => item.id === archiveId(workspace.analysisMode, workspace.result.requestId));
+  if (expectedSavedAt !== undefined && (existing?.savedAt ?? null) !== expectedSavedAt) {
+    throw new Error("档案已在另一标签页更新，请重新确认较新版本后再保存。");
+  }
   const archive = normalizeArchive({
     id: archiveId(workspace.analysisMode, workspace.result.requestId),
     title: existing?.titleCustomized ? existing.title : archiveTitle(workspace),

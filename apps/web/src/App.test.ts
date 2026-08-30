@@ -504,6 +504,16 @@ describe("App analysis provenance", () => {
     expect(document.body.textContent).toContain("已取消覆盖");
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain("2099-01-01T00:00:00.000Z");
 
+    vi.stubGlobal("confirm", vi.fn(() => {
+      envelope.archives[0]!.savedAt = "2099-01-01T01:00:00.000Z";
+      localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
+      return true;
+    }));
+    findButton(mounted.host, "更新档案").click();
+    await flushUi();
+    expect(document.body.textContent).toContain("档案已在另一标签页更新");
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain("2099-01-01T01:00:00.000Z");
+
     envelope.archives[0]!.savedAt = "2099-01-02T00:00:00.000Z";
     localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
     vi.spyOn(window, "prompt").mockReturnValueOnce("旧标签页名称");
