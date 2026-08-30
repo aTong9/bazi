@@ -588,8 +588,9 @@ describe("App analysis provenance", () => {
     const response = makeAnalysisResponse();
     const fetchMock = installBrowserMocks(response);
     let backupBlob: Blob | undefined;
+    const createObjectURL = vi.fn((blob: Blob) => { backupBlob = blob; return "blob:archive-backup"; });
     Object.defineProperties(URL, {
-      createObjectURL: { configurable: true, value: vi.fn((blob: Blob) => { backupBlob = blob; return "blob:archive-backup"; }) },
+      createObjectURL: { configurable: true, value: createObjectURL },
       revokeObjectURL: { configurable: true, value: vi.fn() },
     });
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
@@ -621,6 +622,21 @@ describe("App analysis provenance", () => {
     findButton(document.body, "导出全部备份").click();
     const backup = await backupBlob!.text();
     expect(JSON.parse(backup)).toMatchObject({ schema: "bazi.relationship.archive-backup.v1", containsSensitiveData: true });
+
+    const latestEnvelope = JSON.parse(localStorage.getItem(ARCHIVE_STORAGE_KEY)!) as { archives: Array<{ title: string; savedAt: string }> };
+    latestEnvelope.archives[0]!.title = "另一标签页最新名称";
+    latestEnvelope.archives[0]!.savedAt = "2098-01-01T00:00:00.000Z";
+    localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(latestEnvelope));
+    findButton(document.body, "导出全部备份").click();
+    expect(JSON.parse(await backupBlob!.text()).archives[0]).toMatchObject({ title: "另一标签页最新名称", savedAt: "2098-01-01T00:00:00.000Z" });
+
+    latestEnvelope.archives[0]!.savedAt = "2098-01-02T00:00:00.000Z";
+    localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(latestEnvelope));
+    const downloadCount = createObjectURL.mock.calls.length;
+    findButton(document.body, "导出此档案").click();
+    await flushUi();
+    expect(createObjectURL).toHaveBeenCalledTimes(downloadCount);
+    expect(document.body.textContent).toContain("请确认最新版本后再导出");
 
     const importedBackup = JSON.parse(backup) as { archives: Array<{ title: string; savedAt: string }> };
     importedBackup.archives[0]!.title = "备份中的新名称";

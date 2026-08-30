@@ -531,7 +531,12 @@ function renameSavedArchive(archive: AnalysisArchive, title: string): void {
 }
 
 function exportArchives(): void {
-  if (!archives.value.length) return;
+  refreshArchives();
+  if (archiveRecoveryRaw.value) return;
+  if (!archives.value.length) {
+    archiveNotice.value = "本机已没有可导出的档案。";
+    return;
+  }
   try {
     downloadText(serializeArchiveBackup(archives.value), "application/json", `bazi-reading-archives-${new Date().toISOString().slice(0, 10)}.json`);
     archiveNotice.value = `已导出 ${archives.value.length} 份档案；文件未加密，请妥善保管。`;
@@ -541,9 +546,20 @@ function exportArchives(): void {
 }
 
 function exportArchive(archive: AnalysisArchive): void {
+  refreshArchives();
+  if (archiveRecoveryRaw.value) return;
+  const latest = archives.value.find((item) => item.id === archive.id);
+  if (!latest) {
+    archiveNotice.value = "档案已在另一标签页删除，未导出旧副本。";
+    return;
+  }
+  if (latest.savedAt !== archive.savedAt) {
+    archiveNotice.value = "档案已在另一标签页更新，请确认最新版本后再导出。";
+    return;
+  }
   try {
-    downloadText(serializeArchiveBackup([archive]), "application/json", `bazi-reading-archive-${new Date().toISOString().slice(0, 10)}.json`);
-    archiveNotice.value = `已导出“${archive.title}”；文件未加密，请妥善保管。`;
+    downloadText(serializeArchiveBackup([latest]), "application/json", `bazi-reading-archive-${new Date().toISOString().slice(0, 10)}.json`);
+    archiveNotice.value = `已导出“${latest.title}”；文件未加密，请妥善保管。`;
   } catch {
     archiveNotice.value = "档案导出失败，请重试。";
   }
