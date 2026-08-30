@@ -682,7 +682,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
         {{ !isOnline && offlineReady ? "离线模式 · 规则可用" : healthError ? "分析服务未连接" : health ? `规则已就绪 · ${health.catalog.compiledRecords.toLocaleString('zh-CN')} 条${offlineReady ? ' · 离线可用' : ''}` : "正在连接规则引擎" }}
       </div>
       <div class="header-actions">
-        <button ref="archiveTrigger" type="button" class="quiet-button" @click="archivesOpen = true">看盘档案 <span v-if="archives.length">{{ archives.length }}</span></button>
+        <button ref="archiveTrigger" type="button" class="quiet-button" aria-haspopup="dialog" aria-controls="archive-panel" :aria-expanded="archivesOpen" @click="archivesOpen = true">看盘档案 <span v-if="archives.length">{{ archives.length }}</span></button>
         <button type="button" class="quiet-button" @click="startNewAnalysis">新建分析</button>
       </div>
     </header>

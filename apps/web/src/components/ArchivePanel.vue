@@ -98,7 +98,7 @@ function archiveSearchText(archive: AnalysisArchive): string {
   <Teleport to="body">
     <Transition name="archive-panel">
       <div v-if="open" class="archive-overlay" @click.self="emit('close')">
-        <aside ref="panel" class="archive-panel" role="dialog" aria-modal="true" aria-labelledby="archive-title" @keydown="onKeydown">
+        <aside id="archive-panel" ref="panel" class="archive-panel" role="dialog" aria-modal="true" aria-labelledby="archive-title" @keydown="onKeydown">
           <header>
             <div><p class="eyebrow">仅保存在这台设备</p><h2 id="archive-title">看盘档案</h2></div>
             <button type="button" class="quiet-button" aria-label="关闭看盘档案" @click="emit('close')">关闭</button>

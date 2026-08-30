@@ -75,9 +75,15 @@ describe("App analysis provenance", () => {
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     mounted = mountComponent(App, {});
     await flushUi();
+    const archiveTrigger = findButton(mounted.host, "看盘档案");
+    expect(archiveTrigger.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(archiveTrigger.getAttribute("aria-controls")).toBe("archive-panel");
+    expect(archiveTrigger.getAttribute("aria-expanded")).toBe("false");
 
     findButton(mounted.host, "看盘档案").click();
     await flushUi();
+    expect(archiveTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(document.body.querySelector("#archive-panel")?.getAttribute("role")).toBe("dialog");
     expect(document.body.textContent).toContain("检测到无法读取的本机档案");
     findButton(document.body, "导出原始存储").click();
     expect(await readBlob(recoveryBlob!)).toBe("damaged archive bytes");
