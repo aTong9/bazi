@@ -57,12 +57,17 @@ const currentWorkspaceFingerprint = computed(() => workspaceFingerprint({
   observations: observations.value,
 }));
 const safeWorkspaceFingerprint = ref(currentWorkspaceFingerprint.value);
+const safeResultFingerprint = ref<string | null>(null);
+const currentResultFingerprint = computed(() => result.value ? resultVersionFingerprint(result.value) : null);
 const currentArchive = computed(() => result.value ? archives.value.find((archive) => archive.id === `archive-${result.value?.requestId}`) : undefined);
-const hasArchiveConflict = computed(() => Boolean(currentArchive.value && workspaceFingerprint(currentArchive.value.workspace) !== safeWorkspaceFingerprint.value));
-const isCurrentResultArchived = computed(() => Boolean(currentArchive.value && !hasArchiveConflict.value));
+const hasArchiveConflict = computed(() => Boolean(currentArchive.value && (
+  workspaceFingerprint(currentArchive.value.workspace) !== safeWorkspaceFingerprint.value
+  || resultVersionFingerprint(currentArchive.value.workspace.result) !== safeResultFingerprint.value
+)));
+const isCurrentResultArchived = computed(() => Boolean(currentArchive.value && !hasArchiveConflict.value && currentResultFingerprint.value === safeResultFingerprint.value));
 const hasUnsavedResult = computed(() => Boolean(result.value && !isCurrentResultArchived.value));
 const hasUnsavedWork = computed(() => hasUnsavedResult.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value);
-const resultSaveState = computed<"new" | "saved" | "dirty">(() => !currentArchive.value ? "new" : hasArchiveConflict.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value ? "dirty" : "saved");
+const resultSaveState = computed<"new" | "saved" | "dirty">(() => !currentArchive.value ? "new" : !isCurrentResultArchived.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value ? "dirty" : "saved");
 const observableRiskChains = computed(() => {
   if (!result.value || result.value.report.safetyStatus === "safety_stop") return [];
   return result.value.relationship.m4.riskChains;
@@ -105,6 +110,7 @@ watch(currentInputFingerprint, (fingerprint, previousFingerprint) => {
   activeRequest?.abort();
   resultFingerprint = null;
   result.value = null;
+  safeResultFingerprint.value = null;
   observations.value = [];
 });
 
@@ -301,6 +307,7 @@ function saveCurrentAnalysis(): void {
   try {
     archives.value = saveArchive(currentWorkspace(result.value));
     safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
+    safeResultFingerprint.value = resultVersionFingerprint(result.value);
     archiveNotice.value = "本次看盘已保存到这台设备。";
   } catch (error) {
     archiveNotice.value = error instanceof Error ? error.message : "浏览器没有足够的本地存储空间，未能保存档案。";
@@ -319,6 +326,8 @@ function workspaceFingerprint(workspace: Omit<AnalysisWorkspaceSnapshot, "result
   }), workspace.observations]);
 }
 
+function resultVersionFingerprint(analysisResult: AnalysisResponse): string { return JSON.stringify(analysisResult); }
+
 async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   if (hasUnsavedWork.value && !window.confirm("当前输入或看盘尚未保存，仍要打开档案吗？")) return;
   activeRequest?.abort();
@@ -335,6 +344,7 @@ async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
   resultFingerprint = currentInputFingerprint.value;
   result.value = workspace.result;
+  safeResultFingerprint.value = resultVersionFingerprint(workspace.result);
   archivesOpen.value = false;
   archiveNotice.value = `已打开“${archive.title}”。`;
   await nextTick();
@@ -429,6 +439,7 @@ function resetWorkspace(): void {
   hasSecondarySubject.value = false;
   resultFingerprint = null;
   result.value = null;
+  safeResultFingerprint.value = null;
   errorMessage.value = "";
   safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
   window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
