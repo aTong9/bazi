@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 
 import { analyzeM0Structure, analyzeRelationship, ApiError, fetchHealth } from "@/api";
 import { ARCHIVE_STORAGE_KEY, archiveId, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "@/archive-store";
-import { REALITY_GATES, STATUS_LABELS } from "@/constants";
+import { m5ReasonLabel, REALITY_GATES, STATUS_LABELS } from "@/constants";
 import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, inactiveSecondarySubject, m0InputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
 import ArchivePanel from "@/components/ArchivePanel.vue";
@@ -352,6 +352,13 @@ function readableSummary(analysis: AnalysisResponse): string {
     }),
     "",
   ] : [];
+  const adjudicationEvidence = safetyStop ? [] : [
+    "## 当前裁决依据",
+    "",
+    ...analysis.relationship.m5.fit.residualRisks.map((code) => `- 限制：${m5ReasonLabel(code)}`),
+    ...analysis.relationship.m5.fit.decisionCodes.map((code) => `- 裁决：${m5ReasonLabel(code)}`),
+    "",
+  ];
   const lines = [
     "# 关系脉络看盘摘要",
     "",
@@ -371,6 +378,7 @@ function readableSummary(analysis: AnalysisResponse): string {
     ...sections.flatMap((section) => [`## ${section.title}`, "", section.body, ""]),
     ...realityEvidence,
     ...observationEvidence,
+    ...adjudicationEvidence,
     ...(safetyStop || !analysis.report.observationPlan.length ? [] : [
       "## 下一步可观察",
       "",

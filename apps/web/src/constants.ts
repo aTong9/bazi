@@ -40,6 +40,25 @@ export const GRADE_COPY: Readonly<Record<string, { title: string; detail: string
   FG4: { title: "跨情境稳定", detail: "多种状态下证据一致，仍不是成功概率。" },
 };
 
+const M5_REASON_LABELS: Readonly<Record<string, string>> = {
+  NO_CONCRETE_PARTNER_EVIDENCE: "尚无具体关系对象的现实证据，当前只发布结构画像。",
+  SINGLE_CHART_CAP_FG1: "单盘模式的证据等级上限为 FG1。",
+  SAFETY_STOP: "安全或同意闸门未通过，停止普通适配分析。",
+  SAFETY_OVERRIDES_ALL: "安全事实优先于所有结构候选和普通适配结论。",
+  CORE_REALITY_GATE_FAILED: "至少一道核心现实闸门未通过。",
+  CORE_GATE_CAP_FG2: "核心现实闸门未通过时，证据等级不高于 FG2。",
+  CORE_REALITY_GATE_UNKNOWN: "仍有核心现实闸门缺少可核验事实。",
+  EVIDENCE_CAP_FG2: "核心现实证据未闭合，证据等级暂时不高于 FG2。",
+  MULTIPLE_CONDITIONAL_GATES: "两道或以上现实闸门仍带有成立条件。",
+  CONDITIONAL_CAP_FG3: "多项条件尚未稳定满足，证据等级不高于 FG3。",
+  CONDITION_FAILURE_POINT_MUST_BE_PUBLISHED: "存在单项条件闸门，需要保留其失败条件。",
+  SINGLE_CONDITIONAL_GATE: "当前结论受一道条件闸门约束。",
+  CROSS_STATE_STABLE: "五种跨情境事实均已核验且证据彼此独立。",
+  STANDARD_REALITY_SYNTHESIS: "当前等级由八道现实闸门的综合状态形成。",
+};
+
+export function m5ReasonLabel(code: string): string { return M5_REASON_LABELS[code] ?? code; }
+
 export const M0_FIELD_LABELS: Readonly<Record<string, string>> = {
   input_validation: "输入完整度与交节核验", scope_boundary: "分析适用范围与模型边界", overall_confidence: "总体置信度与待核查项",
   day_master_and_season: "日主与月令", pillar_element_ten_god_map: "四柱五行与十神映射", roots_and_exposure: "主要根气与透干", natal_structure_summary: "原局结构总览",

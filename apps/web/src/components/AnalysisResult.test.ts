@@ -64,6 +64,17 @@ describe("AnalysisResult", () => {
     stale.unmount();
   });
 
+  it("explains the current M5 grade using user-facing adjudication reasons", () => {
+    const result = makeAnalysisResponse();
+    result.relationship.m5.fit.residualRisks = ["CORE_REALITY_GATE_UNKNOWN"];
+    result.relationship.m5.fit.decisionCodes = ["EVIDENCE_CAP_FG2"];
+    const mounted = mountComponent(AnalysisResult, { result });
+
+    expect(mounted.host.querySelector(".adjudication-reasons")?.textContent).toContain("仍有核心现实闸门缺少可核验事实");
+    expect(mounted.host.querySelector(".adjudication-reasons")?.textContent).toContain("证据等级暂时不高于 FG2");
+    mounted.unmount();
+  });
+
   it("shows the reviewed input summary and emits a print request", () => {
     let printRequests = 0;
     const result = makeAnalysisResponse();

@@ -338,11 +338,14 @@ describe("App analysis provenance", () => {
     expect(summary).not.toContain("ORDINARY-CONTENT-MUST-STAY-HIDDEN");
     expect(summary).not.toContain("下一步可观察");
     expect(summary).not.toContain("## 现实闸门");
+    expect(summary).not.toContain("## 当前裁决依据");
   });
 
   it("downloads adjudicated reality gates and cross-state evidence in the readable summary", async () => {
     const response = makeAnalysisResponse();
     response.relationship.m5.crossStateEvidence = [{ state: "pressure", note: "高压期仍能暂停并协商", evidenceIds: ["event-02"] }];
+    response.relationship.m5.fit.residualRisks = ["CORE_REALITY_GATE_UNKNOWN"];
+    response.relationship.m5.fit.decisionCodes = ["EVIDENCE_CAP_FG2"];
     response.report.trace.eventIds.push("event-02");
     response.report.logs.dedup.push("event-02 counted once");
     installBrowserMocks(response);
@@ -376,6 +379,9 @@ describe("App analysis provenance", () => {
     expect(summary).toContain("压力态：高压期仍能暂停并协商");
     expect(summary).toContain("## 独立现实观察");
     expect(summary).toContain("M4-C01 · 观察 1 · 本人观察 · 支持候选：两次压力情境中都能在暂停后恢复协商");
+    expect(summary).toContain("## 当前裁决依据");
+    expect(summary).toContain("限制：仍有核心现实闸门缺少可核验事实");
+    expect(summary).toContain("裁决：核心现实证据未闭合，证据等级暂时不高于 FG2");
   });
 
   it("opens the system print flow for the adjudicated reading", async () => {

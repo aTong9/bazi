@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-import { GRADE_COPY, STATUS_LABELS } from "@/constants";
+import { GRADE_COPY, m5ReasonLabel, STATUS_LABELS } from "@/constants";
 import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
 import type { AnalysisMode, AnalysisResponse, ObservationDraft, ResultItem, SubjectDraft } from "@/types";
 import ModuleRail from "./ModuleRail.vue";
@@ -57,6 +57,10 @@ const secondaryLabel = computed(() => props.secondarySubject?.subjectId.trim() |
 const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档案" : props.saveState === "dirty" ? "更新档案" : "保存到档案");
 const crossStateLabels = { steady: "日常状态", pressure: "压力状态", repair: "修复之后", turningPoint: "关系转折", counterevidenceReviewed: "反例复核" } as const;
 const observationSourceLabels = { self_report: "本人观察", partner_report: "另一方观察", joint_record: "双方共同记录", third_party_record: "第三方事实记录" } as const;
+const adjudicationReasons = computed(() => [
+  ...props.result.relationship.m5.fit.residualRisks.map((code) => ({ code, type: "限制" })),
+  ...props.result.relationship.m5.fit.decisionCodes.map((code) => ({ code, type: "裁决" })),
+]);
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
@@ -225,6 +229,12 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
             <p class="subheading">跨情境核验</p>
             <p v-for="evidence in result.relationship.m5.crossStateEvidence" :key="evidence.state">
               <strong>{{ crossStateLabels[evidence.state] }}</strong>{{ evidence.note }}
+            </p>
+          </div>
+          <div v-if="adjudicationReasons.length" class="observation-plan adjudication-reasons">
+            <p class="subheading">当前裁决依据</p>
+            <p v-for="reason in adjudicationReasons" :key="`${reason.type}-${reason.code}`">
+              <strong>{{ reason.type }}</strong>{{ m5ReasonLabel(reason.code) }}
             </p>
           </div>
           <div v-if="result.report.observationPlan.length" class="observation-plan">
