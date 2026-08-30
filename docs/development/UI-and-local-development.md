@@ -109,7 +109,7 @@ apps/web/
 - `RealityGatePanel.vue`：现实闸门与跨情境核验；
 - `ObservationPanel.vue`：首次分析后，按 M4 chain ID 录入两份独立现实观察；
 - `AnalysisResult.vue`：安全优先的报告投影和 M0—M5 详细依据；
-- `ArchivePanel.vue`：本地看盘档案的恢复、可取消删除确认与隐私边界；
+- `ArchivePanel.vue`：本地看盘档案的恢复、可取消删除确认、模态焦点循环与关闭后焦点恢复；
 - `archive-store.ts`：带版本信封和响应/工作区校验的浏览器本地存储，最多保留 20 份，达到上限时禁止静默淘汰，并负责完整备份的导入、导出与新旧冲突合并；
 - `styles.css`：桌面、平板、390px 手机、键盘焦点和 reduced-motion 行为。
 
@@ -169,12 +169,12 @@ npm run preview
 截至 2026-08-30：
 
 - `npm run test:core`：81 个 Node runner 用例通过；
-- `npm run test:web`：8 个前端测试文件、46 个 Vitest 用例通过；
+- `npm run test:web`：8 个前端测试文件、47 个 Vitest 用例通过；
 - `npm run test:pages`：5 个 Pages 规则包、运行时等价性、离线缓存、打印契约和产物用例通过；
 - `npm run test:evidence`：407 项权威矩阵全部通过；
 - `npm run typecheck`、`npm run build:web` 和静态 Web 集成测试通过。
 
-127 个通用 runner 用例、5 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
+128 个通用 runner 用例、5 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
 
 前端自动化至少覆盖：
 
