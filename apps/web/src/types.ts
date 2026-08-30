@@ -147,6 +147,8 @@ export interface HealthResponse {
 export interface AnalysisWorkspaceSnapshot {
   analysisMode: AnalysisMode;
   roleBasis: RoleBasis;
+  /** Optional only for backwards compatibility with archives created before result-input binding existed. */
+  resultInputFingerprint?: string;
   primarySubject: SubjectDraft;
   secondarySubject: SubjectDraft;
   hasSecondarySubject: boolean;

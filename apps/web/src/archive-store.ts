@@ -1,5 +1,5 @@
 import { parseAnalysisResponse } from "./api";
-import { JIAZI } from "./domain";
+import { analysisInputFingerprint, JIAZI } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, SubjectDraft } from "./types";
 
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
@@ -52,6 +52,7 @@ function readArchives(storage: Pick<Storage, "getItem">, failOnInvalid: boolean)
     if (!isEnvelope(envelope)) throw new Error();
     return envelope.archives.map((archive) => {
       parseAnalysisResponse(archive.workspace.result);
+      if (!workspaceResultMatches(archive.workspace)) throw new Error();
       return normalizeArchive(archive);
     });
   } catch {
@@ -67,6 +68,7 @@ export function saveArchive(
 ): AnalysisArchive[] {
   if (!isWorkspace(workspace)) throw new Error("当前工作区无法保存为有效档案。");
   parseAnalysisResponse(workspace.result);
+  if (!workspaceResultMatches(workspace)) throw new Error("当前工作区输入与分析结果不一致，请重新生成分析。");
   const current = readArchives(storage, true);
   const existing = current.find((item) => item.id === `archive-${workspace.result.requestId}`);
   const archive: AnalysisArchive = {
@@ -199,6 +201,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
     } catch {
       throw new Error(`档案“${archive.title}”的分析结果无效。`);
     }
+    if (!workspaceResultMatches(archive.workspace)) throw new Error(`档案“${archive.title}”的输入与分析结果不一致。`);
     if (!archiveIdentityMatches(archive)) throw new Error(`档案“${archive.title}”的身份无效。`);
   }
   return backup.archives.map(normalizeArchive);
@@ -270,7 +273,13 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
   const value = structuredClone(archive);
   value.workspace.primarySubject = normalizeSubject(value.workspace.primarySubject);
   value.workspace.secondarySubject = normalizeSubject(value.workspace.secondarySubject);
+  value.workspace.resultInputFingerprint ??= analysisInputFingerprint(value.workspace);
   return value;
+}
+
+function workspaceResultMatches(workspace: AnalysisWorkspaceSnapshot): boolean {
+  return workspace.roleBasis === workspace.result.relationship.roleBasis
+    && (workspace.resultInputFingerprint === undefined || workspace.resultInputFingerprint === analysisInputFingerprint(workspace));
 }
 
 function normalizeSubject(subject: SubjectDraft): SubjectDraft {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup } from "./archive-store";
+import { analysisInputFingerprint } from "./domain";
 import { makeAnalysisResponse } from "./test/analysis-fixture";
 import type { AnalysisWorkspaceSnapshot } from "./types";
 
@@ -22,6 +23,7 @@ describe("local analysis archive", () => {
     workspace.primarySubject.subjectId = "小林";
     workspace.secondarySubject.subjectId = "阿青";
     workspace.hasSecondarySubject = true;
+    workspace.resultInputFingerprint = analysisInputFingerprint(workspace);
     const archive = saveArchive(workspace, memoryStorage())[0]!;
     expect(archive.title).toBe("小林 · 甲寅日 × 阿青 · 乙卯日 · 关系画像");
   });
@@ -56,11 +58,13 @@ describe("local analysis archive", () => {
     const workspace = makeWorkspace();
     delete workspace.primarySubject.birthInput;
     delete workspace.secondarySubject.birthInput;
+    delete workspace.resultInputFingerprint;
     const archive = saveArchive(workspace, memoryStorage(), new Date("2026-08-30T01:00:00Z"))[0]!;
     const storage = memoryStorage(JSON.stringify({ version: 1, archives: [archive] }));
     const restored = loadArchives(storage)[0]!;
     expect(restored.workspace.primarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
     expect(restored.workspace.secondarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
+    expect(restored.workspace.resultInputFingerprint).toBe(analysisInputFingerprint(restored.workspace));
   });
 
   it("deletes only the selected archive", () => {
@@ -151,12 +155,15 @@ describe("local analysis archive", () => {
     const mismatchedIdentity = structuredClone(current[0]!);
     mismatchedIdentity.id = "archive-other-request";
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedIdentity] }), storage)).toThrow("身份无效");
+    const mismatchedInput = structuredClone(current[0]!);
+    mismatchedInput.workspace.primarySubject.subjectId = "被拼接的另一命盘";
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedInput] }), storage)).toThrow("输入与分析结果不一致");
     expect(storage.value()).toBe(before);
   });
 });
 
 function makeWorkspace(): AnalysisWorkspaceSnapshot {
-  return {
+  const workspace: AnalysisWorkspaceSnapshot = {
     analysisMode: "profile",
     roleBasis: "female_traditional",
     primarySubject: { subjectId: "主命盘", year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } },
@@ -167,6 +174,8 @@ function makeWorkspace(): AnalysisWorkspaceSnapshot {
     observations: [],
     result: makeAnalysisResponse(),
   };
+  workspace.resultInputFingerprint = analysisInputFingerprint(workspace);
+  return workspace;
 }
 
 function workspaceWithRequestId(requestId: string): AnalysisWorkspaceSnapshot {

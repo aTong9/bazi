@@ -436,6 +436,7 @@ function currentWorkspace(analysisResult: AnalysisResponse): AnalysisWorkspaceSn
   return {
     analysisMode: analysisMode.value,
     roleBasis: roleBasis.value,
+    resultInputFingerprint: resultFingerprint ?? currentInputFingerprint.value,
     primarySubject: cloneJson(primarySubject.value),
     secondarySubject: cloneJson(secondarySubject.value),
     hasSecondarySubject: hasSecondarySubject.value,
