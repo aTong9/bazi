@@ -137,11 +137,29 @@ describe("AnalysisResult", () => {
   it("keeps both charts' complete M0 evidence independently readable", () => {
     const result = makeAnalysisResponse();
     result.relationship.structuralSupplement.available = true;
+    result.relationship.structuralSupplement.status = "complete";
     result.relationship.structuralSupplement.fields = structuredClone(result.m0.fields);
     const mounted = mountComponent(AnalysisResult, { result, hasSecondarySubject: true });
 
     const summaries = [...mounted.host.querySelectorAll(".m0-evidence > summary")].map((summary) => summary.textContent);
     expect(summaries).toEqual(["查看完整 M0 字段证据（45 项）", "查看另一方完整 M0 字段证据（45 项）"]);
+    mounted.unmount();
+  });
+
+  it("keeps the secondary chart's own data-quality limit visible", () => {
+    const result = makeAnalysisResponse();
+    result.relationship.structuralSupplement = {
+      ...result.relationship.structuralSupplement,
+      available: true,
+      status: "limited",
+      dependencyFlags: ["DATA_QUALITY_LOW"],
+      fields: structuredClone(result.m0.fields),
+    };
+    const mounted = mountComponent(AnalysisResult, { result, hasSecondarySubject: true });
+
+    expect(mounted.host.querySelector(".structural-supplement")?.textContent).toContain("受限");
+    expect(mounted.host.querySelector(".structural-supplement .inline-notice")?.textContent).toContain("另一方资料尚未标记为已核对");
+    expect(mounted.host.querySelector(".structural-supplement")?.textContent).not.toContain("DATA_QUALITY_LOW");
     mounted.unmount();
   });
 });

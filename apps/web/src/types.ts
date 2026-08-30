@@ -91,6 +91,8 @@ export interface AnalysisResponse {
       scope: "structural_auxiliary_only";
       replacesRealityEvidence: false;
       replacesRealityGates: false;
+      status: "complete" | "limited" | null;
+      dependencyFlags: string[];
       fields: Record<string, ResultItem> | null;
     };
     m1: {

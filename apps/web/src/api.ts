@@ -132,8 +132,10 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
     || supplement.scope !== "structural_auxiliary_only"
     || supplement.replacesRealityEvidence !== false
     || supplement.replacesRealityGates !== false
+    || !(supplement.status === null || isOneOf(supplement.status, ["complete", "limited"]))
+    || !isStringArray(supplement.dependencyFlags)
     || !(supplement.fields === null || isResultFieldMap(supplement.fields))
-    || (supplement.available ? supplement.fields === null : supplement.fields !== null)
+    || (supplement.available ? supplement.fields === null || supplement.status === null : supplement.fields !== null || supplement.status !== null || supplement.dependencyFlags.length > 0)
   ) {
     throw responseSchemaError("分析响应的关系模块字段无效");
   }

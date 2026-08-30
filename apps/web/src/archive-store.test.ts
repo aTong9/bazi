@@ -29,6 +29,7 @@ describe("local analysis archive", () => {
     workspace.result.relationship.structuralSupplement = {
       ...workspace.result.relationship.structuralSupplement,
       available: true,
+      status: "complete",
       fields: makeAnalysisResponse({ pillars: { year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子" } }).m0.fields,
     };
     workspace.resultInputFingerprint = analysisInputFingerprint(workspace);

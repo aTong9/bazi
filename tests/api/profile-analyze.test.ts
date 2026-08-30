@@ -20,13 +20,15 @@ test("POST /v1/profile/analyze executes M0-M3 and preserves explicit role-basis 
     assert.equal(pending.relationship.status, "dependency_pending"); assert.ok(pending.relationship.dependencyFlags.includes("M1_TRADITIONAL_ROLE_BASIS_REQUIRED"));
 
     const withCompatibility = body("female_traditional") as ReturnType<typeof body> & { subject_b?: unknown; legacy_payloads?: unknown };
-    withCompatibility.subject_b = { ...withCompatibility.subject, subject_id: "P-B" };
+    withCompatibility.subject_b = { ...withCompatibility.subject, subject_id: "P-B", data_quality: "low" };
     withCompatibility.legacy_payloads = { m5_v0_9: { status: "legacy" } };
     const compatibilityResponse = await post(port, withCompatibility); assert.equal(compatibilityResponse.status, 200);
-    const compatibility = await compatibilityResponse.json() as { relationship: { structuralSupplement: { available: boolean; scope: string; replacesRealityEvidence: boolean }; legacyPayloads: { mode: string; payloads: Record<string, unknown> } } };
+    const compatibility = await compatibilityResponse.json() as { relationship: { structuralSupplement: { available: boolean; scope: string; replacesRealityEvidence: boolean; status: string; dependencyFlags: string[] }; legacyPayloads: { mode: string; payloads: Record<string, unknown> } } };
     assert.equal(compatibility.relationship.structuralSupplement.available, true);
     assert.equal(compatibility.relationship.structuralSupplement.scope, "structural_auxiliary_only");
     assert.equal(compatibility.relationship.structuralSupplement.replacesRealityEvidence, false);
+    assert.equal(compatibility.relationship.structuralSupplement.status, "limited");
+    assert.deepEqual(compatibility.relationship.structuralSupplement.dependencyFlags, ["DATA_QUALITY_LOW"]);
     assert.equal(compatibility.relationship.legacyPayloads.mode, "wrapped_read_only");
     assert.ok(compatibility.relationship.legacyPayloads.payloads.m5_v0_9);
 

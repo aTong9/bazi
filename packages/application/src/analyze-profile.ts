@@ -41,6 +41,8 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
     scope: "structural_auxiliary_only" as const,
     replacesRealityEvidence: false as const,
     replacesRealityGates: false as const,
+    status: subjectBResult?.ok ? subjectBResult.response.m0.status : null,
+    dependencyFlags: subjectBResult?.ok ? subjectBResult.response.m0.dependencyFlags : Object.freeze([]),
     fields: subjectBResult?.ok ? subjectBResult.response.m0.fields : null,
   });
   const legacyPayloads = command.legacyPayloads ? Object.freeze({ mode: "wrapped_read_only" as const, payloads: command.legacyPayloads }) : null;

@@ -49,6 +49,7 @@ const secondaryStrength = computed(() => {
   const fields = props.result.relationship.structuralSupplement.fields;
   return fields ? resultValue<string>(fields, "day_master_strength") : null;
 });
+const secondaryHasDataQualityLimit = computed(() => props.result.relationship.structuralSupplement.dependencyFlags.some((flag) => flag.startsWith("DATA_QUALITY_")));
 const reportSections = computed(() => isSafetyStop.value ? props.result.report.sections.filter((section) => section.id === "safety") : props.result.report.sections);
 const hasUnknownHourLimit = computed(() => props.result.m0.dependencyFlags.includes("HOUR_UNKNOWN") || props.result.relationship.dependencyFlags.includes("M3_HOUR_DEPENDENCY_LIMITED"));
 const hasDataQualityLimit = computed(() => props.result.m0.dependencyFlags.some((flag) => flag.startsWith("DATA_QUALITY_")));
@@ -154,8 +155,9 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
           <aside v-if="result.relationship.structuralSupplement.available" class="structural-supplement">
             <div>
               <p class="eyebrow">双盘辅助</p>
-              <h4>另一方结构补充</h4>
+              <h4>另一方结构补充 <span class="status-pill" :data-status="result.relationship.structuralSupplement.status">{{ label(result.relationship.structuralSupplement.status ?? undefined) }}</span></h4>
               <p>只用于补充双方结构背景，不替代现实行为、同意、安全事实或八道现实闸门。</p>
+              <p v-if="secondaryHasDataQualityLimit" class="inline-notice" role="status">另一方资料尚未标记为已核对，本结构补充按受限结果发布。</p>
             </div>
             <dl>
               <div><dt>日主</dt><dd>{{ secondaryDayMaster?.dayMaster ?? "—" }} · {{ label(secondaryDayMaster?.yinYang) }}{{ secondaryDayMaster?.element }}</dd></div>

@@ -86,6 +86,8 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
         scope: "structural_auxiliary_only",
         replacesRealityEvidence: false,
         replacesRealityGates: false,
+        status: null,
+        dependencyFlags: [],
         fields: null,
       },
       m1: {
