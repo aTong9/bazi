@@ -24,7 +24,7 @@
     "catalog:m0:verify": "tsx apps/catalog-cli/src/main.ts verify-m0-enrichment",
     "catalog:build": "tsx apps/catalog-cli/src/main.ts build-catalog-snapshot",
     "catalog:browser:build": "tsx scripts/build-browser-catalog.ts",
-    "dev:api": "tsx apps/api/src/dev.ts",
+    "dev:api": "tsx watch apps/api/src/dev.ts",
     "dev:web": "npm run dev --workspace @bazi/web",
     "dev": "concurrently --kill-others-on-fail --names API,WEB --prefix-colors cyan,green \"npm:dev:api\" \"npm:dev:web\"",
     "build:web": "npm run build --workspace @bazi/web",

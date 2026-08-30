@@ -20,7 +20,7 @@ npm run dev
 - 界面：<http://127.0.0.1:5173>
 - API 健康检查：<http://127.0.0.1:3000/health>
 
-`npm run dev` 会同时启动 API 和 Vite。浏览器请求 `/health`、`/v1/*` 会由 Vite 代理到本地 API，因此开发环境不需要配置 CORS。
+`npm run dev` 会同时启动 API 和 Vite，并在后端或前端源码变化时分别自动重载。浏览器请求 `/health`、`/v1/*` 会由 Vite 代理到本地 API，因此开发环境不需要配置 CORS。
 
 如果只开发单侧，可以分别运行：
 
@@ -76,7 +76,7 @@ npm run release:check
 - `npm run test:core` / `npm run test:web`：只运行后端或前端测试；
 - `npm run typecheck:core` / `npm run typecheck:web`：只检查对应工程。
 
-截至 2026-08-30，通用测试 runner 共执行 154 个测试用例（Node 核心 81、Web 73）；另有 6 个 Pages 产物/等价性专项测试和 407 项权威开发矩阵。各组口径不同，不合并成一个测试总数。桌面、手机和生产同源路径的浏览器验收记录见 [用户界面与本地开发说明](./docs/development/UI-and-local-development.md)。
+截至 2026-08-30，通用测试 runner 共执行 164 个测试用例（Node 核心 81、Web 83）；另有 6 个 Pages 产物/等价性专项测试和 407 项权威开发矩阵。各组口径不同，不合并成一个测试总数。桌面、手机和生产同源路径的浏览器验收记录见 [用户界面与本地开发说明](./docs/development/UI-and-local-development.md)。
 
 ## 当前产品边界
 
