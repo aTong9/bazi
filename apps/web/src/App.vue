@@ -59,6 +59,7 @@ const safeWorkspaceFingerprint = ref(currentWorkspaceFingerprint.value);
 const safeModeSensitiveFingerprint = ref(modeSensitiveDraftFingerprint());
 const safeResultFingerprint = ref<string | null>(null);
 const activeResult = computed(() => structureResult.value ?? result.value);
+const isRulesetOutdated = computed(() => Boolean(activeResult.value && health.value && activeResult.value.rulesetDigest !== health.value.catalog.rulesetDigest));
 const currentResultFingerprint = computed(() => activeResult.value ? resultVersionFingerprint(activeResult.value) : null);
 const currentArchive = computed(() => activeResult.value ? archives.value.find((archive) => archive.id === archiveId(analysisMode.value, activeResult.value!.requestId)) : undefined);
 const hasArchiveConflict = computed(() => Boolean(currentArchive.value && (
@@ -821,6 +822,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
 
         <section class="result-panel" aria-label="分析结果">
           <p v-if="archiveNotice" class="archive-notice" role="status">{{ archiveNotice }}</p>
+          <p v-if="isRulesetOutdated" class="archive-notice" role="status">这份结果使用较早的规则快照；原结果保持不变，重新生成后才会使用当前规则。</p>
           <M0Result
             v-if="structureResult"
             :result="structureResult"

@@ -28,6 +28,19 @@ afterEach(() => {
 });
 
 describe("App analysis provenance", () => {
+  it("marks a result produced by an older ruleset without changing it", async () => {
+    const response = makeAnalysisResponse();
+    response.rulesetDigest = "older-ruleset";
+    response.report.rulesetDigest = response.rulesetDigest;
+    installBrowserMocks(response);
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+
+    expect(mounted.host.querySelector(".result-panel > .archive-notice")?.textContent).toContain("较早的规则快照");
+    expect(mounted.host.textContent).toContain(response.rulesetDigest);
+  });
+
   it("runs the standalone M0 mode without relationship inputs or modules", async () => {
     const fetchMock = installBrowserMocks(makeAnalysisResponse());
     mounted = mountComponent(App, {});
