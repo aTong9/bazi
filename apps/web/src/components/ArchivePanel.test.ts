@@ -1,5 +1,5 @@
 import { defineComponent, h, nextTick, ref } from "vue";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { makeAnalysisResponse } from "@/test/analysis-fixture";
 import { mountComponent } from "@/test/mount-component";
@@ -67,6 +67,23 @@ describe("ArchivePanel", () => {
     await nextTick();
     findButton("确认删除").click();
     expect(deleted).toEqual([archive.id]);
+    mounted.unmount();
+  });
+
+  it("offers native cancellable archive renaming", async () => {
+    const renamed: string[][] = [];
+    const prompt = vi.spyOn(window, "prompt").mockReturnValueOnce("长期观察").mockReturnValueOnce(null);
+    const mounted = mountComponent(ArchivePanel, {
+      open: true,
+      archives: [makeArchive()],
+      onRename: (id: string, title: string) => renamed.push([id, title]),
+    });
+    await nextTick();
+
+    findButton("重命名").click();
+    findButton("重命名").click();
+    expect(renamed).toEqual([["archive-test", "长期观察"]]);
+    prompt.mockRestore();
     mounted.unmount();
   });
 });

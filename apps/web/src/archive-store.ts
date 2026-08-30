@@ -75,6 +75,24 @@ export function deleteArchive(id: string, storage: Pick<Storage, "getItem" | "se
   return archives;
 }
 
+export function renameArchive(
+  id: string,
+  title: string,
+  storage: Pick<Storage, "getItem" | "setItem"> = localStorage,
+  now = new Date(),
+): AnalysisArchive[] {
+  const normalizedTitle = title.trim().replace(/\s+/gu, " ");
+  if (!normalizedTitle) throw new Error("档案名称不能为空。");
+  if (normalizedTitle.length > 300) throw new Error("档案名称不能超过 300 个字符。");
+  const archives = loadArchives(storage);
+  const archive = archives.find((item) => item.id === id);
+  if (!archive) throw new Error("档案不存在。");
+  const renamed = { ...archive, title: normalizedTitle, savedAt: now.toISOString() };
+  const updated = [renamed, ...archives.filter((item) => item.id !== id)];
+  persist(updated, storage);
+  return updated;
+}
+
 export function serializeArchiveBackup(archives: readonly AnalysisArchive[], now = new Date()): string {
   const backup: ArchiveBackup = {
     schema: BACKUP_SCHEMA,
@@ -170,7 +188,7 @@ function isEnvelope(value: unknown): value is ArchiveEnvelope {
 function isArchive(value: unknown): value is AnalysisArchive {
   if (!value || typeof value !== "object") return false;
   const archive = value as Partial<AnalysisArchive>;
-  return typeof archive.id === "string" && archive.id.length > 0 && typeof archive.title === "string" && archive.title.length > 0
+  return typeof archive.id === "string" && archive.id.length > 0 && typeof archive.title === "string" && archive.title.length > 0 && archive.title.length <= 300
     && typeof archive.savedAt === "string" && Number.isFinite(Date.parse(archive.savedAt))
     && typeof archive.rulesetDigest === "string" && archive.rulesetDigest === archive.workspace?.result?.rulesetDigest
     && isWorkspace(archive.workspace);

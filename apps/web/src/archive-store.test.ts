@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deleteArchive, importArchiveBackup, loadArchives, saveArchive, serializeArchiveBackup } from "./archive-store";
+import { deleteArchive, importArchiveBackup, loadArchives, renameArchive, saveArchive, serializeArchiveBackup } from "./archive-store";
 import { makeAnalysisResponse } from "./test/analysis-fixture";
 import type { AnalysisWorkspaceSnapshot } from "./types";
 
@@ -56,6 +56,16 @@ describe("local analysis archive", () => {
     const two = saveArchive(second, storage);
     const remaining = deleteArchive(two[1]!.id, storage);
     expect(remaining.map((item) => item.id)).toEqual(["archive-request-second"]);
+  });
+
+  it("renames the selected archive and records it as the newest backup version", () => {
+    const storage = memoryStorage();
+    const first = saveArchive(makeWorkspace(), storage, new Date("2026-08-30T01:00:00Z"));
+    saveArchive(workspaceWithRequestId("request-second"), storage, new Date("2026-08-30T02:00:00Z"));
+    const renamed = renameArchive(first[0]!.id, "  小林   长期观察  ", storage, new Date("2026-08-30T03:00:00Z"));
+    expect(renamed[0]).toMatchObject({ id: first[0]!.id, title: "小林 长期观察", savedAt: "2026-08-30T03:00:00.000Z" });
+    expect(() => renameArchive(first[0]!.id, "   ", storage)).toThrow("不能为空");
+    expect(loadArchives(storage)[0]?.title).toBe("小林 长期观察");
   });
 
   it("never evicts an existing archive when the 20-item limit is reached", () => {
