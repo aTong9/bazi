@@ -19,6 +19,7 @@ const temperature = computed(() => resultValue<ClimateView>(props.result.m0.fiel
 const moisture = computed(() => resultValue<ClimateView>(props.result.m0.fields, "moisture_state"));
 const uses = computed(() => resultValue<{ primary?: UseDecision[]; auxiliary?: UseDecision[] }>(props.result.m0.fields, "primary_and_auxiliary_use"));
 const allUses = computed(() => [...(uses.value?.primary ?? []), ...(uses.value?.auxiliary ?? [])].slice(0, 5));
+const hasDataQualityLimit = computed(() => props.result.m0.dependencyFlags.some((flag) => flag.startsWith("DATA_QUALITY_")));
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
@@ -40,6 +41,7 @@ const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档�
         <button type="button" class="quiet-button" @click="emit('downloadSummary')">下载可读摘要</button>
         <button type="button" class="quiet-button" @click="emit('download')">下载完整 JSON</button>
       </div>
+      <p v-if="hasDataQualityLimit" class="inline-notice" role="status">输入资料尚未标记为已核对：本次按受限结果发布；核对四柱与时间后请重新生成。</p>
       <dl class="result-context" aria-label="本次原局输入摘要">
         <div><dt>分析方式</dt><dd>原局结构</dd></div>
         <div><dt>主要命盘</dt><dd>{{ subject.subjectId.trim() || '主要命盘' }} · {{ formatSubjectPillars(subject) }}</dd></div>

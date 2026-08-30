@@ -28,6 +28,7 @@ export interface M19Projection {
 export function projectM19(input: {
   contracts: readonly CanonicalCatalogRecord[];
   birthTimeStatus: "exact" | "approximate" | "unknown";
+  inputDependencyFlags: readonly string[];
   m02: M02Result;
   m03: M03Result;
   m04: M04Result;
@@ -48,11 +49,7 @@ export function projectM19(input: {
     ...input.m13.matchedRuleIds, ...input.m14.matchedRuleIds, ...input.m15.matchedRuleIds, ...input.m16.matchedRuleIds,
     ...input.m17.matchedRuleIds, ...input.m18.matchedRuleIds,
   ]);
-  const hourDependencyFlags = input.birthTimeStatus === "unknown"
-    ? ["HOUR_UNKNOWN"]
-    : input.birthTimeStatus === "approximate"
-      ? ["HOUR_APPROXIMATE"]
-      : [];
+  const hourDependencyFlags = input.inputDependencyFlags.filter((flag) => flag.startsWith("HOUR_"));
   set(fields, "input_validation", result(
     {
       fourPillarsProvided: true,
@@ -61,17 +58,17 @@ export function projectM19(input: {
       canContinue: true,
     },
     input.birthTimeStatus === "exact" ? "conditional" : "conditional",
-    input.birthTimeStatus === "exact" ? "medium" : "medium_low",
+    input.inputDependencyFlags.length ? "medium_low" : "medium",
     [...input.m02.matchedRuleIds, "M03-PROC-0018-V1.0"],
-    ["FOUR_PILLARS_STRUCTURE_VALID", "CALENDAR_NOT_REVERIFIED_FROM_FOUR_PILLARS", ...hourDependencyFlags],
+    ["FOUR_PILLARS_STRUCTURE_VALID", "CALENDAR_NOT_REVERIFIED_FROM_FOUR_PILLARS", ...input.inputDependencyFlags],
   ));
   set(fields, "scope_boundary", result(
     ["NATAL_STATIC_STRUCTURE_ONLY", "NO_DYNAMIC_TIMING", "NO_MEDICAL_DIAGNOSIS", "NO_LIFESTYLE_REMEDY"],
     "supported", "high", [], ["SCOPE_BOUNDARY_ENFORCED"],
   ));
   set(fields, "overall_confidence", result(
-    { level: input.birthTimeStatus === "exact" ? "medium" : "medium_low", pendingModules: [], conditions: hourDependencyFlags },
-    input.birthTimeStatus === "exact" ? "supported" : "conditional", input.birthTimeStatus === "exact" ? "medium" : "medium_low", allRules, hourDependencyFlags,
+    { level: input.inputDependencyFlags.length ? "medium_low" : "medium", pendingModules: [], conditions: input.inputDependencyFlags },
+    input.inputDependencyFlags.length ? "conditional" : "supported", input.inputDependencyFlags.length ? "medium_low" : "medium", allRules, input.inputDependencyFlags,
   ));
   set(fields, "day_master_and_season", result(
     {

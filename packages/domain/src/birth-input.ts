@@ -30,6 +30,13 @@ export type BirthInputValidation =
   | { readonly ok: true; readonly value: FourPillarsProvidedInput; readonly limited: boolean }
   | { readonly ok: false; readonly issues: readonly DomainIssue[] };
 
+export function birthInputDependencyFlags(input: Pick<FourPillarsProvidedInput, "birthTimeStatus" | "dataQuality">): string[] {
+  return [
+    ...(input.birthTimeStatus === "unknown" ? ["HOUR_UNKNOWN"] : input.birthTimeStatus === "approximate" ? ["HOUR_APPROXIMATE"] : []),
+    ...(input.dataQuality === "high" ? [] : [`DATA_QUALITY_${input.dataQuality.toUpperCase()}`]),
+  ];
+}
+
 export function validateBirthInput(input: FourPillarsProvidedInput): BirthInputValidation {
   const issues: DomainIssue[] = [];
   if (!input.subjectId.trim()) issues.push(issue("E_SUBJECT_ID_REQUIRED", "subjectId is required", "/subjectId"));
@@ -58,7 +65,7 @@ export function validateBirthInput(input: FourPillarsProvidedInput): BirthInputV
   }
   return issues.length > 0
     ? { ok: false, issues: Object.freeze(issues) }
-    : { ok: true, value: input, limited: input.birthTimeStatus !== "exact" };
+    : { ok: true, value: input, limited: birthInputDependencyFlags(input).length > 0 };
 }
 
 export function isSexagenaryPillar(pillar: { stem: string; branch: string }): pillar is Pillar {

@@ -683,7 +683,7 @@ function startNewAnalysis(): void {
 }
 
 function createSubject(subjectId: string, overrides: Partial<Pick<SubjectDraft, "year" | "month" | "day" | "hour">> = {}): SubjectDraft {
-  return { subjectId, year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" }, ...overrides };
+  return { subjectId, year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "unknown", birthInput: { method: "manual_four_pillars" }, ...overrides };
 }
 
 function birthInputIssue(subject: SubjectDraft, label: string): string | null {

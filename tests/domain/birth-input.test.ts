@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { validateBirthInput } from "../../packages/domain/src/birth-input.js";
+import { birthInputDependencyFlags, validateBirthInput } from "../../packages/domain/src/birth-input.js";
 
 test("exact four-pillar input is rejected when the hour pillar is missing", () => {
   const result = validateBirthInput({
@@ -29,4 +29,15 @@ test("synthetic fixtures bypass calendar-cycle consistency but production input 
   };
   assert.equal(validateBirthInput(subject).ok, false);
   assert.equal(validateBirthInput({ ...subject, syntheticFixture: true }).ok, true);
+});
+
+test("non-high data quality limits publication even when the hour is exact", () => {
+  const input = {
+    inputMode: "four_pillars_provided" as const, subjectId: "A",
+    fourPillars: { year: { stem: "甲" as const, branch: "子" as const }, month: { stem: "丙" as const, branch: "寅" as const }, day: { stem: "庚" as const, branch: "午" as const }, hour: { stem: "壬" as const, branch: "午" as const } },
+    birthTimeStatus: "exact" as const, dataQuality: "low" as const,
+  };
+  const result = validateBirthInput(input);
+  assert.equal(result.ok && result.limited, true);
+  assert.deepEqual(birthInputDependencyFlags(input), ["DATA_QUALITY_LOW"]);
 });

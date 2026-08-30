@@ -215,5 +215,8 @@ function inputIdentity(input: BirthInputRecord): string {
     <p v-if="model.birthTimeStatus !== 'exact'" class="inline-notice">
       时辰不准确会降低位置关系与部分结构结论的证据等级，系统会保留受限状态。
     </p>
+    <p v-if="model.dataQuality !== 'high'" class="inline-notice">
+      资料尚未标记为“高 · 已核对”，系统会按受限结果发布。
+    </p>
   </fieldset>
 </template>

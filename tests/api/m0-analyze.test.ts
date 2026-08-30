@@ -44,6 +44,13 @@ test("POST /v1/m0/analyze returns all 45 M19 fields and rejects exact input with
     assert.equal(approximateBody.m0.status, "limited");
     assert.deepEqual(approximateBody.m0.dependencyFlags, ["HOUR_APPROXIMATE"]);
 
+    const lowQualityInput = requestBody({ stem: "壬", branch: "午" }, "exact") as { subject: { data_quality: string } };
+    lowQualityInput.subject.data_quality = "low";
+    const lowQuality = await post(port, lowQualityInput);
+    const lowQualityBody = await lowQuality.json() as { m0: { status: string; dependencyFlags: string[] } };
+    assert.equal(lowQualityBody.m0.status, "limited");
+    assert.deepEqual(lowQualityBody.m0.dependencyFlags, ["DATA_QUALITY_LOW"]);
+
     const missingTimezone = requestBody({ stem: "壬", branch: "午" }, "exact") as { subject: { timezone?: string } };
     delete missingTimezone.subject.timezone;
     const missingTimezoneResponse = await post(port, missingTimezone);

@@ -51,6 +51,7 @@ const secondaryStrength = computed(() => {
 });
 const reportSections = computed(() => isSafetyStop.value ? props.result.report.sections.filter((section) => section.id === "safety") : props.result.report.sections);
 const hasUnknownHourLimit = computed(() => props.result.m0.dependencyFlags.includes("HOUR_UNKNOWN") || props.result.relationship.dependencyFlags.includes("M3_HOUR_DEPENDENCY_LIMITED"));
+const hasDataQualityLimit = computed(() => props.result.m0.dependencyFlags.some((flag) => flag.startsWith("DATA_QUALITY_")));
 const primaryPillars = computed(() => props.primarySubject ? formatSubjectPillars(props.primarySubject) : "未记录");
 const secondaryPillars = computed(() => props.hasSecondarySubject && props.secondarySubject ? formatSubjectPillars(props.secondarySubject) : null);
 const primaryLabel = computed(() => props.primarySubject?.subjectId.trim() || "主要命盘");
@@ -92,6 +93,7 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
       </div>
       <p v-if="actionsDisabled" class="inline-notice" role="status">独立现实观察尚未进入当前结果，请再次评估后再保存、打印或导出。</p>
       <p v-if="hasUnknownHourLimit" class="inline-notice" role="status">出生时辰未知：位置关系与部分互动结论按受限结果发布；补全时辰后需重新生成。</p>
+      <p v-if="hasDataQualityLimit" class="inline-notice" role="status">输入资料尚未标记为已核对：本次按受限结果发布；核对四柱与时间后请重新生成。</p>
       <dl class="result-context" aria-label="本次看盘输入摘要">
         <div><dt>分析方式</dt><dd>{{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</dd></div>
         <div><dt>主要命盘</dt><dd>{{ primaryLabel }} · {{ primaryPillars }}</dd></div>

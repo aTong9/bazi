@@ -340,7 +340,7 @@ function makeWorkspace(): AnalysisWorkspaceSnapshot {
     analysisMode: "profile",
     roleBasis: "female_traditional",
     primarySubject: { subjectId: "主命盘", year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } },
-    secondarySubject: { subjectId: "另一方", year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } },
+    secondarySubject: { subjectId: "另一方", year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子", birthTimeStatus: "exact", dataQuality: "unknown", birthInput: { method: "manual_four_pillars" } },
     hasSecondarySubject: false,
     gates: REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" })),
     crossState: { steady: false, pressure: false, repair: false, turningPoint: false, counterevidenceReviewed: false, evidence: { steady: "", pressure: "", repair: "", turningPoint: "", counterevidenceReviewed: "" } },

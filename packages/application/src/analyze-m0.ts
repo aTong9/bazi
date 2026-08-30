@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import type { CatalogSnapshot } from "../../catalog/src/open-catalog-snapshot.js";
-import { validateBirthInput, type FourPillarsProvidedInput } from "../../domain/src/birth-input.js";
+import { birthInputDependencyFlags, validateBirthInput, type FourPillarsProvidedInput } from "../../domain/src/birth-input.js";
 import type { DomainIssue } from "../../domain/src/index.js";
 import { analyzeM02 } from "../../m0-engine/src/m02.js";
 import { analyzeM03 } from "../../m0-engine/src/m03.js";
@@ -84,7 +84,8 @@ export function analyzeM0(command: AnalyzeM0Command, catalog: CatalogSnapshot): 
   const m17 = analyzeM17(m09, m12, m13, m15, m16);
   const m18 = analyzeM18(m17, m15, m16);
   const contracts = catalog.getOutputContracts();
-  const m19 = projectM19({ contracts, birthTimeStatus: validation.value.birthTimeStatus, m02, m03, m04, m05, m06, m07, m08, m09, m10, m11, m12, m13, m14, m15, m16, m17, m18 });
+  const dependencyFlags = birthInputDependencyFlags(validation.value);
+  const m19 = projectM19({ contracts, birthTimeStatus: validation.value.birthTimeStatus, inputDependencyFlags: dependencyFlags, m02, m03, m04, m05, m06, m07, m08, m09, m10, m11, m12, m13, m14, m15, m16, m17, m18 });
   if (m19.issues.length > 0) return { ok: false, httpStatus: 500, issues: m19.issues };
   const ruleTrace = [...new Set([
     ...m02.matchedRuleIds, ...m03.matchedRuleIds, ...m04.matchedRuleIds,
@@ -95,11 +96,6 @@ export function analyzeM0(command: AnalyzeM0Command, catalog: CatalogSnapshot): 
   ])].sort();
   const traceIssues = validateRuleTrace(ruleTrace, catalog);
   if (traceIssues.length > 0) return { ok: false, httpStatus: 500, issues: traceIssues };
-  const dependencyFlags = validation.value.birthTimeStatus === "unknown"
-    ? ["HOUR_UNKNOWN"]
-    : validation.value.birthTimeStatus === "approximate"
-      ? ["HOUR_APPROXIMATE"]
-      : [];
   return {
     ok: true,
     httpStatus: 200,
