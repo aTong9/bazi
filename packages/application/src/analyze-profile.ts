@@ -47,7 +47,7 @@ export function analyzeProfile(command: AnalyzeProfileCommand, catalog: CatalogS
   const eventIds = Object.freeze([...new Set([...m5.realityGates.flatMap((gate) => gate.evidenceIds), ...m5.crossStateEvidence.flatMap((evidence) => evidence.evidenceIds)])]);
   const report = buildAnalysisReport({
     analysisRunId: m0.response.requestId, rulesetDigest: m0.response.rulesetDigest, reportStatus: m5.reportStatus, safetyStatus: m5.safetyStatus,
-    fit: m5.fit, m0Fields: m0.response.m0.fields, profileStatements: m3.synthesis.statements,
+    fit: m5.fit, m0Fields: m0.response.m0.fields, profileStatements: [...m1.synthesis.statements, ...m2.synthesis.summary, ...m3.synthesis.statements],
     riskChains: m4.riskChains.map((chain) => ({ id: chain.id, candidate: chain.structuralCandidate, realityStatus: chain.realityStatus })),
     realityGates: m5.realityGates, ruleIds: [...m0.response.ruleTrace, ...relationshipRuleTrace], sourceIds: [...m0.response.sourceIds, ...relationshipRuleTrace], eventIds,
     dedupLog: eventIds.map((id) => `${id} counted once`), conflictLog: m5.fit.assessment === "AF08" ? ["CORE_REALITY_GATE_CAP_FG2"] : m5.fit.assessment === "AF09" ? ["SAFETY_STOP_OVERRIDES_ORDINARY_FIT"] : [],
