@@ -275,6 +275,37 @@ describe("App analysis provenance", () => {
     expect(summary).toContain("本报告不是命定结果");
     expect(summary).not.toContain("ORDINARY-CONTENT-MUST-STAY-HIDDEN");
     expect(summary).not.toContain("下一步可观察");
+    expect(summary).not.toContain("## 现实闸门");
+  });
+
+  it("downloads adjudicated reality gates and cross-state evidence in the readable summary", async () => {
+    const response = makeAnalysisResponse();
+    response.relationship.m5.crossStateEvidence = [{ state: "pressure", note: "高压期仍能暂停并协商", evidenceIds: ["event-02"] }];
+    installBrowserMocks(response);
+    let downloadedBlob: Blob | undefined;
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn((blob: Blob) => { downloadedBlob = blob; return "blob:evaluate-summary"; }) });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    mounted = mountComponent(App, {});
+    await flushUi();
+    const evaluate = mounted.host.querySelector<HTMLInputElement>('input[value="evaluate"]')!;
+    evaluate.checked = true;
+    evaluate.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+    const gate = mounted.host.querySelector<HTMLSelectElement>("#gate-RG01")!;
+    gate.value = "pass";
+    gate.dispatchEvent(new Event("change", { bubbles: true }));
+    const note = mounted.host.querySelector<HTMLInputElement>('[aria-label="安全、同意与尊重的事实依据"]')!;
+    note.value = "双方能自由表达并撤回同意";
+    note.dispatchEvent(new Event("input", { bubbles: true }));
+    await submit(mounted.host);
+
+    findButton(mounted.host, "下载可读摘要").click();
+    const summary = await readBlob(downloadedBlob!);
+    expect(summary).toContain("## 现实闸门");
+    expect(summary).toContain("RG01 安全、同意与尊重：通过｜事实依据：双方能自由表达并撤回同意");
+    expect(summary).toContain("## 跨情境核验");
+    expect(summary).toContain("压力态：高压期仍能暂停并协商");
   });
 
   it("opens the system print flow for the adjudicated reading", async () => {

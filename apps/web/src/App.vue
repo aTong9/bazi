@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 
 import { analyzeM0Structure, analyzeRelationship, ApiError, fetchHealth } from "@/api";
 import { ARCHIVE_STORAGE_KEY, archiveId, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "@/archive-store";
-import { REALITY_GATES } from "@/constants";
+import { REALITY_GATES, STATUS_LABELS } from "@/constants";
 import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, inactiveSecondarySubject, m0InputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
 import ArchivePanel from "@/components/ArchivePanel.vue";
@@ -315,6 +315,22 @@ function downloadText(content: string, type: string, filename: string): void {
 function readableSummary(analysis: AnalysisResponse): string {
   const safetyStop = analysis.report.safetyStatus === "safety_stop";
   const sections = safetyStop ? analysis.report.sections.filter((section) => section.id === "safety") : analysis.report.sections;
+  const realityEvidence = !safetyStop && analysisMode.value === "evaluate" ? [
+    "## 现实闸门",
+    "",
+    ...analysis.report.realityGates.map((gate) => {
+      const draft = gates.value.find((item) => item.id === gate.id);
+      const note = draft?.note.trim();
+      return `- ${gate.id} ${draft?.label ?? gate.label}：${STATUS_LABELS[gate.status] ?? gate.status}${note ? `｜事实依据：${note}` : ""}`;
+    }),
+    "",
+    ...(analysis.relationship.m5.crossStateEvidence.length ? [
+      "## 跨情境核验",
+      "",
+      ...analysis.relationship.m5.crossStateEvidence.map((evidence) => `- ${STATUS_LABELS[evidence.state] ?? evidence.state}：${evidence.note}`),
+      "",
+    ] : []),
+  ] : [];
   const lines = [
     "# 关系脉络看盘摘要",
     "",
@@ -332,6 +348,7 @@ function readableSummary(analysis: AnalysisResponse): string {
     `- 生成时间：${new Date(analysis.generatedAt).toLocaleString("zh-CN")}`,
     "",
     ...sections.flatMap((section) => [`## ${section.title}`, "", section.body, ""]),
+    ...realityEvidence,
     ...(safetyStop || !analysis.report.observationPlan.length ? [] : [
       "## 下一步可观察",
       "",
