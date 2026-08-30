@@ -60,7 +60,7 @@ BAZI_SNAPSHOT_PATH=rulesets/<digest> npm start
 npm run check:pages
 ```
 
-该命令生成浏览器专用的完整运行目录 `apps/web/dist`：包含 10,918 条运行记录、`/bazi/` 基础路径、SPA 的 `404.html` fallback 和 `.nojekyll`。`master` 更新后，[部署工作流](./.github/workflows/deploy-pages.yml)会发布该目录。Pages 没有 Node API、自定义服务端安全响应头或服务端持久化；需要验证 API 托管契约时仍应使用 `npm run preview`。
+该命令生成浏览器专用的完整运行目录 `apps/web/dist`：包含 10,918 条运行记录、`/bazi/` 基础路径、SPA 的 `404.html` fallback、PWA 清单、内容版本化的离线缓存和 `.nojekyll`。首次成功加载并显示“离线可用”后，界面与同版本规则包可在断网时继续运行；新版本在旧页面关闭后原子接管。`master` 更新后，[部署工作流](./.github/workflows/deploy-pages.yml)会发布该目录。Pages 没有 Node API、自定义服务端安全响应头或服务端持久化；需要验证 API 托管契约时仍应使用 `npm run preview`。
 
 ## 验证与测试
 
@@ -76,7 +76,7 @@ npm run release:check
 - `npm run test:core` / `npm run test:web`：只运行后端或前端测试；
 - `npm run typecheck:core` / `npm run typecheck:web`：只检查对应工程。
 
-截至 2026-08-30，通用测试 runner 共执行 122 个测试用例（Node 核心 81、Web 41）；另有 4 个 Pages 产物/等价性专项测试和 407 项权威开发矩阵。各组口径不同，不合并成一个测试总数。桌面、手机和生产同源路径的浏览器验收记录见 [用户界面与本地开发说明](./docs/development/UI-and-local-development.md)。
+截至 2026-08-30，通用测试 runner 共执行 122 个测试用例（Node 核心 81、Web 41）；另有 5 个 Pages 产物/等价性专项测试和 407 项权威开发矩阵。各组口径不同，不合并成一个测试总数。桌面、手机和生产同源路径的浏览器验收记录见 [用户界面与本地开发说明](./docs/development/UI-and-local-development.md)。
 
 ## 当前产品边界
 

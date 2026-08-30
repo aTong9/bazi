@@ -59,6 +59,23 @@ test("Pages artifact has a base-path SPA fallback and no Node external stubs", a
   }
 });
 
+test("Pages artifact precaches one complete, versioned offline runtime", async () => {
+  const [manifestSource, worker] = await Promise.all([
+    readFile(path.join(dist, "manifest.webmanifest"), "utf8"),
+    readFile(path.join(dist, "sw.js"), "utf8"),
+  ]);
+  const manifest = JSON.parse(manifestSource) as { start_url: string; scope: string; display: string };
+  assert.equal(manifest.start_url, "/bazi/");
+  assert.equal(manifest.scope, "/bazi/");
+  assert.equal(manifest.display, "standalone");
+  assert.match(worker, /bazi-pages-[a-f0-9]{16}/u);
+  assert.match(worker, /\/bazi\/browser-catalog\.json/u);
+  assert.match(worker, /\/bazi\/index\.html/u);
+  assert.match(worker, /cache\.addAll\(PRECACHE_URLS\)/u);
+  assert.match(worker, /caches\.delete/u);
+  assert.match(worker, /event\.request\.mode === "navigate"/u);
+});
+
 test("Pages artifact keeps the printable reading contract", async () => {
   const index = await readFile(path.join(dist, "index.html"), "utf8");
   const stylesheets = [...index.matchAll(/href="([^"]+\.css)"/gu)]
