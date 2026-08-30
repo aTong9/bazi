@@ -17,7 +17,7 @@ export function validateRelationshipResponse(value: unknown, expected?: { readon
   if (expected?.rulesetDigest && response.rulesetDigest !== expected.rulesetDigest) errors.push("rulesetDigest does not match the fixed snapshot");
   if (expected?.integrationVersion && response.versionManifest.integrationVersion !== expected.integrationVersion) errors.push("integrationVersion does not match the fixed snapshot");
   if (Object.keys(response.m0.fields).length !== 45) errors.push("M0 must publish exactly 45 fields");
-  if (response.relationship.status === "dependency_pending" && response.relationship.dependencyFlags.length === 0) errors.push("dependency_pending requires dependency flags");
+  if (["limited", "dependency_pending"].includes(response.relationship.status) && response.relationship.dependencyFlags.length === 0) errors.push(`${response.relationship.status} requires dependency flags`);
   if (response.relationship.m3.status === "complete" && (!response.relationship.m3.repair || !response.relationship.m3.state || !response.relationship.m3.synthesis)) errors.push("complete M3 requires repair, state, and synthesis");
   const m5 = response.relationship.m5;
   if (m5.mode === "single_chart_relationship_profile" && ["FG3", "FG4"].includes(m5.fit.grade)) errors.push("single-chart mode cannot publish FG3 or FG4");

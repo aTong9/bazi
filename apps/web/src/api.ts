@@ -123,9 +123,10 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
   const legacyPayloads = relationship && record(relationship.legacyPayloads);
   if (
     !relationship || !m1 || !m2 || !m3 || !m4 || !m5 || !supplement
-    || !isOneOf(relationship.status, ["provisional", "dependency_pending"])
+    || !isOneOf(relationship.status, ["provisional", "limited", "dependency_pending"])
     || !isOneOf(relationship.roleBasis, ["female_traditional", "male_traditional", "unspecified"])
     || !isStringArray(relationship.dependencyFlags) || !isStringArray(relationship.ruleTrace)
+    || (relationship.status !== "provisional" && relationship.dependencyFlags.length === 0)
     || !(relationship.legacyPayloads === null || (legacyPayloads?.mode === "wrapped_read_only" && Boolean(record(legacyPayloads.payloads))))
     || !isM1(m1) || !isM2(m2) || !isM3(m3) || !isM4(m4) || !isM5(m5)
     || typeof supplement.available !== "boolean"

@@ -19,6 +19,13 @@ test("POST /v1/profile/analyze executes M0-M3 and preserves explicit role-basis 
     const pending = await unspecified.json() as { relationship: { status: string; dependencyFlags: string[] } };
     assert.equal(pending.relationship.status, "dependency_pending"); assert.ok(pending.relationship.dependencyFlags.includes("M1_TRADITIONAL_ROLE_BASIS_REQUIRED"));
 
+    const lowQualityRequest = body("female_traditional");
+    lowQualityRequest.subject.data_quality = "low";
+    const lowQualityResponse = await post(port, lowQualityRequest); assert.equal(lowQualityResponse.status, 200);
+    const lowQuality = await lowQualityResponse.json() as { relationship: { status: string; dependencyFlags: string[] } };
+    assert.equal(lowQuality.relationship.status, "limited");
+    assert.deepEqual(lowQuality.relationship.dependencyFlags, ["DATA_QUALITY_LOW"]);
+
     const withCompatibility = body("female_traditional") as ReturnType<typeof body> & { subject_b?: unknown; legacy_payloads?: unknown };
     withCompatibility.subject_b = { ...withCompatibility.subject, subject_id: "P-B", data_quality: "low" };
     withCompatibility.legacy_payloads = { m5_v0_9: { status: "legacy" } };

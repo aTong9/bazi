@@ -23,6 +23,15 @@ describe("API response guards", () => {
   it("accepts the complete browser-facing analysis contract", () => {
     const response = makeAnalysisResponse();
     expect(parseAnalysisResponse(response)).toBe(response);
+
+    response.m0.status = "limited";
+    response.m0.dependencyFlags = ["DATA_QUALITY_LOW"];
+    response.relationship.status = "limited";
+    response.relationship.dependencyFlags = ["DATA_QUALITY_LOW"];
+    expect(parseAnalysisResponse(response)).toBe(response);
+
+    response.relationship.dependencyFlags = [];
+    expect(() => parseAnalysisResponse(response)).toThrow("关系模块字段无效");
   });
 
   it("rejects relationship responses missing authoritative runtime metadata", () => {
