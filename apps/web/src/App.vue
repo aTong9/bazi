@@ -359,7 +359,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             </label>
           </fieldset>
 
-          <PillarEditor v-model="primarySubject" id-prefix="primary" title="主要命盘" description="当前版本只接受已经排好的四柱，不进行公历生日自动排盘。" />
+          <PillarEditor v-model="primarySubject" id-prefix="primary" title="主要命盘" description="请手动录入已核对的四柱，或用固定 UTC+8 公历时间辅助填入后复核。" />
 
           <fieldset class="role-basis">
             <legend>传统夫妻星计算口径</legend>

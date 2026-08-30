@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 import { hourOptions, JIAZI, monthOptions, normalizeLinkedPillars } from "@/domain";
 import type { SubjectDraft } from "@/types";
+import { formatFourPillars, resolveSolarBirth, type SolarBirthResolution } from "../../../../packages/calendar/src/resolve-solar-birth";
 
 const props = defineProps<{ idPrefix: string; title: string; description: string }>();
 const model = defineModel<SubjectDraft>({ required: true });
+const entryMode = ref<"manual" | "solar">("manual");
+const solarLocalDateTime = ref("");
+const calendarResolution = ref<SolarBirthResolution | null>(null);
 
 const availableMonths = computed(() => monthOptions(model.value.year));
 const availableHours = computed(() => hourOptions(model.value.day));
@@ -14,12 +18,58 @@ const isHourUnknown = computed(() => model.value.birthTimeStatus === "unknown");
 watch([() => model.value.year, () => model.value.day], () => {
   model.value = normalizeLinkedPillars(model.value);
 }, { immediate: true });
+
+function calculateFromSolar(): void {
+  calendarResolution.value = resolveSolarBirth(solarLocalDateTime.value);
+  if (calendarResolution.value.status !== "resolved") return;
+  const { year, month, day, hour } = calendarResolution.value.fourPillars;
+  model.value = {
+    ...model.value,
+    year: `${year.stem}${year.branch}`,
+    month: `${month.stem}${month.branch}`,
+    day: `${day.stem}${day.branch}`,
+    hour: `${hour.stem}${hour.branch}`,
+    birthTimeStatus: "exact",
+    dataQuality: "high",
+  };
+}
 </script>
 
 <template>
   <fieldset class="pillar-editor">
     <legend>{{ title }}</legend>
     <p class="field-help">{{ description }}</p>
+
+    <div class="pillar-entry-switch" role="group" :aria-label="`${title}录入方式`">
+      <button type="button" :class="{ active: entryMode === 'manual' }" @click="entryMode = 'manual'">手动四柱</button>
+      <button type="button" :class="{ active: entryMode === 'solar' }" @click="entryMode = 'solar'">公历排盘辅助</button>
+    </div>
+
+    <section v-if="entryMode === 'solar'" class="solar-birth-assist" :aria-labelledby="`${idPrefix}-solar-title`">
+      <div>
+        <strong :id="`${idPrefix}-solar-title`">输入已经换算好的中国标准时间</strong>
+        <p>仅按固定 UTC+8 计算；不做出生地时区、历史夏令时或真太阳时换算。</p>
+      </div>
+      <div class="solar-input-row">
+        <label class="field-control">
+          <span>公历出生日期与时间</span>
+          <input :id="`${idPrefix}-solar-datetime`" v-model="solarLocalDateTime" type="datetime-local" min="1901-01-01T00:00" max="2099-12-31T23:59">
+        </label>
+        <button type="button" class="secondary-action" @click="calculateFromSolar">计算并填入四柱</button>
+      </div>
+      <div v-if="calendarResolution" class="calendar-resolution" role="status" aria-live="polite" :class="`is-${calendarResolution.status}`">
+        <template v-if="calendarResolution.status === 'resolved'">
+          已填入：{{ formatFourPillars(calendarResolution.fourPillars) }}。请在下方复核后再分析。
+        </template>
+        <template v-else>
+          {{ calendarResolution.message }}
+          <span v-if="calendarResolution.status === 'boundary_unresolved' && calendarResolution.candidates.length">
+            候选：{{ calendarResolution.candidates.map(formatFourPillars).join('；') }}。
+          </span>
+        </template>
+      </div>
+      <p class="solar-policy-note">交节前后、时辰交界和 23 时不会自动选盘；此功能是录入辅助，不代表历法结果已获独立权威校验。</p>
+    </section>
 
     <div class="pillar-grid">
       <label class="field-control">

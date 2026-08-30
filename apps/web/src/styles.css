@@ -738,6 +738,60 @@
     margin-top: 8px;
   }
 
+  .pillar-entry-switch {
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 18px;
+    border: 1px solid var(--ink-200);
+  }
+
+  .pillar-entry-switch button {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 0;
+    background: var(--white);
+    color: var(--ink-700);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .pillar-entry-switch button + button { border-left: 1px solid var(--ink-200); }
+  .pillar-entry-switch button.active { background: var(--teal-050); color: var(--teal-800); }
+
+  .solar-birth-assist {
+    display: grid;
+    gap: 14px;
+    margin-top: 16px;
+    padding: 18px;
+    border-left: 3px solid var(--teal-600);
+    background: var(--teal-050);
+  }
+
+  .solar-birth-assist strong { font-size: 13px; }
+  .solar-birth-assist p { margin-top: 4px; color: var(--ink-600); font-size: 11px; line-height: 1.6; }
+
+  .solar-input-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: end;
+  }
+
+  .field-control input[type="datetime-local"] {
+    width: 100%;
+    height: 46px;
+    padding: 0 12px;
+    border: 1px solid var(--ink-200);
+    border-radius: 0;
+    background: var(--white);
+  }
+
+  .calendar-resolution { padding: 10px 12px; background: var(--white); color: var(--ink-800); font-size: 12px; line-height: 1.6; }
+  .calendar-resolution.is-resolved { border-left: 2px solid var(--teal-600); }
+  .calendar-resolution.is-boundary_unresolved,
+  .calendar-resolution.is-invalid,
+  .calendar-resolution.is-unsupported { border-left: 2px solid var(--amber-700); }
+
   .pillar-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2126,6 +2180,8 @@
       border-top: 1px solid var(--ink-200);
       border-left: 0;
     }
+
+    .solar-input-row { grid-template-columns: 1fr; }
 
     .pillar-grid {
       grid-template-columns: 1fr 1fr;
