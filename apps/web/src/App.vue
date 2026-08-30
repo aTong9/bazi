@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
-import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
+import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
 import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, inactiveSecondarySubject, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
@@ -260,13 +260,7 @@ async function submitAnalysis(): Promise<void> {
 
 function downloadResult(): void {
   if (!result.value) return;
-  const reading = {
-    schema: "bazi.relationship.reading.v1",
-    exportedAt: new Date().toISOString(),
-    containsSensitiveData: true,
-    workspace: currentWorkspace(result.value),
-  };
-  downloadText(`${JSON.stringify(reading, null, 2)}\n`, "application/json", `bazi-relationship-${result.value.requestId}.json`);
+  downloadText(serializeReadingPackage(currentWorkspace(result.value)), "application/json", `bazi-relationship-${result.value.requestId}.json`);
 }
 
 function downloadReadableSummary(): void {

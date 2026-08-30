@@ -5,6 +5,7 @@ import type { AnalysisArchive, AnalysisWorkspaceSnapshot, SubjectDraft } from ".
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
 const MAX_ARCHIVES = 20;
 const BACKUP_SCHEMA = "bazi.relationship.archive-backup.v1";
+const READING_SCHEMA = "bazi.relationship.reading.v1";
 
 interface ArchiveEnvelope { version: 1; archives: AnalysisArchive[] }
 interface ArchiveBackup {
@@ -122,6 +123,21 @@ export function serializeArchiveBackup(archives: readonly AnalysisArchive[], now
   return `${JSON.stringify(backup, null, 2)}\n`;
 }
 
+export function serializeReadingPackage(workspace: AnalysisWorkspaceSnapshot, now = new Date()): string {
+  if (!isWorkspace(workspace)) throw new Error("当前工作区无法导出为完整看盘包。");
+  parseAnalysisResponse(workspace.result);
+  if (!workspaceResultMatches(workspace)) throw new Error("当前工作区输入与分析结果不一致，请重新生成分析。");
+  const exportedAt = now.toISOString();
+  const archive = normalizeArchive({
+    id: `archive-${workspace.result.requestId}`,
+    title: archiveTitle(workspace),
+    savedAt: exportedAt,
+    rulesetDigest: workspace.result.rulesetDigest,
+    workspace: structuredClone(workspace),
+  });
+  return `${JSON.stringify({ schema: READING_SCHEMA, exportedAt, containsSensitiveData: true, workspace: archive.workspace }, null, 2)}\n`;
+}
+
 export function importArchiveBackup(
   raw: string,
   storage: Pick<Storage, "getItem" | "setItem"> = localStorage,
@@ -184,6 +200,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
     throw new Error("备份文件不是有效的 JSON。");
   }
   if (!value || typeof value !== "object") throw new Error("备份文件结构无效。");
+  if ((value as Record<string, unknown>).schema === READING_SCHEMA) return [parseReadingPackage(value as Record<string, unknown>)];
   const backup = value as Partial<ArchiveBackup>;
   if (backup.schema !== BACKUP_SCHEMA) throw new Error("备份版本不受支持。");
   if (backup.containsSensitiveData !== true || typeof backup.exportedAt !== "string" || !Number.isFinite(Date.parse(backup.exportedAt))) {
@@ -205,6 +222,26 @@ function parseBackup(raw: string): AnalysisArchive[] {
     if (!archiveIdentityMatches(archive)) throw new Error(`档案“${archive.title}”的身份无效。`);
   }
   return backup.archives.map(normalizeArchive);
+}
+
+function parseReadingPackage(value: Record<string, unknown>): AnalysisArchive {
+  if (value.containsSensitiveData !== true || typeof value.exportedAt !== "string" || !Number.isFinite(Date.parse(value.exportedAt))) {
+    throw new Error("完整看盘包元数据无效。");
+  }
+  if (!isWorkspace(value.workspace)) throw new Error("完整看盘包工作区无效。");
+  try {
+    parseAnalysisResponse(value.workspace.result);
+  } catch {
+    throw new Error("完整看盘包的分析结果无效。");
+  }
+  if (!workspaceResultMatches(value.workspace)) throw new Error("完整看盘包的输入与分析结果不一致。");
+  return normalizeArchive({
+    id: `archive-${value.workspace.result.requestId}`,
+    title: archiveTitle(value.workspace),
+    savedAt: value.exportedAt,
+    rulesetDigest: value.workspace.result.rulesetDigest,
+    workspace: structuredClone(value.workspace),
+  });
 }
 
 function isEnvelope(value: unknown): value is ArchiveEnvelope {

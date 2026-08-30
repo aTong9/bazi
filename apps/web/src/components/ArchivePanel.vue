@@ -101,7 +101,7 @@ function archiveSearchText(archive: AnalysisArchive): string {
           <p v-if="notice" class="archive-notice" role="status">{{ notice }}</p>
           <div class="archive-transfer">
             <button type="button" class="quiet-button" :disabled="!archives.length" @click="emit('export')">导出全部备份</button>
-            <button type="button" class="quiet-button" @click="fileInput?.click()">从备份导入</button>
+            <button type="button" class="quiet-button" @click="fileInput?.click()">导入备份 / 看盘包</button>
             <input ref="fileInput" class="visually-hidden" type="file" tabindex="-1" accept="application/json,.json" @change="selectBackup" />
           </div>
           <div v-if="recoveryAvailable" class="archive-transfer archive-recovery" role="group" aria-label="损坏档案恢复">

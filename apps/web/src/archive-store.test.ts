@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup } from "./archive-store";
+import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "./archive-store";
 import { analysisInputFingerprint, riskCandidateFingerprint } from "./domain";
 import { makeAnalysisResponse } from "./test/analysis-fixture";
 import type { AnalysisWorkspaceSnapshot } from "./types";
@@ -167,6 +167,14 @@ describe("local analysis archive", () => {
     const newer = importArchiveBackup(newerBackup, destination);
     expect(newer).toMatchObject({ added: 0, updated: 1, skipped: 0 });
     expect(newer.archives[0]?.savedAt).toBe("2026-08-30T04:00:00.000Z");
+
+    const readingStorage = memoryStorage();
+    const reading = serializeReadingPackage(makeWorkspace(), new Date("2026-08-30T05:00:00Z"));
+    expect(JSON.parse(reading)).toMatchObject({ schema: "bazi.relationship.reading.v1", exportedAt: "2026-08-30T05:00:00.000Z", containsSensitiveData: true });
+    expect(previewArchiveBackup(reading, readingStorage)).toMatchObject({ added: 1, updated: 0, skipped: 0 });
+    expect(readingStorage.value()).toBeNull();
+    expect(importArchiveBackup(reading, readingStorage)).toMatchObject({ added: 1, updated: 0, skipped: 0 });
+    expect(loadArchives(readingStorage)[0]?.workspace.result.requestId).toBe(makeWorkspace().result.requestId);
   });
 
   it("rejects unknown, duplicated, oversized, or response-invalid backups without mutating storage", () => {
