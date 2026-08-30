@@ -180,6 +180,11 @@ function downloadResult(): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+function printResult(): void {
+  if (!result.value) return;
+  window.print();
+}
+
 function saveCurrentAnalysis(): void {
   if (!result.value) return;
   try {
@@ -404,7 +409,18 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
 
         <section class="result-panel" aria-label="分析结果">
           <p v-if="archiveNotice" class="archive-notice" role="status">{{ archiveNotice }}</p>
-          <AnalysisResult v-if="result" :result="result" :can-add-observations="isEvaluate" @save="saveCurrentAnalysis" @download="downloadResult" />
+          <AnalysisResult
+            v-if="result"
+            :result="result"
+            :analysis-mode="analysisMode"
+            :primary-subject="primarySubject"
+            :secondary-subject="secondarySubject"
+            :has-secondary-subject="hasSecondarySubject"
+            :can-add-observations="isEvaluate"
+            @save="saveCurrentAnalysis"
+            @print="printResult"
+            @download="downloadResult"
+          />
           <div v-else class="empty-result">
             <div class="empty-orbit" aria-hidden="true"><span>命</span><i></i><i></i><i></i><i></i><i></i></div>
             <p class="eyebrow">等待一次完整输入</p>

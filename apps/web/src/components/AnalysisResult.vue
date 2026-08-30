@@ -3,13 +3,24 @@ import { computed } from "vue";
 
 import { GRADE_COPY, STATUS_LABELS } from "@/constants";
 import { resultValue, shortDigest } from "@/domain";
-import type { AnalysisResponse, ResultItem } from "@/types";
+import type { AnalysisMode, AnalysisResponse, ResultItem, SubjectDraft } from "@/types";
 import ModuleRail from "./ModuleRail.vue";
 
-const props = withDefaults(defineProps<{ result: AnalysisResponse; canAddObservations?: boolean }>(), {
+const props = withDefaults(defineProps<{
+  result: AnalysisResponse;
+  canAddObservations?: boolean;
+  primarySubject?: SubjectDraft | null;
+  secondarySubject?: SubjectDraft | null;
+  hasSecondarySubject?: boolean;
+  analysisMode?: AnalysisMode;
+}>(), {
   canAddObservations: false,
+  primarySubject: null,
+  secondarySubject: null,
+  hasSecondarySubject: false,
+  analysisMode: "profile",
 });
-const emit = defineEmits<{ download: []; save: [] }>();
+const emit = defineEmits<{ download: []; print: []; save: [] }>();
 
 interface DayMasterView { dayMaster?: string; element?: string; yinYang?: string; monthBranch?: string; seasonElement?: string }
 interface ClimateView { state?: string; evidence?: string[]; candidateElements?: string[] }
@@ -32,12 +43,17 @@ const secondaryStrength = computed(() => {
   return fields ? resultValue<string>(fields, "day_master_strength") : null;
 });
 const reportSections = computed(() => isSafetyStop.value ? props.result.report.sections.filter((section) => section.id === "safety") : props.result.report.sections);
+const primaryPillars = computed(() => props.primarySubject ? formatSubjectPillars(props.primarySubject) : "未记录");
+const secondaryPillars = computed(() => props.hasSecondarySubject && props.secondarySubject ? formatSubjectPillars(props.secondarySubject) : null);
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
 function list(values: readonly string[] | undefined, fallback = "当前没有形成稳定陈述。"): string[] {
   const filtered = values?.filter(Boolean).slice(0, 5) ?? [];
   return filtered.length ? filtered : [fallback];
+}
+function formatSubjectPillars(subject: SubjectDraft): string {
+  return [subject.year, subject.month, subject.day, subject.birthTimeStatus === "unknown" ? "时柱未知" : subject.hour].join(" · ");
 }
 </script>
 
@@ -55,8 +71,15 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
       </div>
       <div class="result-tools">
         <button type="button" class="quiet-button" @click="emit('save')">保存到档案</button>
+        <button type="button" class="quiet-button" @click="emit('print')">打印 / 存 PDF</button>
         <button type="button" class="quiet-button" @click="emit('download')">下载完整 JSON</button>
       </div>
+      <dl class="result-context" aria-label="本次看盘输入摘要">
+        <div><dt>分析方式</dt><dd>{{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</dd></div>
+        <div><dt>主要命盘</dt><dd>{{ primaryPillars }}</dd></div>
+        <div v-if="secondaryPillars"><dt>另一方命盘</dt><dd>{{ secondaryPillars }}</dd></div>
+        <div><dt>生成时间</dt><dd>{{ new Date(result.generatedAt).toLocaleString('zh-CN') }}</dd></div>
+      </dl>
     </header>
 
     <section v-if="isSafetyStop" class="safety-only" aria-labelledby="safety-title">

@@ -113,6 +113,8 @@ apps/web/
 - `archive-store.ts`：带版本信封和响应/工作区校验的浏览器本地存储，最多保留 20 份，并负责完整备份的导入、导出与新旧冲突合并；
 - `styles.css`：桌面、平板、390px 手机、键盘焦点和 reduced-motion 行为。
 
+结果顶部的“打印 / 存 PDF”调用浏览器系统打印流程。打印样式只保留已裁决的结果、复核后的四柱摘要、证据等级、M0—M5 正文和阅读边界，隐藏输入表单、页面导航、操作按钮和技术折叠项。若触发 `safety_stop`，打印内容与屏幕投影使用同一安全过滤结果，不得重新包含普通适配叙事。
+
 普通开发构建通过 browser-safe DTO 和运行时 guard 验证 API 响应。Pages 构建则在编译期把契约 Schema 转成浏览器资源，并使用 Web Crypto 校验规则包摘要；最终产物不得包含 Node external stub。
 
 ## 5. 本地开发拓扑
@@ -167,12 +169,12 @@ npm run preview
 截至 2026-08-30：
 
 - `npm run test:core`：81 个 Node runner 用例通过；
-- `npm run test:web`：7 个前端测试文件、36 个 Vitest 用例通过；
-- `npm run test:pages`：3 个 Pages 规则包、运行时等价性和产物用例通过；
+- `npm run test:web`：7 个前端测试文件、38 个 Vitest 用例通过；
+- `npm run test:pages`：4 个 Pages 规则包、运行时等价性、打印契约和产物用例通过；
 - `npm run test:evidence`：407 项权威矩阵全部通过；
 - `npm run typecheck`、`npm run build:web` 和静态 Web 集成测试通过。
 
-117 个通用 runner 用例、3 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
+119 个通用 runner 用例、4 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
 
 前端自动化至少覆盖：
 
