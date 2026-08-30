@@ -47,6 +47,30 @@ describe("PillarEditor", () => {
     mounted.unmount();
   });
 
+  it("removes a specific hour and solar timestamp when birth time becomes unknown", async () => {
+    const modelValue = reactive<SubjectDraft>({
+      subjectId: "subject-a", year: "丙寅", month: "癸巳", day: "癸酉", hour: "戊午",
+      birthTimeStatus: "exact", dataQuality: "high",
+      birthInput: {
+        method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved",
+        resolvedPillars: "丙寅 癸巳 癸酉 戊午",
+        adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
+      },
+    });
+    const mounted = mountComponent(PillarEditor, {
+      modelValue, idPrefix: "subject-a", title: "主要命盘", description: "测试",
+      "onUpdate:modelValue": (value: SubjectDraft) => { Object.assign(modelValue, value); },
+    });
+    const status = mounted.host.querySelector<HTMLSelectElement>("#subject-a-time-status")!;
+    status.value = "unknown";
+    status.dispatchEvent(new Event("change", { bubbles: true }));
+    await nextTick();
+    await nextTick();
+    expect(modelValue).toMatchObject({ birthTimeStatus: "unknown", hour: "壬子", birthInput: { method: "manual_four_pillars" } });
+    expect(mounted.host.querySelector<HTMLSelectElement>("#subject-a-hour")?.disabled).toBe(true);
+    mounted.unmount();
+  });
+
   it("fills reviewed pillars from a clear UTC+8 civil datetime", async () => {
     const modelValue = reactive<SubjectDraft>({
       subjectId: "subject-a", year: "甲子", month: "丙寅", day: "甲子", hour: "甲子",

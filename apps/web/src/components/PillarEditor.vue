@@ -27,6 +27,12 @@ const storedSolarIsStale = computed(() => inputRecord.value.method === "solar_ut
 watch([() => model.value.year, () => model.value.day], () => {
   model.value = normalizeLinkedPillars(model.value);
 }, { immediate: true });
+watch(() => model.value.birthTimeStatus, (status) => {
+  if (status !== "unknown") return;
+  const hour = hourOptions(model.value.day)[0]!;
+  if (model.value.hour === hour && inputRecord.value.method === "manual_four_pillars") return;
+  model.value = { ...model.value, hour, birthInput: { method: "manual_four_pillars" } };
+}, { immediate: true });
 watch(() => model.value.birthInput, (input) => {
   const record = input ?? { method: "manual_four_pillars" as const };
   const nextIdentity = inputIdentity(record);

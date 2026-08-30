@@ -1,5 +1,5 @@
 import { parseAnalysisResponse } from "./api";
-import { analysisInputFingerprint, JIAZI, riskCandidateFingerprint } from "./domain";
+import { analysisInputFingerprint, hourOptions, JIAZI, riskCandidateFingerprint } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, SubjectDraft } from "./types";
 
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
@@ -302,6 +302,7 @@ function workspaceObservationsMatch(workspace: AnalysisWorkspaceSnapshot): boole
 }
 
 function normalizeSubject(subject: SubjectDraft): SubjectDraft {
+  if (subject.birthTimeStatus === "unknown") return { ...subject, hour: hourOptions(subject.day)[0]!, birthInput: { method: "manual_four_pillars" } };
   return { ...subject, birthInput: subject.birthInput ?? { method: "manual_four_pillars" } };
 }
 

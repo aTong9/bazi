@@ -57,13 +57,19 @@ describe("local analysis archive", () => {
   it("upgrades legacy v1 subjects to an explicit manual input source", () => {
     const workspace = makeWorkspace();
     const archive = saveArchive(workspace, memoryStorage(), new Date("2026-08-30T01:00:00Z"))[0]!;
-    delete archive.workspace.primarySubject.birthInput;
+    archive.workspace.primarySubject.birthTimeStatus = "unknown";
+    archive.workspace.primarySubject.hour = "庚午";
+    archive.workspace.primarySubject.birthInput = {
+      method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved", resolvedPillars: "丙寅 癸巳 癸酉 戊午",
+      adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
+    };
     delete archive.workspace.secondarySubject.birthInput;
     delete archive.workspace.resultInputFingerprint;
     archive.workspace.crossState.evidence.pressure = "未勾选但遗留的隐藏事实";
     const storage = memoryStorage(JSON.stringify({ version: 1, archives: [archive] }));
     const restored = loadArchives(storage)[0]!;
     expect(restored.workspace.primarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
+    expect(restored.workspace.primarySubject.hour).toBe("甲子");
     expect(restored.workspace.secondarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
     expect(restored.workspace.crossState.evidence.pressure).toBe("");
     expect(restored.workspace.resultInputFingerprint).toBe(analysisInputFingerprint(restored.workspace));
