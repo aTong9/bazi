@@ -46,6 +46,14 @@ describe("AnalysisResult", () => {
     expect(mounted.host.querySelector<HTMLAnchorElement>('.result-mast .inline-notice a')?.getAttribute("href")).toBe("#primary-time-status");
     expect(mounted.host.querySelector(".result-mast")?.textContent).not.toMatch(/HOUR_UNKNOWN|M3_HOUR/u);
     mounted.unmount();
+
+    const approximate = makeAnalysisResponse();
+    approximate.m0.dependencyFlags = ["HOUR_APPROXIMATE"];
+    const approximateMounted = mountComponent(AnalysisResult, { result: approximate });
+    expect(approximateMounted.host.querySelector(".result-mast .inline-notice")?.textContent).toContain("出生时辰为大致时间");
+    expect(approximateMounted.host.querySelector<HTMLAnchorElement>('.result-mast .inline-notice a')?.getAttribute("href")).toBe("#primary-time-status");
+    expect(approximateMounted.host.querySelector(".result-mast")?.textContent).not.toContain("HOUR_APPROXIMATE");
+    approximateMounted.unmount();
   });
 
   it("explains a data-quality limitation without exposing its dependency code", () => {
