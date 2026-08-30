@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
-import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
+import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
 import { analysisInputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
@@ -107,6 +107,7 @@ onMounted(() => {
   window.addEventListener("online", updateNetworkState);
   window.addEventListener("offline", updateNetworkState);
   window.addEventListener("bazi-offline-ready", markOfflineReady);
+  window.addEventListener("storage", syncArchives);
   void refreshHealth();
 });
 onBeforeUnmount(() => {
@@ -114,11 +115,17 @@ onBeforeUnmount(() => {
   window.removeEventListener("online", updateNetworkState);
   window.removeEventListener("offline", updateNetworkState);
   window.removeEventListener("bazi-offline-ready", markOfflineReady);
+  window.removeEventListener("storage", syncArchives);
   window.removeEventListener("beforeunload", protectUnsavedWork);
 });
 
 function updateNetworkState(): void { isOnline.value = navigator.onLine; }
 function markOfflineReady(): void { offlineReady.value = true; }
+function syncArchives(event: StorageEvent): void {
+  if (event.key !== ARCHIVE_STORAGE_KEY && event.key !== null) return;
+  archives.value = loadArchives();
+  if (archivesOpen.value) archiveNotice.value = "档案已从另一标签页同步。";
+}
 function protectUnsavedWork(event: BeforeUnloadEvent): void {
   if (!hasUnsavedWork.value) return;
   event.preventDefault();

@@ -2,7 +2,7 @@ import { parseAnalysisResponse } from "./api";
 import { JIAZI } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, SubjectDraft } from "./types";
 
-const STORAGE_KEY = "bazi.relationship.archives.v1";
+export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
 const MAX_ARCHIVES = 20;
 const BACKUP_SCHEMA = "bazi.relationship.archive-backup.v1";
 
@@ -25,7 +25,7 @@ export function loadArchives(storage: Pick<Storage, "getItem"> = localStorage): 
   let raw: string | null;
   try {
     if (typeof storage?.getItem !== "function") return [];
-    raw = storage.getItem(STORAGE_KEY);
+    raw = storage.getItem(ARCHIVE_STORAGE_KEY);
   } catch {
     return [];
   }
@@ -156,7 +156,7 @@ export function archiveTitle(workspace: AnalysisWorkspaceSnapshot): string {
 
 function persist(archives: AnalysisArchive[], storage: Pick<Storage, "setItem">): void {
   const envelope: ArchiveEnvelope = { version: 1, archives };
-  storage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+  storage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
 }
 
 function parseBackup(raw: string): AnalysisArchive[] {

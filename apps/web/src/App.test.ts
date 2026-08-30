@@ -2,6 +2,7 @@ import { nextTick } from "vue";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App.vue";
+import { ARCHIVE_STORAGE_KEY } from "./archive-store";
 import { makeAnalysisResponse } from "./test/analysis-fixture";
 import { mountComponent, type MountedComponent } from "./test/mount-component";
 
@@ -183,6 +184,24 @@ describe("App analysis provenance", () => {
     await flushUi();
     expect(findButton(mounted.host, "已保存到档案").disabled).toBe(true);
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true);
+  });
+
+  it("refreshes the local archive list after another tab changes storage", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+    findButton(mounted.host, "保存到档案").click();
+    await flushUi();
+    findButton(mounted.host, "看盘档案 1").click();
+    await flushUi();
+
+    localStorage.clear();
+    window.dispatchEvent(new StorageEvent("storage", { key: ARCHIVE_STORAGE_KEY }));
+    await flushUi();
+    expect(document.body.textContent).toContain("档案已从另一标签页同步");
+    expect(document.body.textContent).toContain("还没有保存的看盘");
+    expect(findButton(mounted.host, "保存到档案").disabled).toBe(false);
   });
 
   it("protects reality observations edited after the reading was saved", async () => {
