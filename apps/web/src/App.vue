@@ -46,7 +46,10 @@ const currentInputFingerprint = computed(() => analysisInputFingerprint({
   gates: gates.value,
   crossState: crossState.value,
 }));
+const currentWorkspaceFingerprint = computed(() => JSON.stringify([currentInputFingerprint.value, observations.value]));
+const safeWorkspaceFingerprint = ref(currentWorkspaceFingerprint.value);
 const hasUnsavedResult = computed(() => Boolean(result.value && !archives.value.some((archive) => archive.id === `archive-${result.value?.requestId}`)));
+const hasUnsavedWork = computed(() => hasUnsavedResult.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value);
 const observableRiskChains = computed(() => {
   if (!result.value || result.value.report.safetyStatus === "safety_stop") return [];
   return result.value.relationship.m4.riskChains;
@@ -92,9 +95,9 @@ watch(currentInputFingerprint, (fingerprint, previousFingerprint) => {
   observations.value = [];
 });
 
-watch(hasUnsavedResult, (unsaved) => {
-  if (unsaved) window.addEventListener("beforeunload", protectUnsavedResult);
-  else window.removeEventListener("beforeunload", protectUnsavedResult);
+watch(hasUnsavedWork, (unsaved) => {
+  if (unsaved) window.addEventListener("beforeunload", protectUnsavedWork);
+  else window.removeEventListener("beforeunload", protectUnsavedWork);
 });
 
 onMounted(() => {
@@ -109,13 +112,13 @@ onBeforeUnmount(() => {
   window.removeEventListener("online", updateNetworkState);
   window.removeEventListener("offline", updateNetworkState);
   window.removeEventListener("bazi-offline-ready", markOfflineReady);
-  window.removeEventListener("beforeunload", protectUnsavedResult);
+  window.removeEventListener("beforeunload", protectUnsavedWork);
 });
 
 function updateNetworkState(): void { isOnline.value = navigator.onLine; }
 function markOfflineReady(): void { offlineReady.value = true; }
-function protectUnsavedResult(event: BeforeUnloadEvent): void {
-  if (!hasUnsavedResult.value) return;
+function protectUnsavedWork(event: BeforeUnloadEvent): void {
+  if (!hasUnsavedWork.value) return;
   event.preventDefault();
   event.returnValue = true;
 }
@@ -232,6 +235,7 @@ function saveCurrentAnalysis(): void {
   if (!result.value) return;
   try {
     archives.value = saveArchive(currentWorkspace(result.value));
+    safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
     archiveNotice.value = "本次看盘已保存到这台设备。";
   } catch (error) {
     archiveNotice.value = error instanceof Error ? error.message : "浏览器没有足够的本地存储空间，未能保存档案。";
@@ -239,6 +243,7 @@ function saveCurrentAnalysis(): void {
 }
 
 async function restoreArchive(archive: AnalysisArchive): Promise<void> {
+  if (hasUnsavedWork.value && !window.confirm("当前输入或看盘尚未保存，仍要打开档案吗？")) return;
   activeRequest?.abort();
   const workspace = cloneJson(archive.workspace);
   analysisMode.value = workspace.analysisMode;
@@ -250,6 +255,7 @@ async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   crossState.value = workspace.crossState;
   observations.value = workspace.observations;
   await nextTick();
+  safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
   resultFingerprint = currentInputFingerprint.value;
   result.value = workspace.result;
   archivesOpen.value = false;
@@ -326,11 +332,12 @@ function resetWorkspace(): void {
   resultFingerprint = null;
   result.value = null;
   errorMessage.value = "";
+  safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
   window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
 }
 
 function startNewAnalysis(): void {
-  if (hasUnsavedResult.value && !window.confirm("本次看盘还未保存，仍要新建分析吗？")) return;
+  if (hasUnsavedWork.value && !window.confirm("当前输入或看盘尚未保存，仍要新建分析吗？")) return;
   resetWorkspace();
 }
 
