@@ -145,6 +145,7 @@ function fingerprintSubject(subject: SubjectDraft) {
     hour: subject.hour,
     birthTimeStatus: subject.birthTimeStatus,
     dataQuality: subject.dataQuality,
+    birthInput: subject.birthInput ?? { method: "manual_four_pillars" },
   };
 }
 

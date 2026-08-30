@@ -55,6 +55,11 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
 function formatSubjectPillars(subject: SubjectDraft): string {
   return [subject.year, subject.month, subject.day, subject.birthTimeStatus === "unknown" ? "时柱未知" : subject.hour].join(" · ");
 }
+function formatInputSource(subject: SubjectDraft): string {
+  const input = subject.birthInput;
+  if (!input || input.method === "manual_four_pillars") return "手动四柱";
+  return `${input.solarLocalDateTime.replace("T", " ")} · ${input.adapter.civilTimeBasis} · ${input.adapter.id} ${input.adapter.version}`;
+}
 </script>
 
 <template>
@@ -77,7 +82,9 @@ function formatSubjectPillars(subject: SubjectDraft): string {
       <dl class="result-context" aria-label="本次看盘输入摘要">
         <div><dt>分析方式</dt><dd>{{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</dd></div>
         <div><dt>主要命盘</dt><dd>{{ primaryPillars }}</dd></div>
+        <div v-if="primarySubject"><dt>主要命盘来源</dt><dd>{{ formatInputSource(primarySubject) }}</dd></div>
         <div v-if="secondaryPillars"><dt>另一方命盘</dt><dd>{{ secondaryPillars }}</dd></div>
+        <div v-if="secondaryPillars && secondarySubject"><dt>另一方命盘来源</dt><dd>{{ formatInputSource(secondarySubject) }}</dd></div>
         <div><dt>生成时间</dt><dd>{{ new Date(result.generatedAt).toLocaleString('zh-CN') }}</dd></div>
       </dl>
     </header>

@@ -112,6 +112,13 @@ describe("four-pillar domain helpers", () => {
     };
     const fingerprint = analysisInputFingerprint(base);
     expect(analysisInputFingerprint({ ...base, primarySubject: { ...subject, day: "乙卯" } })).not.toBe(fingerprint);
+    expect(analysisInputFingerprint({ ...base, primarySubject: {
+      ...subject,
+      birthInput: {
+        method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved", resolvedPillars: "丙寅 癸巳 癸酉 戊午",
+        adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
+      },
+    } })).not.toBe(fingerprint);
     expect(analysisInputFingerprint(structuredClone(base))).toBe(fingerprint);
   });
 });

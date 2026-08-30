@@ -104,6 +104,19 @@ async function refreshHealth(): Promise<void> {
 }
 
 async function submitAnalysis(): Promise<void> {
+  const inputIssues = [
+    birthInputIssue(primarySubject.value, "主要命盘"),
+    ...(hasSecondarySubject.value ? [birthInputIssue(secondarySubject.value, "另一方命盘")] : []),
+  ].filter((issue): issue is string => Boolean(issue));
+  if (inputIssues.length) {
+    result.value = null;
+    resultFingerprint = null;
+    errorMessage.value = "公历辅助记录尚未完成复核。";
+    errorDetails.value = inputIssues;
+    await nextTick();
+    document.querySelector<HTMLElement>(".error-summary")?.focus();
+    return;
+  }
   activeRequest?.abort();
   const controller = new AbortController();
   activeRequest = controller;
@@ -287,7 +300,16 @@ function resetWorkspace(): void {
 }
 
 function createSubject(subjectId: string, overrides: Partial<Pick<SubjectDraft, "year" | "month" | "day" | "hour">> = {}): SubjectDraft {
-  return { subjectId, year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high", ...overrides };
+  return { subjectId, year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" }, ...overrides };
+}
+
+function birthInputIssue(subject: SubjectDraft, label: string): string | null {
+  const input = subject.birthInput;
+  if (!input || input.method === "manual_four_pillars") return null;
+  if (input.resolutionStatus !== "resolved" || !input.resolvedPillars) return `${label}：请完成公历时间计算，或切换为手动四柱。`;
+  const current = [subject.year, subject.month, subject.day, subject.hour].join(" ");
+  if (input.resolvedPillars !== current) return `${label}：四柱已在计算后修改，请重新计算或切换为手动四柱。`;
+  return null;
 }
 
 function createCrossState(): CrossStateDraft {

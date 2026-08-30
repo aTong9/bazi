@@ -13,6 +13,16 @@ export type EvidenceGrade = "FG0" | "FG1" | "FG2" | "FG3" | "FG4";
 export type AssessmentFlag = "AF01" | "AF02" | "AF03" | "AF04" | "AF05" | "AF06" | "AF07" | "AF08" | "AF09";
 
 export interface Pillar { stem: HeavenlyStem; branch: EarthlyBranch }
+export type SolarResolutionStatus = "not_calculated" | "resolved" | "boundary_unresolved" | "invalid" | "unsupported";
+export type BirthInputRecord =
+  | { method: "manual_four_pillars" }
+  | {
+      method: "solar_utc8_assist";
+      solarLocalDateTime: string;
+      resolutionStatus: SolarResolutionStatus;
+      resolvedPillars: string | null;
+      adapter: { id: string; version: string; civilTimeBasis: "UTC+08:00"; trueSolarTimeApplied: false };
+    };
 export interface SubjectDraft {
   subjectId: string;
   year: string;
@@ -21,6 +31,8 @@ export interface SubjectDraft {
   hour: string;
   birthTimeStatus: BirthTimeStatus;
   dataQuality: DataQuality;
+  /** Optional only for backwards compatibility with archives created before input provenance existed. */
+  birthInput?: BirthInputRecord;
 }
 export interface RealityGateDraft { id: RealityGateId; label: string; status: RealityGateStatus; note: string }
 export interface CrossStateDraft {

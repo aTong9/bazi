@@ -27,6 +27,17 @@ describe("local analysis archive", () => {
     expect(loadArchives(invalid)).toEqual([]);
   });
 
+  it("upgrades legacy v1 subjects to an explicit manual input source", () => {
+    const workspace = makeWorkspace();
+    delete workspace.primarySubject.birthInput;
+    delete workspace.secondarySubject.birthInput;
+    const archive = saveArchive(workspace, memoryStorage(), new Date("2026-08-30T01:00:00Z"))[0]!;
+    const storage = memoryStorage(JSON.stringify({ version: 1, archives: [archive] }));
+    const restored = loadArchives(storage)[0]!;
+    expect(restored.workspace.primarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
+    expect(restored.workspace.secondarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
+  });
+
   it("deletes only the selected archive", () => {
     const storage = memoryStorage();
     const first = makeWorkspace();
@@ -82,8 +93,8 @@ function makeWorkspace(): AnalysisWorkspaceSnapshot {
   return {
     analysisMode: "profile",
     roleBasis: "female_traditional",
-    primarySubject: { subjectId: "主命盘", year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high" },
-    secondarySubject: { subjectId: "另一方", year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子", birthTimeStatus: "exact", dataQuality: "high" },
+    primarySubject: { subjectId: "主命盘", year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } },
+    secondarySubject: { subjectId: "另一方", year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } },
     hasSecondarySubject: false,
     gates: ["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"].map((id, index) => ({ id: id as `RG0${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`, label: `闸门 ${index + 1}`, status: "not_assessed", note: "" })),
     crossState: { steady: false, pressure: false, repair: false, turningPoint: false, counterevidenceReviewed: false, evidence: { steady: "", pressure: "", repair: "", turningPoint: "", counterevidenceReviewed: "" } },

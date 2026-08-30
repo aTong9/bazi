@@ -42,7 +42,7 @@ function selectBackup(event: Event): void {
             <div><p class="eyebrow">仅保存在这台设备</p><h2 id="archive-title">看盘档案</h2></div>
             <button type="button" class="quiet-button" aria-label="关闭看盘档案" @click="emit('close')">关闭</button>
           </header>
-          <p class="archive-privacy">档案包含四柱、现实证据与完整分析结果。数据只写入当前浏览器；导出的 JSON 是未加密敏感文件，请自行妥善保管。</p>
+          <p class="archive-privacy">档案可能包含公历出生时间、历法版本、四柱、现实证据与完整分析结果。数据只写入当前浏览器；导出的 JSON 是未加密敏感文件，请自行妥善保管。</p>
           <p v-if="notice" class="archive-notice" role="status">{{ notice }}</p>
           <div class="archive-transfer">
             <button type="button" class="quiet-button" :disabled="!archives.length" @click="emit('export')">导出全部备份</button>
