@@ -1,6 +1,7 @@
 import { parseAnalysisResponse, parseM0AnalysisResponse } from "./api";
 import { analysisInputFingerprint, hourOptions, inactiveSecondarySubject, JIAZI, m0InputFingerprint, monthOptions, riskCandidateFingerprint } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, ArchiveWorkspaceSnapshot, M0WorkspaceSnapshot, SubjectDraft } from "./types";
+import { formatFourPillars, isCurrentCalendarAdapter, resolveSolarBirth } from "../../../packages/calendar/src/resolve-solar-birth";
 
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
 const MAX_ARCHIVES = 20;
@@ -325,6 +326,9 @@ function isSubject(value: unknown): boolean {
   const subject = value as Record<string, unknown>;
   const input = record(subject.birthInput);
   const pillars = [subject.year, subject.month, subject.day, subject.hour].join(" ");
+  const solarResolution = input?.method === "solar_utc8_assist" && typeof input.solarLocalDateTime === "string" && input.solarLocalDateTime
+    ? resolveSolarBirth(input.solarLocalDateTime)
+    : null;
   return hasOnlyKeys(subject, ["subjectId", "year", "month", "day", "hour", "birthTimeStatus", "dataQuality", "birthInput"])
     && typeof subject.subjectId === "string" && subject.subjectId.length <= 120
     && ["year", "month", "day", "hour"].every((key) => typeof subject[key] === "string" && JIAZI.includes(String(subject[key])))
@@ -336,6 +340,9 @@ function isSubject(value: unknown): boolean {
     && (!input || input.method === "manual_four_pillars" || (
       (input.resolutionStatus === "resolved") === (input.resolvedPillars !== null)
       && (subject.birthTimeStatus === "unknown" || input.resolutionStatus !== "resolved" || input.resolvedPillars === pillars)
+      && (!input.solarLocalDateTime || (solarResolution?.status !== "invalid" && solarResolution?.status !== "unsupported"))
+      && (subject.birthTimeStatus === "unknown" || input.resolutionStatus !== "resolved" || !isCurrentCalendarAdapter(input.adapter)
+        || (solarResolution?.status === "resolved" && formatFourPillars(solarResolution.fourPillars) === pillars))
     ));
 }
 
