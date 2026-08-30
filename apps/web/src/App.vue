@@ -115,6 +115,13 @@ watch(currentInputFingerprint, (fingerprint, previousFingerprint) => {
   observations.value = [];
 });
 
+watch(analysisMode, (mode) => {
+  if (mode !== "profile") return;
+  gates.value = REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
+  crossState.value = createCrossState();
+  observations.value = [];
+});
+
 watch(hasUnsavedWork, (unsaved) => {
   if (unsaved) window.addEventListener("beforeunload", protectUnsavedWork);
   else window.removeEventListener("beforeunload", protectUnsavedWork);

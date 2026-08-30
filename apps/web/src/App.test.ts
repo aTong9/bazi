@@ -121,6 +121,43 @@ describe("App analysis provenance", () => {
     expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/evaluate")).toHaveLength(0);
   });
 
+  it("clears hidden reality evidence when switching back to a profile", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    mounted = mountComponent(App, {});
+    await flushUi();
+    const evaluateMode = mounted.host.querySelector<HTMLInputElement>('input[value="evaluate"]')!;
+    evaluateMode.checked = true;
+    evaluateMode.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+
+    const gateStatus = mounted.host.querySelector<HTMLSelectElement>("#gate-RG01")!;
+    gateStatus.value = "pass";
+    gateStatus.dispatchEvent(new Event("change", { bubbles: true }));
+    const gateNote = gateStatus.closest(".gate-row")!.querySelector<HTMLInputElement>('input[type="text"]')!;
+    gateNote.value = "双方曾明确确认并可随时撤回同意";
+    gateNote.dispatchEvent(new Event("input", { bubbles: true }));
+    const steady = mounted.host.querySelector<HTMLInputElement>("#cross-steady")!;
+    steady.checked = true;
+    steady.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+    const steadyEvidence = mounted.host.querySelector<HTMLInputElement>("#cross-steady-evidence")!;
+    steadyEvidence.value = "连续三周的日常安排记录";
+    steadyEvidence.dispatchEvent(new Event("input", { bubbles: true }));
+
+    const profileMode = mounted.host.querySelector<HTMLInputElement>('input[value="profile"]')!;
+    profileMode.checked = true;
+    profileMode.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+    await submit(mounted.host);
+    findButton(mounted.host, "保存到档案").click();
+
+    const stored = JSON.parse(localStorage.getItem(ARCHIVE_STORAGE_KEY)!) as { archives: Array<{ workspace: { gates: Array<{ status: string; note: string }>; crossState: { steady: boolean; evidence: { steady: string } } } }> };
+    expect(stored.archives[0]?.workspace.gates.every((gate) => gate.status === "not_assessed" && gate.note === "")).toBe(true);
+    expect(stored.archives[0]?.workspace.crossState).toMatchObject({ steady: false, evidence: { steady: "" } });
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).not.toContain("双方曾明确确认");
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).not.toContain("连续三周");
+  });
+
   it("downloads the exact response through a connected anchor and then releases the blob URL", async () => {
     const response = makeAnalysisResponse();
     installBrowserMocks(response);
