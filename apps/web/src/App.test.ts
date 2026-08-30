@@ -186,7 +186,7 @@ describe("App analysis provenance", () => {
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true);
   });
 
-  it("refreshes the local archive list after another tab changes storage", async () => {
+  it("syncs another tab and confirms before overwriting its newer workspace", async () => {
     installBrowserMocks(makeAnalysisResponse());
     mounted = mountComponent(App, {});
     await flushUi();
@@ -195,6 +195,20 @@ describe("App analysis provenance", () => {
     await flushUi();
     findButton(mounted.host, "看盘档案 1").click();
     await flushUi();
+
+    const envelope = JSON.parse(localStorage.getItem(ARCHIVE_STORAGE_KEY)!) as { archives: Array<{ workspace: { primarySubject: { subjectId: string } } }> };
+    envelope.archives[0]!.workspace.primarySubject.subjectId = "另一标签页版本";
+    localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
+    window.dispatchEvent(new StorageEvent("storage", { key: ARCHIVE_STORAGE_KEY }));
+    await flushUi();
+    expect(findButton(mounted.host, "更新档案").disabled).toBe(false);
+    const cancelOverwrite = vi.fn(() => false);
+    vi.stubGlobal("confirm", cancelOverwrite);
+    findButton(mounted.host, "更新档案").click();
+    await flushUi();
+    expect(cancelOverwrite).toHaveBeenCalledWith("这份档案已在另一标签页或备份中更新。继续会用当前工作区覆盖较新版本，是否继续？");
+    expect(document.body.textContent).toContain("已取消覆盖");
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain("另一标签页版本");
 
     localStorage.clear();
     window.dispatchEvent(new StorageEvent("storage", { key: ARCHIVE_STORAGE_KEY }));
