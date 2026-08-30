@@ -75,6 +75,10 @@ describe("local analysis archive", () => {
     archive.workspace.crossState.steady = true;
     archive.workspace.crossState.evidence.steady = "画像模式不应保留的跨情境事实";
     archive.workspace.crossState.evidence.pressure = "未勾选但遗留的隐藏事实";
+    archive.workspace.observations = [{
+      chainId: "M4-C01", slot: 0, source: "self_report", context: "画像模式不应保留的风险观察", direction: "supports",
+      basisFingerprint: "legacy", candidateFingerprint: "legacy", basisRequestId: archive.workspace.result.requestId,
+    }];
     const storage = memoryStorage(JSON.stringify({ version: 1, archives: [archive] }));
     const restored = loadArchives(storage)[0]!;
     expect(restored.workspace.primarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
@@ -83,6 +87,7 @@ describe("local analysis archive", () => {
     expect(JSON.stringify(restored)).not.toContain("1991-02-03T04:05");
     expect(restored.workspace.gates[0]).toMatchObject({ status: "not_assessed", note: "" });
     expect(restored.workspace.crossState).toMatchObject({ steady: false, evidence: { steady: "", pressure: "" } });
+    expect(restored.workspace.observations).toEqual([]);
     expect(restored.workspace.crossState.evidence.pressure).toBe("");
     expect(restored.workspace.resultInputFingerprint).toBe(analysisInputFingerprint(restored.workspace));
 

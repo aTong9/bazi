@@ -277,7 +277,10 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
     if (value.workspace.analysisMode === "profile") value.workspace.crossState[state] = false;
     if (!value.workspace.crossState[state]) value.workspace.crossState.evidence[state] = "";
   }
-  if (value.workspace.analysisMode === "profile") value.workspace.gates = value.workspace.gates.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
+  if (value.workspace.analysisMode === "profile") {
+    value.workspace.gates = value.workspace.gates.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
+    value.workspace.observations = [];
+  }
   value.workspace.resultInputFingerprint = analysisInputFingerprint(value.workspace);
   return value;
 }
@@ -290,7 +293,7 @@ function workspaceResultMatches(workspace: AnalysisWorkspaceSnapshot): boolean {
 }
 
 function workspaceObservationsMatch(workspace: AnalysisWorkspaceSnapshot): boolean {
-  if (workspace.analysisMode === "profile") return workspace.observations.length === 0;
+  if (workspace.analysisMode === "profile") return true;
   const basisFingerprint = workspace.resultInputFingerprint ?? analysisInputFingerprint(workspace);
   const candidates = new Map(workspace.result.relationship.m4.riskChains.map((chain) => [chain.id, riskCandidateFingerprint(chain)]));
   const slots = new Set<string>();
