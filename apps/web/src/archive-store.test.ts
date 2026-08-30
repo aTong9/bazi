@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deleteArchive, loadArchives, saveArchive } from "./archive-store";
+import { deleteArchive, importArchiveBackup, loadArchives, saveArchive, serializeArchiveBackup } from "./archive-store";
 import { makeAnalysisResponse } from "./test/analysis-fixture";
 import type { AnalysisWorkspaceSnapshot } from "./types";
 
@@ -36,6 +36,46 @@ describe("local analysis archive", () => {
     const remaining = deleteArchive(two[1]!.id, storage);
     expect(remaining.map((item) => item.id)).toEqual(["archive-request-second"]);
   });
+
+  it("exports a self-describing backup and imports new and newer records", () => {
+    const source = memoryStorage();
+    const first = saveArchive(makeWorkspace(), source, new Date("2026-08-30T01:00:00Z"));
+    const backup = serializeArchiveBackup(first, new Date("2026-08-30T02:00:00Z"));
+    expect(JSON.parse(backup)).toMatchObject({
+      schema: "bazi.relationship.archive-backup.v1",
+      exportedAt: "2026-08-30T02:00:00.000Z",
+      containsSensitiveData: true,
+    });
+
+    const destination = memoryStorage();
+    const added = importArchiveBackup(backup, destination);
+    expect(added).toMatchObject({ added: 1, updated: 0, skipped: 0 });
+
+    saveArchive(makeWorkspace(), destination, new Date("2026-08-30T03:00:00Z"));
+    const older = importArchiveBackup(backup, destination);
+    expect(older).toMatchObject({ added: 0, updated: 0, skipped: 1 });
+
+    const newerBackup = serializeArchiveBackup(saveArchive(makeWorkspace(), source, new Date("2026-08-30T04:00:00Z")));
+    const newer = importArchiveBackup(newerBackup, destination);
+    expect(newer).toMatchObject({ added: 0, updated: 1, skipped: 0 });
+    expect(newer.archives[0]?.savedAt).toBe("2026-08-30T04:00:00.000Z");
+  });
+
+  it("rejects unknown, duplicated, oversized, or response-invalid backups without mutating storage", () => {
+    const storage = memoryStorage();
+    const current = saveArchive(makeWorkspace(), storage);
+    const valid = JSON.parse(serializeArchiveBackup(current)) as Record<string, unknown>;
+    const before = storage.value();
+
+    expect(() => importArchiveBackup("not-json", storage)).toThrow("不是有效的 JSON");
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, schema: "future" }), storage)).toThrow("版本不受支持");
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: Array.from({ length: 21 }, () => current[0]) }), storage)).toThrow("数量超过 20");
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [current[0], current[0]] }), storage)).toThrow("重复档案");
+    const invalidResponse = structuredClone(current[0]!);
+    invalidResponse.workspace.result = { rulesetDigest: invalidResponse.rulesetDigest } as typeof invalidResponse.workspace.result;
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [invalidResponse] }), storage)).toThrow("分析结果无效");
+    expect(storage.value()).toBe(before);
+  });
 });
 
 function makeWorkspace(): AnalysisWorkspaceSnapshot {
@@ -45,7 +85,7 @@ function makeWorkspace(): AnalysisWorkspaceSnapshot {
     primarySubject: { subjectId: "主命盘", year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high" },
     secondarySubject: { subjectId: "另一方", year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子", birthTimeStatus: "exact", dataQuality: "high" },
     hasSecondarySubject: false,
-    gates: [],
+    gates: ["RG01", "RG02", "RG03", "RG04", "RG05", "RG06", "RG07", "RG08"].map((id, index) => ({ id: id as `RG0${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`, label: `闸门 ${index + 1}`, status: "not_assessed", note: "" })),
     crossState: { steady: false, pressure: false, repair: false, turningPoint: false, counterevidenceReviewed: false, evidence: { steady: "", pressure: "", repair: "", turningPoint: "", counterevidenceReviewed: "" } },
     observations: [],
     result: makeAnalysisResponse(),
@@ -57,5 +97,6 @@ function memoryStorage(initial?: string) {
   return {
     getItem: (_key: string) => value,
     setItem: (_key: string, next: string) => { value = next; },
+    value: () => value,
   };
 }
