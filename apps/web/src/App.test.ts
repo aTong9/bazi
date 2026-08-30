@@ -1,5 +1,5 @@
 import { nextTick } from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App.vue";
 import { makeAnalysisResponse } from "./test/analysis-fixture";
@@ -8,12 +8,19 @@ import { mountComponent, type MountedComponent } from "./test/mount-component";
 const health = { status: "ready", catalog: { rulesetDigest: "digest", loadedRecords: 10, compiledRecords: 10, activeModules: ["M0", "M1", "M2", "M3", "M4", "M5"] } };
 let mounted: MountedComponent | null = null;
 
+beforeEach(() => {
+  const storage = browserStorage();
+  Object.defineProperty(window, "localStorage", { configurable: true, value: storage });
+  vi.stubGlobal("localStorage", storage);
+});
+
 afterEach(() => {
   mounted?.unmount();
   mounted = null;
   vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  localStorage.clear();
   document.body.replaceChildren();
 });
 
@@ -72,7 +79,7 @@ describe("App analysis provenance", () => {
     mounted = mountComponent(App, {});
     await flushUi();
     await submit(mounted.host);
-    mounted.host.querySelector<HTMLButtonElement>(".result-mast .quiet-button")!.click();
+    findButton(mounted.host, "下载完整 JSON").click();
 
     expect(createObjectURL).toHaveBeenCalledOnce();
     expect(downloadName).toContain(response.requestId);
@@ -82,6 +89,30 @@ describe("App analysis provenance", () => {
     expect(JSON.parse(await readBlob(downloadedBlob!))).toEqual(response);
     await new Promise((resolve) => window.setTimeout(resolve, 0));
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:test-result");
+  });
+
+  it("saves a completed reading locally and restores it after starting over", async () => {
+    const response = makeAnalysisResponse();
+    installBrowserMocks(response);
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+
+    findButton(mounted.host, "保存到档案").click();
+    await flushUi();
+    expect(localStorage.getItem("bazi.relationship.archives.v1")).toContain(response.requestId);
+    expect(mounted.host.textContent).toContain("本次看盘已保存到这台设备");
+
+    findButton(mounted.host, "新建分析").click();
+    await flushUi();
+    expect(mounted.host.querySelector(".analysis-result")).toBeNull();
+    findButton(mounted.host, "看盘档案 1").click();
+    await flushUi();
+    expect(document.body.textContent).toContain("看盘档案");
+    findButton(document.body, "打开档案").click();
+    await flushUi();
+    expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
+    expect(mounted.host.textContent).toContain("已打开");
   });
 });
 
@@ -122,4 +153,22 @@ function readBlob(blob: Blob): Promise<string> {
     reader.addEventListener("error", () => reject(reader.error));
     reader.readAsText(blob);
   });
+}
+
+function findButton(root: ParentNode, label: string): HTMLButtonElement {
+  const button = [...root.querySelectorAll<HTMLButtonElement>("button")].find((item) => item.textContent?.trim() === label);
+  if (!button) throw new Error(`button not found: ${label}`);
+  return button;
+}
+
+function browserStorage(): Storage {
+  const values = new Map<string, string>();
+  return {
+    get length() { return values.size; },
+    clear: () => values.clear(),
+    getItem: (key) => values.get(key) ?? null,
+    key: (index) => [...values.keys()][index] ?? null,
+    removeItem: (key) => { values.delete(key); },
+    setItem: (key, value) => { values.set(key, value); },
+  };
 }

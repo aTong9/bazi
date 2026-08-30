@@ -9,7 +9,7 @@ import ModuleRail from "./ModuleRail.vue";
 const props = withDefaults(defineProps<{ result: AnalysisResponse; canAddObservations?: boolean }>(), {
   canAddObservations: false,
 });
-const emit = defineEmits<{ download: [] }>();
+const emit = defineEmits<{ download: []; save: [] }>();
 
 interface DayMasterView { dayMaster?: string; element?: string; yinYang?: string; monthBranch?: string; seasonElement?: string }
 interface ClimateView { state?: string; evidence?: string[]; candidateElements?: string[] }
@@ -53,7 +53,10 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
         <span>{{ result.report.evidenceGrade }}</span>
         <small>证据发布等级</small>
       </div>
-      <button type="button" class="quiet-button" @click="emit('download')">下载完整 JSON</button>
+      <div class="result-tools">
+        <button type="button" class="quiet-button" @click="emit('save')">保存到档案</button>
+        <button type="button" class="quiet-button" @click="emit('download')">下载完整 JSON</button>
+      </div>
     </header>
 
     <section v-if="isSafetyStop" class="safety-only" aria-labelledby="safety-title">

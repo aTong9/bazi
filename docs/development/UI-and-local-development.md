@@ -109,6 +109,8 @@ apps/web/
 - `RealityGatePanel.vue`：现实闸门与跨情境核验；
 - `ObservationPanel.vue`：首次分析后，按 M4 chain ID 录入两份独立现实观察；
 - `AnalysisResult.vue`：安全优先的报告投影和 M0—M5 详细依据；
+- `ArchivePanel.vue`：本地看盘档案的恢复、删除与隐私边界；
+- `archive-store.ts`：带版本信封和响应校验的浏览器本地存储，最多保留 20 份；
 - `styles.css`：桌面、平板、390px 手机、键盘焦点和 reduced-motion 行为。
 
 普通开发构建通过 browser-safe DTO 和运行时 guard 验证 API 响应。Pages 构建则在编译期把契约 Schema 转成浏览器资源，并使用 Web Crypto 校验规则包摘要；最终产物不得包含 Node external stub。
@@ -165,12 +167,12 @@ npm run preview
 截至 2026-08-30：
 
 - `npm run test:core`：76 个 Node runner 用例通过；
-- `npm run test:web`：6 个前端测试文件、28 个 Vitest 用例通过；
+- `npm run test:web`：7 个前端测试文件、32 个 Vitest 用例通过；
 - `npm run test:pages`：3 个 Pages 规则包、运行时等价性和产物用例通过；
 - `npm run test:evidence`：407 项权威矩阵全部通过；
 - `npm run typecheck`、`npm run build:web` 和静态 Web 集成测试通过。
 
-104 个通用 runner 用例、3 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
+108 个通用 runner 用例、3 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
 
 前端自动化至少覆盖：
 
@@ -237,7 +239,7 @@ npm run check:pages
 
 构建步骤会生成规则包、使用 `/bazi/` 基础路径编译前端，并产生 `404.html` 和 `.nojekyll`。Pages 专项测试验证规则包摘要/数量/45 项 M19 输出契约、浏览器与 SQLite 三条代表性业务路径结果等价、深链接 fallback，以及最终脚本不含 Node external stub。
 
-隐私与限制：分析请求不发送到本项目 API，页面刷新后输入也不会由应用持久化；但 GitHub 作为静态托管方仍会收到资源请求的常规网络元数据。Pages 不提供 Node API、自定义服务端响应头、数据库或服务端保存功能。本地 API 与同源静态托管契约继续通过 `npm run preview` 验证。
+隐私与限制：分析请求不发送到本项目 API。只有用户点击“保存到档案”时，四柱、现实证据和完整结果才会写入当前浏览器；最多保留 20 份，可逐份恢复和删除，清理站点数据也会全部清除。GitHub 作为静态托管方仍会收到资源请求的常规网络元数据。Pages 不提供 Node API、自定义服务端响应头、数据库或服务端保存功能。本地 API 与同源静态托管契约继续通过 `npm run preview` 验证。
 
 ## 9. 明确不在当前 UI 内的能力
 
@@ -248,6 +250,6 @@ npm run check:pages
 - 把另一方命盘当作现实适配或安全证据；
 - 真实案例校准录入和治理审批后台。
 
-当前 API 与界面也不会自动持久化出生资料、关系事实或分析结果；页面只展示本次响应，持久保存需要用户主动导出或未来另建应用数据域。
+当前 API 与界面不会自动上传或服务端持久化出生资料、关系事实或分析结果。用户可主动下载 JSON，或明确点击“保存到档案”写入当前浏览器本地存储；跨设备同步仍需要未来另建应用数据域。
 
 这些能力需要独立契约、数据来源和安全审查，不应通过前端猜测或隐式默认值补齐。
