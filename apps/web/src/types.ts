@@ -131,3 +131,23 @@ export interface HealthResponse {
   status: "ready";
   catalog: { rulesetDigest: string; loadedRecords: number; compiledRecords: number; activeModules: string[] };
 }
+
+export interface AnalysisWorkspaceSnapshot {
+  analysisMode: AnalysisMode;
+  roleBasis: RoleBasis;
+  primarySubject: SubjectDraft;
+  secondarySubject: SubjectDraft;
+  hasSecondarySubject: boolean;
+  gates: RealityGateDraft[];
+  crossState: CrossStateDraft;
+  observations: ObservationDraft[];
+  result: AnalysisResponse;
+}
+
+export interface AnalysisArchive {
+  id: string;
+  title: string;
+  savedAt: string;
+  rulesetDigest: string;
+  workspace: AnalysisWorkspaceSnapshot;
+}

@@ -254,8 +254,27 @@
     box-shadow: 0 0 0 4px var(--red-100);
   }
 
-  .app-header > .quiet-button {
+  .header-actions {
+    display: flex;
+    gap: 18px;
     justify-self: end;
+    align-items: center;
+  }
+
+  .header-actions .quiet-button {
+    justify-self: end;
+  }
+
+  .header-actions .quiet-button span {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    margin-left: 4px;
+    border-radius: 999px;
+    background: var(--teal-100);
+    color: var(--teal-700);
+    font-size: 10px;
   }
 
   .workspace {
@@ -420,6 +439,148 @@
   .primary-button:disabled {
     cursor: wait;
     opacity: .67;
+  }
+
+  .result-tools {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+  }
+
+  .archive-notice {
+    margin-bottom: 18px;
+    padding: 11px 14px;
+    border-left: 3px solid var(--teal-600);
+    background: var(--teal-050);
+    color: var(--ink-700);
+    font-size: 12px;
+  }
+
+  .archive-overlay {
+    position: fixed;
+    z-index: 90;
+    inset: 0;
+    display: flex;
+    justify-content: flex-end;
+    background: rgb(16 38 43 / 38%);
+    backdrop-filter: blur(3px);
+  }
+
+  .archive-panel {
+    width: min(520px, 100%);
+    height: 100%;
+    overflow-y: auto;
+    padding: clamp(28px, 5vw, 52px);
+    background: var(--paper);
+    box-shadow: -20px 0 70px rgb(16 38 43 / 18%);
+  }
+
+  .archive-panel > header {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--ink-200);
+  }
+
+  .archive-panel h2 {
+    margin-top: 7px;
+    font-size: 38px;
+  }
+
+  .archive-privacy {
+    margin: 22px 0 26px;
+    color: var(--ink-600);
+    font-size: 13px;
+  }
+
+  .archive-list {
+    display: grid;
+    border-top: 1px solid var(--ink-200);
+  }
+
+  .archive-list article {
+    display: grid;
+    gap: 20px;
+    padding: 23px 0;
+    border-bottom: 1px solid var(--ink-200);
+  }
+
+  .archive-list h3,
+  .archive-empty h3 {
+    font-size: 21px;
+  }
+
+  .archive-list article p {
+    margin-top: 7px;
+    color: var(--ink-600);
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+
+  .archive-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .archive-actions .primary-button {
+    min-width: 128px;
+    min-height: 38px;
+    padding-inline: 16px;
+    font-size: 12px;
+  }
+
+  .danger-button:hover {
+    border-bottom-color: var(--red-700);
+    color: var(--red-700);
+  }
+
+  .archive-empty {
+    display: grid;
+    justify-items: center;
+    padding: 64px 12px;
+    color: var(--ink-600);
+    text-align: center;
+  }
+
+  .archive-empty > span {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 20px;
+    border: 1px solid var(--ink-300);
+    border-radius: 50%;
+    color: var(--teal-700);
+    font-family: var(--serif);
+    font-size: 28px;
+  }
+
+  .archive-empty p {
+    margin-top: 9px;
+    font-size: 13px;
+  }
+
+  .archive-panel-enter-active,
+  .archive-panel-leave-active {
+    transition: opacity 180ms ease;
+  }
+
+  .archive-panel-enter-active .archive-panel,
+  .archive-panel-leave-active .archive-panel {
+    transition: translate 220ms ease;
+  }
+
+  .archive-panel-enter-from,
+  .archive-panel-leave-to {
+    opacity: 0;
+  }
+
+  .archive-panel-enter-from .archive-panel,
+  .archive-panel-leave-to .archive-panel {
+    translate: 100% 0;
   }
 
   .spinner {
@@ -1834,7 +1995,7 @@
       margin-top: 3px;
     }
 
-    .app-header > .quiet-button {
+    .header-actions {
       grid-column: 2;
       grid-row: 1;
     }

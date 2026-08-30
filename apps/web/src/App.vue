@@ -2,13 +2,15 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
+import { deleteArchive, loadArchives, saveArchive } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
 import { analysisInputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
+import ArchivePanel from "@/components/ArchivePanel.vue";
 import ObservationPanel from "@/components/ObservationPanel.vue";
 import PillarEditor from "@/components/PillarEditor.vue";
 import RealityGatePanel from "@/components/RealityGatePanel.vue";
-import type { AnalysisMode, AnalysisResponse, CrossStateDraft, HealthResponse, ObservationDraft, RealityGateDraft, RoleBasis, SubjectDraft } from "@/types";
+import type { AnalysisArchive, AnalysisMode, AnalysisResponse, AnalysisWorkspaceSnapshot, CrossStateDraft, HealthResponse, ObservationDraft, RealityGateDraft, RoleBasis, SubjectDraft } from "@/types";
 
 const primarySubject = ref<SubjectDraft>(createSubject("主命盘"));
 const secondarySubject = ref<SubjectDraft>(createSubject("另一方", { year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子" }));
@@ -24,6 +26,9 @@ const healthError = ref(false);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const errorDetails = ref<string[]>([]);
+const archives = ref<AnalysisArchive[]>([]);
+const archivesOpen = ref(false);
+const archiveNotice = ref("");
 let activeRequest: AbortController | null = null;
 let resultFingerprint: string | null = null;
 
@@ -83,7 +88,10 @@ watch(currentInputFingerprint, (fingerprint, previousFingerprint) => {
   observations.value = [];
 });
 
-onMounted(() => { void refreshHealth(); });
+onMounted(() => {
+  archives.value = loadArchives();
+  void refreshHealth();
+});
 onBeforeUnmount(() => activeRequest?.abort());
 
 async function refreshHealth(): Promise<void> {
@@ -172,6 +180,61 @@ function downloadResult(): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+function saveCurrentAnalysis(): void {
+  if (!result.value) return;
+  try {
+    archives.value = saveArchive(currentWorkspace(result.value));
+    archiveNotice.value = "本次看盘已保存到这台设备。";
+  } catch {
+    archiveNotice.value = "浏览器没有足够的本地存储空间，未能保存档案。";
+  }
+}
+
+async function restoreArchive(archive: AnalysisArchive): Promise<void> {
+  activeRequest?.abort();
+  const workspace = cloneJson(archive.workspace);
+  analysisMode.value = workspace.analysisMode;
+  roleBasis.value = workspace.roleBasis;
+  primarySubject.value = workspace.primarySubject;
+  secondarySubject.value = workspace.secondarySubject;
+  hasSecondarySubject.value = workspace.hasSecondarySubject;
+  gates.value = workspace.gates;
+  crossState.value = workspace.crossState;
+  observations.value = workspace.observations;
+  await nextTick();
+  resultFingerprint = currentInputFingerprint.value;
+  result.value = workspace.result;
+  archivesOpen.value = false;
+  archiveNotice.value = `已打开“${archive.title}”。`;
+  await nextTick();
+  document.querySelector<HTMLElement>(".result-mast h2")?.focus({ preventScroll: true });
+}
+
+function removeArchive(id: string): void {
+  try {
+    archives.value = deleteArchive(id);
+    archiveNotice.value = "档案已从这台设备删除。";
+  } catch {
+    archiveNotice.value = "档案删除失败，请检查浏览器存储权限。";
+  }
+}
+
+function currentWorkspace(analysisResult: AnalysisResponse): AnalysisWorkspaceSnapshot {
+  return {
+    analysisMode: analysisMode.value,
+    roleBasis: roleBasis.value,
+    primarySubject: cloneJson(primarySubject.value),
+    secondarySubject: cloneJson(secondarySubject.value),
+    hasSecondarySubject: hasSecondarySubject.value,
+    gates: cloneJson(gates.value),
+    crossState: cloneJson(crossState.value),
+    observations: cloneJson(observations.value),
+    result: cloneJson(analysisResult),
+  };
+}
+
+function cloneJson<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
+
 function resetWorkspace(): void {
   activeRequest?.abort();
   primarySubject.value = createSubject("主命盘");
@@ -227,7 +290,10 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
         <span aria-hidden="true"></span>
         {{ healthError ? "分析服务未连接" : health ? `规则已就绪 · ${health.catalog.compiledRecords.toLocaleString('zh-CN')} 条` : "正在连接规则引擎" }}
       </div>
-      <button type="button" class="quiet-button" @click="resetWorkspace">新建分析</button>
+      <div class="header-actions">
+        <button type="button" class="quiet-button" @click="archivesOpen = true">看盘档案 <span v-if="archives.length">{{ archives.length }}</span></button>
+        <button type="button" class="quiet-button" @click="resetWorkspace">新建分析</button>
+      </div>
     </header>
 
     <main id="analysis-workspace" class="workspace">
@@ -305,7 +371,8 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
         </form>
 
         <section class="result-panel" aria-label="分析结果">
-          <AnalysisResult v-if="result" :result="result" :can-add-observations="isEvaluate" @download="downloadResult" />
+          <p v-if="archiveNotice" class="archive-notice" role="status">{{ archiveNotice }}</p>
+          <AnalysisResult v-if="result" :result="result" :can-add-observations="isEvaluate" @save="saveCurrentAnalysis" @download="downloadResult" />
           <div v-else class="empty-result">
             <div class="empty-orbit" aria-hidden="true"><span>命</span><i></i><i></i><i></i><i></i><i></i></div>
             <p class="eyebrow">等待一次完整输入</p>
@@ -321,5 +388,6 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
       <p>关系脉络不是命运判决，也不替代安全、同意和现实决定。</p>
       <span v-if="health">规则快照 {{ health.catalog.rulesetDigest.slice(0, 10) }}</span>
     </footer>
+    <ArchivePanel :open="archivesOpen" :archives="archives" @close="archivesOpen = false" @restore="restoreArchive" @delete="removeArchive" />
   </div>
 </template>
