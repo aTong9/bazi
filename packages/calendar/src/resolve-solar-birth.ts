@@ -40,6 +40,15 @@ export interface FourPillars {
   readonly hour: Pillar;
 }
 
+export function isCurrentCalendarAdapter(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const adapter = value as Record<string, unknown>;
+  return adapter.id === CALENDAR_ADAPTER.id
+    && adapter.version === CALENDAR_ADAPTER.version
+    && adapter.civilTimeBasis === CALENDAR_ADAPTER.civilTimeBasis
+    && adapter.trueSolarTimeApplied === CALENDAR_ADAPTER.trueSolarTimeApplied;
+}
+
 const MONTH_BOUNDARY_NAMES = new Set([
   "立春", "惊蛰", "清明", "立夏", "芒种", "小暑", "立秋", "白露", "寒露", "立冬", "大雪", "小寒",
   "LI_CHUN", "JING_ZHE", "QING_MING", "LI_XIA", "MANG_ZHONG", "XIAO_SHU",

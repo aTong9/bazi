@@ -12,6 +12,7 @@ import ObservationPanel from "@/components/ObservationPanel.vue";
 import PillarEditor from "@/components/PillarEditor.vue";
 import RealityGatePanel from "@/components/RealityGatePanel.vue";
 import type { AnalysisArchive, AnalysisMode, AnalysisResponse, AnalysisWorkspaceSnapshot, ArchiveWorkspaceSnapshot, CrossStateDraft, HealthResponse, M0AnalysisResponse, M0WorkspaceSnapshot, ObservationDraft, RealityGateDraft, RoleBasis, SubjectDraft } from "@/types";
+import { isCurrentCalendarAdapter } from "../../../packages/calendar/src/resolve-solar-birth";
 
 const primarySubject = ref<SubjectDraft>(createSubject("主命盘"));
 const secondarySubject = ref<SubjectDraft>(inactiveSecondarySubject());
@@ -630,6 +631,7 @@ function createSubject(subjectId: string, overrides: Partial<Pick<SubjectDraft, 
 function birthInputIssue(subject: SubjectDraft, label: string): string | null {
   const input = subject.birthInput;
   if (!input || input.method === "manual_four_pillars") return null;
+  if (!isCurrentCalendarAdapter(input.adapter)) return `${label}：公历排盘辅助版本已变更，请用当前版本重新计算，或切换为手动四柱。`;
   if (input.resolutionStatus !== "resolved" || !input.resolvedPillars) return `${label}：请完成公历时间计算，或切换为手动四柱。`;
   const current = [subject.year, subject.month, subject.day, subject.hour].join(" ");
   if (input.resolvedPillars !== current) return `${label}：四柱已在计算后修改，请重新计算或切换为手动四柱。`;

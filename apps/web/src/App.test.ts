@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App.vue";
 import { ARCHIVE_STORAGE_KEY } from "./archive-store";
+import { analysisInputFingerprint } from "./domain";
 import { makeAnalysisResponse, makeM0AnalysisResponse } from "./test/analysis-fixture";
 import { mountComponent, type MountedComponent } from "./test/mount-component";
 
@@ -100,6 +101,42 @@ describe("App analysis provenance", () => {
     expect(mounted.host.textContent).toContain("请先修正分析输入");
     expect(mounted.host.textContent).toContain("请完成公历时间计算，或切换为手动四柱");
     expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/profile")).toHaveLength(0);
+  });
+
+  it("blocks reanalysis of an archive produced by another calendar adapter version", async () => {
+    const fetchMock = installBrowserMocks(makeAnalysisResponse());
+    vi.stubGlobal("confirm", vi.fn(() => true));
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+    findButton(mounted.host, "保存到档案").click();
+    await flushUi();
+
+    const envelope = JSON.parse(localStorage.getItem(ARCHIVE_STORAGE_KEY)!) as { archives: Array<{ workspace: Record<string, any> }> };
+    const workspace = envelope.archives[0]!.workspace;
+    workspace.primarySubject.birthInput = {
+      method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved",
+      resolvedPillars: "庚申 己丑 甲寅 庚午",
+      adapter: { id: "lunar-typescript-standard-time", version: "0.9.0", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
+    };
+    workspace.resultInputFingerprint = analysisInputFingerprint(workspace as never);
+    localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
+    window.dispatchEvent(new StorageEvent("storage", { key: ARCHIVE_STORAGE_KEY }));
+    await flushUi();
+
+    findButton(mounted.host, "新建分析").click();
+    await flushUi();
+    findButton(mounted.host, "看盘档案 1").click();
+    await flushUi();
+    findButton(document.body, "打开档案").click();
+    await flushUi();
+    expect(mounted.host.textContent).toContain("来自其他历法适配器版本");
+
+    const callsBefore = fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/profile").length;
+    mounted.host.querySelector<HTMLFormElement>("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await flushUi();
+    expect(mounted.host.textContent).toContain("公历排盘辅助版本已变更");
+    expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/profile")).toHaveLength(callsBefore);
   });
 
   it("clears a prior M4 observation and excludes it after the primary day pillar changes", async () => {

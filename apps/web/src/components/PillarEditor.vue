@@ -3,7 +3,7 @@ import { computed, ref, watch } from "vue";
 
 import { hourOptions, JIAZI, monthOptions, normalizeLinkedPillars } from "@/domain";
 import type { BirthInputRecord, SolarResolutionStatus, SubjectDraft } from "@/types";
-import { CALENDAR_ADAPTER, formatFourPillars, resolveSolarBirth, type SolarBirthResolution } from "../../../../packages/calendar/src/resolve-solar-birth";
+import { CALENDAR_ADAPTER, formatFourPillars, isCurrentCalendarAdapter, resolveSolarBirth, type SolarBirthResolution } from "../../../../packages/calendar/src/resolve-solar-birth";
 
 const props = defineProps<{ idPrefix: string; title: string; description: string }>();
 const model = defineModel<SubjectDraft>({ required: true });
@@ -17,11 +17,14 @@ const availableMonths = computed(() => monthOptions(model.value.year));
 const availableHours = computed(() => hourOptions(model.value.day));
 const isHourUnknown = computed(() => model.value.birthTimeStatus === "unknown");
 const currentPillars = computed(() => [model.value.year, model.value.month, model.value.day, model.value.hour].join(" "));
+const storedSolarUsesCurrentAdapter = computed(() => inputRecord.value.method !== "solar_utc8_assist" || isCurrentCalendarAdapter(inputRecord.value.adapter));
 const storedSolarIsCurrent = computed(() => inputRecord.value.method === "solar_utc8_assist"
   && inputRecord.value.resolutionStatus === "resolved"
+  && storedSolarUsesCurrentAdapter.value
   && inputRecord.value.resolvedPillars === currentPillars.value);
 const storedSolarIsStale = computed(() => inputRecord.value.method === "solar_utc8_assist"
   && inputRecord.value.resolutionStatus === "resolved"
+  && storedSolarUsesCurrentAdapter.value
   && inputRecord.value.resolvedPillars !== currentPillars.value);
 
 watch([() => model.value.year, () => model.value.day], () => {
@@ -149,6 +152,9 @@ function inputIdentity(input: BirthInputRecord): string {
       </div>
       <div v-else-if="storedSolarIsCurrent" class="calendar-resolution is-resolved" role="status">
         已恢复公历记录：{{ solarLocalDateTime.replace('T', ' ') }}（UTC+8），与当前四柱一致。
+      </div>
+      <div v-else-if="inputRecord.method === 'solar_utc8_assist' && !storedSolarUsesCurrentAdapter" class="calendar-resolution is-boundary_unresolved" role="alert">
+        此公历记录来自其他历法适配器版本。请用当前版本重新计算，或切换为手动四柱再分析。
       </div>
       <div v-else-if="storedSolarIsStale" class="calendar-resolution is-boundary_unresolved" role="alert">
         当前四柱已在公历辅助计算后被修改。请重新计算，或切换为手动四柱再分析。

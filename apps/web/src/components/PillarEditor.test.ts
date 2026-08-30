@@ -145,4 +145,23 @@ describe("PillarEditor", () => {
     expect(emitted.at(-1)?.year).toBe("丁卯");
     mounted.unmount();
   });
+
+  it("requires recalculation when a restored solar record uses another adapter version", () => {
+    const modelValue = reactive<SubjectDraft>({
+      subjectId: "subject-a", year: "丙寅", month: "癸巳", day: "癸酉", hour: "戊午",
+      birthTimeStatus: "exact", dataQuality: "high",
+      birthInput: {
+        method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved",
+        resolvedPillars: "丙寅 癸巳 癸酉 戊午",
+        adapter: { id: "lunar-typescript-standard-time", version: "0.9.0", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
+      },
+    });
+    const mounted = mountComponent(PillarEditor, {
+      modelValue, idPrefix: "subject-a", title: "主要命盘", description: "测试",
+      "onUpdate:modelValue": (value: SubjectDraft) => { Object.assign(modelValue, value); },
+    });
+    expect(mounted.host.textContent).toContain("来自其他历法适配器版本");
+    expect(mounted.host.textContent).not.toContain("已恢复公历记录");
+    mounted.unmount();
+  });
 });
