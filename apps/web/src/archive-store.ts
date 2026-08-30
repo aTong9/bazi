@@ -1,5 +1,5 @@
 import { parseAnalysisResponse, parseM0AnalysisResponse } from "./api";
-import { analysisInputFingerprint, hourOptions, inactiveSecondarySubject, JIAZI, m0InputFingerprint, riskCandidateFingerprint } from "./domain";
+import { analysisInputFingerprint, hourOptions, inactiveSecondarySubject, JIAZI, m0InputFingerprint, monthOptions, riskCandidateFingerprint } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, ArchiveWorkspaceSnapshot, M0WorkspaceSnapshot, SubjectDraft } from "./types";
 
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
@@ -326,6 +326,8 @@ function isSubject(value: unknown): boolean {
   return hasOnlyKeys(subject, ["subjectId", "year", "month", "day", "hour", "birthTimeStatus", "dataQuality", "birthInput"])
     && typeof subject.subjectId === "string" && subject.subjectId.length <= 120
     && ["year", "month", "day", "hour"].every((key) => typeof subject[key] === "string" && JIAZI.includes(String(subject[key])))
+    && monthOptions(String(subject.year)).includes(String(subject.month))
+    && (subject.birthTimeStatus === "unknown" || hourOptions(String(subject.day)).includes(String(subject.hour)))
     && ["exact", "approximate", "unknown"].includes(String(subject.birthTimeStatus))
     && ["high", "medium", "low", "unknown"].includes(String(subject.dataQuality))
     && (subject.birthInput === undefined || isBirthInput(subject.birthInput));
