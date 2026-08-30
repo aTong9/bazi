@@ -4,7 +4,7 @@ import type { M10Result } from "../../m0-engine/src/m10.js";
 import { field, unique, type RelationshipRuleCatalog } from "./rule-catalog.js";
 
 type ChannelKey = "base" | "expression" | "care" | "boundary" | "conflict";
-export interface M3Channel { readonly moduleId: string; readonly anchorTenGod: TenGod; readonly statements: readonly string[]; readonly outputSlots: readonly string[]; readonly ruleIds: readonly string[]; readonly status: "provisional" | "limited" }
+export interface M3Channel { readonly moduleId: string; readonly anchorTenGod: TenGod; readonly statements: readonly string[]; readonly synthesisCandidate?: string; readonly outputSlots: readonly string[]; readonly ruleIds: readonly string[]; readonly status: "provisional" | "limited" }
 export interface M3Result {
   readonly moduleId: "M3.SYNTH"; readonly status: "provisional" | "limited";
   readonly channels: Readonly<Record<ChannelKey, M3Channel>>;
@@ -27,7 +27,7 @@ export function analyzeM3(input: { m02: M02Result; m09: M09Result; m10: M10Resul
     const statements = unique(selected.map((record) => field(record, "user_explanation")).filter(Boolean)).slice(0, 5);
     const synthesisCandidate = unique(anchored.map((record) => field(record, "user_explanation")).filter(Boolean))[0] ?? statements[0];
     if (synthesisCandidate) synthesisCandidates.set(key, synthesisCandidate);
-    return [key, Object.freeze({ moduleId, anchorTenGod, statements: Object.freeze(statements), outputSlots: unique(selected.map((record) => field(record, "output_slot"))), ruleIds: unique(selected.map((record) => record.id)), status })];
+    return [key, Object.freeze({ moduleId, anchorTenGod, statements: Object.freeze(statements), ...(synthesisCandidate ? { synthesisCandidate } : {}), outputSlots: unique(selected.map((record) => field(record, "output_slot"))), ruleIds: unique(selected.map((record) => record.id)), status })];
   });
   const channels = Object.freeze(Object.fromEntries(channelEntries) as Record<ChannelKey, M3Channel>);
   const pressure = input.m09.burdenEvidence.length > input.m09.supportEvidence.length || input.m09.strengthCandidate === "weak_candidate";

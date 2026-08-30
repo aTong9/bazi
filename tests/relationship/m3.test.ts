@@ -9,6 +9,7 @@ import { analyzeM08 } from "../../packages/m0-engine/src/m08.js";
 import { analyzeM09 } from "../../packages/m0-engine/src/m09.js";
 import { analyzeM10 } from "../../packages/m0-engine/src/m10.js";
 import { analyzeM3 } from "../../packages/relationship-engine/src/m3.js";
+import { analyzeM4 } from "../../packages/relationship-engine/src/m4.js";
 
 test("M3 closes BASE, EXPR, CARE, BOUND, CONFLICT, STATE, REPAIR, and SYNTH without personality diagnosis", async () => {
   const catalog = await importCatalog({ repositoryRoot: path.resolve(".") });
@@ -22,6 +23,7 @@ test("M3 closes BASE, EXPR, CARE, BOUND, CONFLICT, STATE, REPAIR, and SYNTH with
   assert.ok(result.synthesis.primaryChannels.length > 0);
   assert.ok(result.synthesis.statements.every((statement) => !/^(模型三|这一部分关注|这里描述的是)/u.test(statement)), "M3 synthesis must prefer chart-anchored findings over section boilerplate");
   assert.ok(result.synthesis.statements.every((statement) => statement.includes("你")));
+  assert.ok(analyzeM4({ m3: result }).riskChains.every((chain) => !/^(模型三|这一部分关注|这里描述的是)/u.test(chain.structuralCandidate)), "M4 must use chart-anchored channel findings instead of section boilerplate");
   assert.deepEqual(result.dependencyFlags, []);
   assert.ok(result.boundaries.includes("不推断人格或依恋类型"));
   assert.ok(result.ruleTrace.every((id) => /^M3-/u.test(id)));

@@ -37,8 +37,8 @@ export interface M4Result {
 
 export function analyzeM4(input: { readonly m3: M3Result; readonly observations?: readonly M4Observation[]; readonly rules?: RelationshipRuleCatalog }): M4Result {
   const candidates = [
-    input.m3.channels.boundary.statements[0] ?? "边界信号可能未被明确确认",
-    input.m3.channels.conflict.statements[0] ?? "压力下冲突循环可能被放大",
+    input.m3.channels.boundary.synthesisCandidate ?? input.m3.channels.boundary.statements[0] ?? "边界信号可能未被明确确认",
+    input.m3.channels.conflict.synthesisCandidate ?? input.m3.channels.conflict.statements[0] ?? "压力下冲突循环可能被放大",
   ];
   const observations = dedupeObservations(input.observations ?? []);
   const riskChains = candidates.map((structuralCandidate, index): M4RiskChain => {
