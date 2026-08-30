@@ -2,7 +2,7 @@
 import { computed } from "vue";
 
 import { GRADE_COPY, STATUS_LABELS } from "@/constants";
-import { resultValue, shortDigest } from "@/domain";
+import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
 import type { AnalysisMode, AnalysisResponse, ResultItem, SubjectDraft } from "@/types";
 import ModuleRail from "./ModuleRail.vue";
 
@@ -57,14 +57,6 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
   const filtered = values?.filter(Boolean).slice(0, 5) ?? [];
   return filtered.length ? filtered : [fallback];
 }
-function formatSubjectPillars(subject: SubjectDraft): string {
-  return [subject.year, subject.month, subject.day, subject.birthTimeStatus === "unknown" ? "时柱未知" : subject.hour].join(" · ");
-}
-function formatInputSource(subject: SubjectDraft): string {
-  const input = subject.birthInput;
-  if (!input || input.method === "manual_four_pillars") return "手动四柱";
-  return `${input.solarLocalDateTime.replace("T", " ")} · ${input.adapter.civilTimeBasis} · ${input.adapter.id} ${input.adapter.version}`;
-}
 </script>
 
 <template>
@@ -88,9 +80,9 @@ function formatInputSource(subject: SubjectDraft): string {
       <dl class="result-context" aria-label="本次看盘输入摘要">
         <div><dt>分析方式</dt><dd>{{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</dd></div>
         <div><dt>主要命盘</dt><dd>{{ primaryLabel }} · {{ primaryPillars }}</dd></div>
-        <div v-if="primarySubject"><dt>主要命盘来源</dt><dd>{{ formatInputSource(primarySubject) }}</dd></div>
+        <div v-if="primarySubject"><dt>主要命盘来源</dt><dd>{{ formatBirthInputSource(primarySubject) }}</dd></div>
         <div v-if="secondaryPillars"><dt>另一方命盘</dt><dd>{{ secondaryLabel }} · {{ secondaryPillars }}</dd></div>
-        <div v-if="secondaryPillars && secondarySubject"><dt>另一方命盘来源</dt><dd>{{ formatInputSource(secondarySubject) }}</dd></div>
+        <div v-if="secondaryPillars && secondarySubject"><dt>另一方命盘来源</dt><dd>{{ formatBirthInputSource(secondarySubject) }}</dd></div>
         <div><dt>生成时间</dt><dd>{{ new Date(result.generatedAt).toLocaleString('zh-CN') }}</dd></div>
       </dl>
     </header>

@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
 import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
-import { analysisInputFingerprint, inactiveSecondarySubject, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
+import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, inactiveSecondarySubject, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
 import ArchivePanel from "@/components/ArchivePanel.vue";
 import ObservationPanel from "@/components/ObservationPanel.vue";
@@ -283,13 +283,16 @@ function downloadText(content: string, type: string, filename: string): void {
 function readableSummary(analysis: AnalysisResponse): string {
   const safetyStop = analysis.report.safetyStatus === "safety_stop";
   const sections = safetyStop ? analysis.report.sections.filter((section) => section.id === "safety") : analysis.report.sections;
-  const pillars = (subject: SubjectDraft) => [subject.year, subject.month, subject.day, subject.birthTimeStatus === "unknown" ? "时柱未知" : subject.hour].join(" · ");
   const lines = [
     "# 关系脉络看盘摘要",
     "",
     `- 分析方式：${analysisMode.value === "evaluate" ? "现实评估" : "关系画像"}`,
-    `- 主要命盘：${primarySubject.value.subjectId.trim() || "主要命盘"} · ${pillars(primarySubject.value)}`,
-    ...(hasSecondarySubject.value ? [`- 另一方命盘：${secondarySubject.value.subjectId.trim() || "另一方命盘"} · ${pillars(secondarySubject.value)}`] : []),
+    `- 主要命盘：${primarySubject.value.subjectId.trim() || "主要命盘"} · ${formatSubjectPillars(primarySubject.value)}`,
+    `- 主要命盘来源：${formatBirthInputSource(primarySubject.value)}`,
+    ...(hasSecondarySubject.value ? [
+      `- 另一方命盘：${secondarySubject.value.subjectId.trim() || "另一方命盘"} · ${formatSubjectPillars(secondarySubject.value)}`,
+      `- 另一方命盘来源：${formatBirthInputSource(secondarySubject.value)}`,
+    ] : []),
     `- 证据等级：${analysis.report.evidenceGrade}`,
     `- 报告状态：${analysis.report.reportStatus}`,
     `- 生成时间：${new Date(analysis.generatedAt).toLocaleString("zh-CN")}`,

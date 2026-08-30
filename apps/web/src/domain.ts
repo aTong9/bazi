@@ -8,6 +8,16 @@ export function inactiveSecondarySubject(): SubjectDraft {
   return { subjectId: "另一方", year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } };
 }
 
+export function formatSubjectPillars(subject: SubjectDraft): string {
+  return [subject.year, subject.month, subject.day, subject.birthTimeStatus === "unknown" ? "时柱未知" : subject.hour].join(" · ");
+}
+
+export function formatBirthInputSource(subject: SubjectDraft): string {
+  const input = subject.birthInput;
+  if (!input || input.method === "manual_four_pillars") return "手动四柱";
+  return `${input.solarLocalDateTime.replace("T", " ")} · ${input.adapter.civilTimeBasis} · ${input.adapter.id} ${input.adapter.version}`;
+}
+
 const TIGER_STARTS: Readonly<Record<HeavenlyStem, HeavenlyStem>> = {
   甲: "丙", 己: "丙", 乙: "戊", 庚: "戊", 丙: "庚", 辛: "庚", 丁: "壬", 壬: "壬", 戊: "甲", 癸: "甲",
 };
