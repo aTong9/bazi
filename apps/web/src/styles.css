@@ -597,6 +597,12 @@
     align-items: center;
   }
 
+  .archive-delete-confirm {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
   .archive-actions .primary-button {
     min-width: 128px;
     min-height: 38px;

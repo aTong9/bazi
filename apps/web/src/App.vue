@@ -220,8 +220,8 @@ function saveCurrentAnalysis(): void {
   try {
     archives.value = saveArchive(currentWorkspace(result.value));
     archiveNotice.value = "本次看盘已保存到这台设备。";
-  } catch {
-    archiveNotice.value = "浏览器没有足够的本地存储空间，未能保存档案。";
+  } catch (error) {
+    archiveNotice.value = error instanceof Error ? error.message : "浏览器没有足够的本地存储空间，未能保存档案。";
   }
 }
 
