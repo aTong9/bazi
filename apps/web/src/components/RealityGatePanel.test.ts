@@ -33,6 +33,15 @@ describe("RealityGatePanel", () => {
     expect(evidence.required).toBe(true);
     expect(evidence.getAttribute("aria-invalid")).toBe("true");
     expect(evidence.labels?.[0]?.textContent).toContain("事实依据（必填）");
+    evidence.value = "压力期的具体事实";
+    evidence.dispatchEvent(new Event("input", { bubbles: true }));
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    await nextTick();
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+    await nextTick();
+    expect(mounted.host.querySelector<HTMLInputElement>("#cross-pressure-evidence")?.value).toBe("");
     mounted.unmount();
   });
 });

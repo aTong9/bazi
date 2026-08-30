@@ -23,6 +23,10 @@ const crossStates = [
 function requiresEvidence(status: RealityGateStatus): boolean {
   return status === "pass" || status === "conditional" || status === "fail";
 }
+
+function updateCrossState(key: CrossStateKey): void {
+  if (!crossState.value[key]) crossState.value.evidence[key] = "";
+}
 </script>
 
 <template>
@@ -65,7 +69,7 @@ function requiresEvidence(status: RealityGateStatus): boolean {
       <p>只有在不同状态下都观察过，才勾选。全选不代表关系成功，只提高证据覆盖。</p>
       <div class="check-grid">
         <div v-for="item in crossStates" :key="item.key" class="cross-state-item">
-          <label :for="`cross-${item.key}`"><input :id="`cross-${item.key}`" v-model="crossState[item.key]" type="checkbox" /> {{ item.label }}</label>
+          <label :for="`cross-${item.key}`"><input :id="`cross-${item.key}`" v-model="crossState[item.key]" type="checkbox" @change="updateCrossState(item.key)" /> {{ item.label }}</label>
           <label v-if="crossState[item.key]" class="cross-evidence" :for="`cross-${item.key}-evidence`">
             <span>事实依据（必填）</span>
             <input
