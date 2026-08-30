@@ -282,6 +282,7 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
 
 function workspaceResultMatches(workspace: AnalysisWorkspaceSnapshot): boolean {
   return workspace.roleBasis === workspace.result.relationship.roleBasis
+    && workspace.hasSecondarySubject === workspace.result.relationship.structuralSupplement.available
     && (workspace.resultInputFingerprint === undefined || workspace.resultInputFingerprint === analysisInputFingerprint(workspace))
     && workspaceObservationsMatch(workspace);
 }

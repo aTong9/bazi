@@ -33,6 +33,12 @@ describe("API response guards", () => {
     expect(() => parseAnalysisResponse(response)).toThrow("关系模块字段无效");
   });
 
+  it("requires structural supplement availability to match its fields", () => {
+    const response = makeAnalysisResponse();
+    response.relationship.structuralSupplement.available = true;
+    expect(() => parseAnalysisResponse(response)).toThrow("关系模块字段无效");
+  });
+
   it("requires the auditable cross-state evidence collection in M5", () => {
     const response = makeAnalysisResponse() as unknown as Record<string, unknown>;
     const relationship = response.relationship as Record<string, unknown>;

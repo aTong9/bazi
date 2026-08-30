@@ -86,6 +86,7 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
     || supplement.replacesRealityEvidence !== false
     || supplement.replacesRealityGates !== false
     || !(supplement.fields === null || isResultFieldMap(supplement.fields))
+    || (supplement.available ? supplement.fields === null : supplement.fields !== null)
   ) {
     throw responseSchemaError("分析响应的关系模块字段无效");
   }
