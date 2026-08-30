@@ -44,6 +44,23 @@ describe("App analysis provenance", () => {
     expect(JSON.parse(String(calls[0]?.[1]?.body))).toMatchObject({ requested_sections: ["m0"] });
     expect(mounted.host.textContent).toContain("原局结构已生成");
     expect(mounted.host.querySelector("#result-m1")).toBeNull();
+
+    findButton(mounted.host, "保存到档案").click();
+    await flushUi();
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain('"analysisMode":"structure"');
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain('"id":"archive-m0-');
+    expect(findButton(mounted.host, "已保存到档案").disabled).toBe(true);
+
+    findButton(mounted.host, "新建分析").click();
+    await flushUi();
+    expect(mounted.host.querySelector(".analysis-result")).toBeNull();
+    findButton(mounted.host, "看盘档案 1").click();
+    await flushUi();
+    expect(document.body.textContent).toContain("原局结构");
+    findButton(document.body, "打开档案").click();
+    await flushUi();
+    expect(mounted.host.textContent).toContain("原局结构已生成");
+    expect(mounted.host.querySelector<HTMLInputElement>('input[value="structure"]')?.checked).toBe(true);
   });
 
   it("exports unreadable archive storage before allowing a confirmed reset", async () => {

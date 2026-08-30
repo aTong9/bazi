@@ -140,6 +140,10 @@ export function analysisInputFingerprint(input: AnalysisFingerprintInput): strin
   });
 }
 
+export function m0InputFingerprint(subject: SubjectDraft): string {
+  return JSON.stringify({ version: 1, mode: "structure", primary: fingerprintSubject(subject) });
+}
+
 export function riskCandidateFingerprint(chain: { readonly id: string; readonly structuralCandidate: string }): string {
   return JSON.stringify({ id: chain.id, structuralCandidate: chain.structuralCandidate });
 }

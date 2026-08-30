@@ -5,8 +5,8 @@ import { STATUS_LABELS } from "@/constants";
 import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
 import type { M0AnalysisResponse, ResultItem, SubjectDraft } from "@/types";
 
-const props = defineProps<{ result: M0AnalysisResponse; subject: SubjectDraft }>();
-const emit = defineEmits<{ download: []; downloadSummary: []; print: [] }>();
+const props = withDefaults(defineProps<{ result: M0AnalysisResponse; subject: SubjectDraft; saveState?: "new" | "saved" | "dirty" }>(), { saveState: "new" });
+const emit = defineEmits<{ download: []; downloadSummary: []; print: []; save: [] }>();
 
 interface DayMasterView { dayMaster?: string; element?: string; yinYang?: string; monthBranch?: string; seasonElement?: string }
 interface ClimateView { state?: string }
@@ -21,6 +21,7 @@ const allUses = computed(() => [...(uses.value?.primary ?? []), ...(uses.value?.
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
+const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档案" : props.saveState === "dirty" ? "更新档案" : "保存到档案");
 </script>
 
 <template>
@@ -33,6 +34,7 @@ function item(key: string): ResultItem | undefined { return props.result.m0.fiel
       </div>
       <div class="grade-seal" :aria-label="`M0 状态 ${result.m0.status}`"><span>M0</span><small>{{ label(result.m0.status) }}</small></div>
       <div class="result-tools">
+        <button type="button" class="quiet-button" :disabled="saveState === 'saved'" @click="emit('save')">{{ saveLabel }}</button>
         <button type="button" class="quiet-button" @click="emit('print')">打印 / 存 PDF</button>
         <button type="button" class="quiet-button" @click="emit('downloadSummary')">下载可读摘要</button>
         <button type="button" class="quiet-button" @click="emit('download')">下载完整 JSON</button>

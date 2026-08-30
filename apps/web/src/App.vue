@@ -2,16 +2,16 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { analyzeM0Structure, analyzeRelationship, ApiError, fetchHealth } from "@/api";
-import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "@/archive-store";
+import { ARCHIVE_STORAGE_KEY, archiveId, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
-import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, inactiveSecondarySubject, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
+import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, inactiveSecondarySubject, m0InputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
 import ArchivePanel from "@/components/ArchivePanel.vue";
 import M0Result from "@/components/M0Result.vue";
 import ObservationPanel from "@/components/ObservationPanel.vue";
 import PillarEditor from "@/components/PillarEditor.vue";
 import RealityGatePanel from "@/components/RealityGatePanel.vue";
-import type { AnalysisArchive, AnalysisMode, AnalysisResponse, AnalysisWorkspaceSnapshot, CrossStateDraft, HealthResponse, M0AnalysisResponse, ObservationDraft, RealityGateDraft, RoleBasis, SubjectDraft } from "@/types";
+import type { AnalysisArchive, AnalysisMode, AnalysisResponse, AnalysisWorkspaceSnapshot, ArchiveWorkspaceSnapshot, CrossStateDraft, HealthResponse, M0AnalysisResponse, M0WorkspaceSnapshot, ObservationDraft, RealityGateDraft, RoleBasis, SubjectDraft } from "@/types";
 
 const primarySubject = ref<SubjectDraft>(createSubject("主命盘"));
 const secondarySubject = ref<SubjectDraft>(inactiveSecondarySubject());
@@ -50,26 +50,18 @@ const currentInputFingerprint = computed(() => analysisInputFingerprint({
   gates: gates.value,
   crossState: crossState.value,
 }));
-const currentWorkspaceFingerprint = computed(() => workspaceFingerprint({
-  analysisMode: analysisMode.value,
-  roleBasis: roleBasis.value,
-  primarySubject: primarySubject.value,
-  secondarySubject: secondarySubject.value,
-  hasSecondarySubject: hasSecondarySubject.value,
-  gates: gates.value,
-  crossState: crossState.value,
-  observations: observations.value,
-}));
+const currentWorkspaceFingerprint = computed(currentDraftFingerprint);
 const safeWorkspaceFingerprint = ref(currentWorkspaceFingerprint.value);
 const safeResultFingerprint = ref<string | null>(null);
-const currentResultFingerprint = computed(() => result.value ? resultVersionFingerprint(result.value) : null);
-const currentArchive = computed(() => result.value ? archives.value.find((archive) => archive.id === `archive-${result.value?.requestId}`) : undefined);
+const activeResult = computed(() => structureResult.value ?? result.value);
+const currentResultFingerprint = computed(() => activeResult.value ? resultVersionFingerprint(activeResult.value) : null);
+const currentArchive = computed(() => activeResult.value ? archives.value.find((archive) => archive.id === archiveId(analysisMode.value, activeResult.value!.requestId)) : undefined);
 const hasArchiveConflict = computed(() => Boolean(currentArchive.value && (
   workspaceFingerprint(currentArchive.value.workspace) !== safeWorkspaceFingerprint.value
   || resultVersionFingerprint(currentArchive.value.workspace.result) !== safeResultFingerprint.value
 )));
 const isCurrentResultArchived = computed(() => Boolean(currentArchive.value && !hasArchiveConflict.value && currentResultFingerprint.value === safeResultFingerprint.value));
-const hasUnsavedResult = computed(() => Boolean(result.value && !isCurrentResultArchived.value));
+const hasUnsavedResult = computed(() => Boolean(activeResult.value && !isCurrentResultArchived.value));
 const hasUnsavedWork = computed(() => hasUnsavedResult.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value);
 const resultSaveState = computed<"new" | "saved" | "dirty">(() => !currentArchive.value ? "new" : !isCurrentResultArchived.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value ? "dirty" : "saved");
 const observableRiskChains = computed(() => {
@@ -277,8 +269,7 @@ async function submitAnalysis(): Promise<void> {
 
 function downloadResult(): void {
   if (structureResult.value) {
-    const reading = { schema: "bazi.m0.reading.v1", exportedAt: new Date().toISOString(), containsSensitiveData: true, resultInputFingerprint: resultFingerprint, subject: cloneJson(primarySubject.value), result: cloneJson(structureResult.value) };
-    downloadText(`${JSON.stringify(reading, null, 2)}\n`, "application/json", `bazi-m0-${structureResult.value.requestId}.json`);
+    downloadText(serializeReadingPackage(currentM0Workspace(structureResult.value)), "application/json", `bazi-m0-${structureResult.value.requestId}.json`);
     return;
   }
   if (!result.value) return;
@@ -353,22 +344,37 @@ function printResult(): void {
 }
 
 function saveCurrentAnalysis(): void {
-  if (!result.value) return;
+  const analysis = activeResult.value;
+  if (!analysis) return;
   if (hasArchiveConflict.value && !window.confirm("这份档案已在另一标签页或备份中更新。继续会用当前工作区覆盖较新版本，是否继续？")) {
     archiveNotice.value = "已取消覆盖；请从看盘档案打开较新版本后再继续。";
     return;
   }
   try {
-    archives.value = saveArchive(currentWorkspace(result.value));
+    archives.value = saveArchive(structureResult.value ? currentM0Workspace(structureResult.value) : currentWorkspace(result.value!));
     safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
-    safeResultFingerprint.value = resultVersionFingerprint(result.value);
+    safeResultFingerprint.value = resultVersionFingerprint(analysis);
     archiveNotice.value = "本次看盘已保存到这台设备。";
   } catch (error) {
     archiveNotice.value = error instanceof Error ? error.message : "浏览器没有足够的本地存储空间，未能保存档案。";
   }
 }
 
-function workspaceFingerprint(workspace: Omit<AnalysisWorkspaceSnapshot, "result">): string {
+function currentDraftFingerprint(): string {
+  if (analysisMode.value === "structure") return m0InputFingerprint(primarySubject.value);
+  return JSON.stringify([analysisInputFingerprint({
+    analysisMode: analysisMode.value,
+    roleBasis: roleBasis.value,
+    primarySubject: primarySubject.value,
+    hasSecondarySubject: hasSecondarySubject.value,
+    secondarySubject: secondarySubject.value,
+    gates: gates.value,
+    crossState: crossState.value,
+  }), observations.value]);
+}
+
+function workspaceFingerprint(workspace: ArchiveWorkspaceSnapshot): string {
+  if (workspace.analysisMode === "structure") return workspace.resultInputFingerprint;
   return JSON.stringify([analysisInputFingerprint({
     analysisMode: workspace.analysisMode,
     roleBasis: workspace.roleBasis,
@@ -380,25 +386,38 @@ function workspaceFingerprint(workspace: Omit<AnalysisWorkspaceSnapshot, "result
   }), workspace.observations]);
 }
 
-function resultVersionFingerprint(analysisResult: AnalysisResponse): string { return JSON.stringify(analysisResult); }
+function resultVersionFingerprint(analysisResult: AnalysisResponse | M0AnalysisResponse): string { return JSON.stringify(analysisResult); }
 
 async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   if (hasUnsavedWork.value && !window.confirm("当前输入或看盘尚未保存，仍要打开档案吗？")) return;
   activeRequest?.abort();
   const workspace = cloneJson(archive.workspace);
   analysisMode.value = workspace.analysisMode;
-  roleBasis.value = workspace.roleBasis;
   primarySubject.value = workspace.primarySubject;
-  secondarySubject.value = workspace.secondarySubject;
-  hasSecondarySubject.value = workspace.hasSecondarySubject;
-  gates.value = workspace.gates;
-  crossState.value = workspace.crossState;
-  observations.value = workspace.observations;
+  if (workspace.analysisMode === "structure") {
+    secondarySubject.value = inactiveSecondarySubject();
+    hasSecondarySubject.value = false;
+    gates.value = REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
+    crossState.value = createCrossState();
+    observations.value = [];
+  } else {
+    roleBasis.value = workspace.roleBasis;
+    secondarySubject.value = workspace.secondarySubject;
+    hasSecondarySubject.value = workspace.hasSecondarySubject;
+    gates.value = workspace.gates;
+    crossState.value = workspace.crossState;
+    observations.value = workspace.observations;
+  }
   await nextTick();
   safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
   resultFingerprint = currentInputFingerprint.value;
-  result.value = workspace.result;
-  structureResult.value = null;
+  if (workspace.analysisMode === "structure") {
+    structureResult.value = workspace.result;
+    result.value = null;
+  } else {
+    result.value = workspace.result;
+    structureResult.value = null;
+  }
   safeResultFingerprint.value = resultVersionFingerprint(workspace.result);
   archivesOpen.value = false;
   archiveNotice.value = `已打开“${archive.title}”。`;
@@ -481,6 +500,7 @@ async function importArchives(file: File): Promise<void> {
 }
 
 function currentWorkspace(analysisResult: AnalysisResponse): AnalysisWorkspaceSnapshot {
+  if (analysisMode.value === "structure") throw new Error("原局结构不能写入关系工作区。");
   return {
     analysisMode: analysisMode.value,
     roleBasis: roleBasis.value,
@@ -491,6 +511,15 @@ function currentWorkspace(analysisResult: AnalysisResponse): AnalysisWorkspaceSn
     gates: cloneJson(gates.value),
     crossState: cloneJson(crossState.value),
     observations: cloneJson(observations.value),
+    result: cloneJson(analysisResult),
+  };
+}
+
+function currentM0Workspace(analysisResult: M0AnalysisResponse): M0WorkspaceSnapshot {
+  return {
+    analysisMode: "structure",
+    resultInputFingerprint: m0InputFingerprint(primarySubject.value),
+    primarySubject: cloneJson(primarySubject.value),
     result: cloneJson(analysisResult),
   };
 }
@@ -671,6 +700,8 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             v-if="structureResult"
             :result="structureResult"
             :subject="primarySubject"
+            :save-state="resultSaveState"
+            @save="saveCurrentAnalysis"
             @print="printResult"
             @download-summary="downloadReadableSummary"
             @download="downloadResult"

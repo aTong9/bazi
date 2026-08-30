@@ -162,7 +162,7 @@ export interface HealthResponse {
 }
 
 export interface AnalysisWorkspaceSnapshot {
-  analysisMode: AnalysisMode;
+  analysisMode: "profile" | "evaluate";
   roleBasis: RoleBasis;
   /** Optional only for backwards compatibility with archives created before result-input binding existed. */
   resultInputFingerprint?: string;
@@ -175,11 +175,20 @@ export interface AnalysisWorkspaceSnapshot {
   result: AnalysisResponse;
 }
 
+export interface M0WorkspaceSnapshot {
+  analysisMode: "structure";
+  resultInputFingerprint: string;
+  primarySubject: SubjectDraft;
+  result: M0AnalysisResponse;
+}
+
+export type ArchiveWorkspaceSnapshot = AnalysisWorkspaceSnapshot | M0WorkspaceSnapshot;
+
 export interface AnalysisArchive {
   id: string;
   title: string;
   titleCustomized?: true;
   savedAt: string;
   rulesetDigest: string;
-  workspace: AnalysisWorkspaceSnapshot;
+  workspace: ArchiveWorkspaceSnapshot;
 }

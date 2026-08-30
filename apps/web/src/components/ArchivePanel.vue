@@ -82,9 +82,10 @@ function requestRename(archive: AnalysisArchive): void {
 }
 
 function archiveSearchText(archive: AnalysisArchive): string {
-  const { primarySubject, secondarySubject, hasSecondarySubject } = archive.workspace;
+  const { primarySubject } = archive.workspace;
   const subjectText = (subject: typeof primarySubject) => [subject.subjectId, subject.year, subject.month, subject.day, subject.hour].join(" ");
-  return [archive.title, subjectText(primarySubject), hasSecondarySubject ? subjectText(secondarySubject) : ""].join(" ").toLocaleLowerCase("zh-CN");
+  const secondary = archive.workspace.analysisMode === "structure" || !archive.workspace.hasSecondarySubject ? "" : subjectText(archive.workspace.secondarySubject);
+  return [archive.title, subjectText(primarySubject), secondary].join(" ").toLocaleLowerCase("zh-CN");
 }
 </script>
 

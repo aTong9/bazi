@@ -1,11 +1,12 @@
-import { parseAnalysisResponse } from "./api";
-import { analysisInputFingerprint, hourOptions, inactiveSecondarySubject, JIAZI, riskCandidateFingerprint } from "./domain";
-import type { AnalysisArchive, AnalysisWorkspaceSnapshot, SubjectDraft } from "./types";
+import { parseAnalysisResponse, parseM0AnalysisResponse } from "./api";
+import { analysisInputFingerprint, hourOptions, inactiveSecondarySubject, JIAZI, m0InputFingerprint, riskCandidateFingerprint } from "./domain";
+import type { AnalysisArchive, AnalysisWorkspaceSnapshot, ArchiveWorkspaceSnapshot, M0WorkspaceSnapshot, SubjectDraft } from "./types";
 
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
 const MAX_ARCHIVES = 20;
 const BACKUP_SCHEMA = "bazi.relationship.archive-backup.v1";
 const READING_SCHEMA = "bazi.relationship.reading.v1";
+const M0_READING_SCHEMA = "bazi.m0.reading.v1";
 
 interface ArchiveEnvelope { version: 1; archives: AnalysisArchive[] }
 interface ArchiveBackup {
@@ -20,6 +21,10 @@ export interface ArchiveImportResult {
   readonly added: number;
   readonly updated: number;
   readonly skipped: number;
+}
+
+export function archiveId(mode: ArchiveWorkspaceSnapshot["analysisMode"], requestId: string): string {
+  return mode === "structure" ? `archive-m0-${requestId}` : `archive-${requestId}`;
 }
 
 export function loadArchives(storage: Pick<Storage, "getItem"> = localStorage): AnalysisArchive[] {
@@ -52,7 +57,7 @@ function readArchives(storage: Pick<Storage, "getItem">, failOnInvalid: boolean)
     const envelope = JSON.parse(raw) as unknown;
     if (!isEnvelope(envelope)) throw new Error();
     return envelope.archives.map((archive) => {
-      parseAnalysisResponse(archive.workspace.result);
+      parseWorkspaceResult(archive.workspace);
       if (!workspaceResultMatches(archive.workspace)) throw new Error();
       return normalizeArchive(archive);
     });
@@ -63,17 +68,17 @@ function readArchives(storage: Pick<Storage, "getItem">, failOnInvalid: boolean)
 }
 
 export function saveArchive(
-  workspace: AnalysisWorkspaceSnapshot,
+  workspace: ArchiveWorkspaceSnapshot,
   storage: Pick<Storage, "getItem" | "setItem"> = localStorage,
   now = new Date(),
 ): AnalysisArchive[] {
   if (!isWorkspace(workspace)) throw new Error("当前工作区无法保存为有效档案。");
-  parseAnalysisResponse(workspace.result);
+  parseWorkspaceResult(workspace);
   if (!workspaceResultMatches(workspace)) throw new Error("当前工作区输入与分析结果不一致，请重新生成分析。");
   const current = readArchives(storage, true);
-  const existing = current.find((item) => item.id === `archive-${workspace.result.requestId}`);
+  const existing = current.find((item) => item.id === archiveId(workspace.analysisMode, workspace.result.requestId));
   const archive = normalizeArchive({
-    id: `archive-${workspace.result.requestId}`,
+    id: archiveId(workspace.analysisMode, workspace.result.requestId),
     title: existing?.titleCustomized ? existing.title : archiveTitle(workspace),
     ...(existing?.titleCustomized ? { titleCustomized: true as const } : {}),
     savedAt: now.toISOString(),
@@ -123,19 +128,20 @@ export function serializeArchiveBackup(archives: readonly AnalysisArchive[], now
   return `${JSON.stringify(backup, null, 2)}\n`;
 }
 
-export function serializeReadingPackage(workspace: AnalysisWorkspaceSnapshot, now = new Date()): string {
+export function serializeReadingPackage(workspace: ArchiveWorkspaceSnapshot, now = new Date()): string {
   if (!isWorkspace(workspace)) throw new Error("当前工作区无法导出为完整看盘包。");
-  parseAnalysisResponse(workspace.result);
+  parseWorkspaceResult(workspace);
   if (!workspaceResultMatches(workspace)) throw new Error("当前工作区输入与分析结果不一致，请重新生成分析。");
   const exportedAt = now.toISOString();
   const archive = normalizeArchive({
-    id: `archive-${workspace.result.requestId}`,
+    id: archiveId(workspace.analysisMode, workspace.result.requestId),
     title: archiveTitle(workspace),
     savedAt: exportedAt,
     rulesetDigest: workspace.result.rulesetDigest,
     workspace: structuredClone(workspace),
   });
-  return `${JSON.stringify({ schema: READING_SCHEMA, exportedAt, containsSensitiveData: true, workspace: archive.workspace }, null, 2)}\n`;
+  const schema = workspace.analysisMode === "structure" ? M0_READING_SCHEMA : READING_SCHEMA;
+  return `${JSON.stringify({ schema, exportedAt, containsSensitiveData: true, workspace: archive.workspace }, null, 2)}\n`;
 }
 
 export function importArchiveBackup(
@@ -178,8 +184,9 @@ export function previewArchiveBackup(
   return { archives, added, updated, skipped };
 }
 
-export function archiveTitle(workspace: AnalysisWorkspaceSnapshot): string {
+export function archiveTitle(workspace: ArchiveWorkspaceSnapshot): string {
   const day = workspace.primarySubject.day;
+  if (workspace.analysisMode === "structure") return `${workspace.primarySubject.subjectId.trim() || "主命盘"} · ${day}日 · 原局结构`;
   const mode = workspace.analysisMode === "evaluate" ? "现实评估" : "关系画像";
   const secondaryLabel = workspace.secondarySubject.subjectId.trim() || "另一方命盘";
   const pair = workspace.hasSecondarySubject ? ` × ${secondaryLabel} · ${workspace.secondarySubject.day}日` : "";
@@ -200,7 +207,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
     throw new Error("备份文件不是有效的 JSON。");
   }
   if (!value || typeof value !== "object") throw new Error("备份文件结构无效。");
-  if ((value as Record<string, unknown>).schema === READING_SCHEMA) return [parseReadingPackage(value as Record<string, unknown>)];
+  if ([READING_SCHEMA, M0_READING_SCHEMA].includes(String((value as Record<string, unknown>).schema))) return [parseReadingPackage(value as Record<string, unknown>)];
   const backup = value as Partial<ArchiveBackup>;
   if (backup.schema !== BACKUP_SCHEMA) throw new Error("备份版本不受支持。");
   if (backup.containsSensitiveData !== true || typeof backup.exportedAt !== "string" || !Number.isFinite(Date.parse(backup.exportedAt))) {
@@ -214,7 +221,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
     if (ids.has(archive.id)) throw new Error("备份中包含重复档案。");
     ids.add(archive.id);
     try {
-      parseAnalysisResponse(archive.workspace.result);
+      parseWorkspaceResult(archive.workspace);
     } catch {
       throw new Error(`档案“${archive.title}”的分析结果无效。`);
     }
@@ -228,20 +235,30 @@ function parseReadingPackage(value: Record<string, unknown>): AnalysisArchive {
   if (value.containsSensitiveData !== true || typeof value.exportedAt !== "string" || !Number.isFinite(Date.parse(value.exportedAt))) {
     throw new Error("完整看盘包元数据无效。");
   }
-  if (!isWorkspace(value.workspace)) throw new Error("完整看盘包工作区无效。");
+  const workspaceValue = value.schema === M0_READING_SCHEMA && value.workspace === undefined
+    ? legacyM0Workspace(value)
+    : value.workspace;
+  if (!isWorkspace(workspaceValue)) throw new Error("完整看盘包工作区无效。");
+  if ((value.schema === M0_READING_SCHEMA) !== (workspaceValue.analysisMode === "structure")) throw new Error("完整看盘包类型与工作区不一致。");
   try {
-    parseAnalysisResponse(value.workspace.result);
+    parseWorkspaceResult(workspaceValue);
   } catch {
     throw new Error("完整看盘包的分析结果无效。");
   }
-  if (!workspaceResultMatches(value.workspace)) throw new Error("完整看盘包的输入与分析结果不一致。");
+  if (!workspaceResultMatches(workspaceValue)) throw new Error("完整看盘包的输入与分析结果不一致。");
   return normalizeArchive({
-    id: `archive-${value.workspace.result.requestId}`,
-    title: archiveTitle(value.workspace),
+    id: archiveId(workspaceValue.analysisMode, workspaceValue.result.requestId),
+    title: archiveTitle(workspaceValue),
     savedAt: value.exportedAt,
-    rulesetDigest: value.workspace.result.rulesetDigest,
-    workspace: structuredClone(value.workspace),
+    rulesetDigest: workspaceValue.result.rulesetDigest,
+    workspace: structuredClone(workspaceValue),
   });
+}
+
+function legacyM0Workspace(value: Record<string, unknown>): unknown {
+  if (!isSubject(value.subject) || !value.result || typeof value.result !== "object") return null;
+  const primarySubject = structuredClone(value.subject) as SubjectDraft;
+  return { analysisMode: "structure", resultInputFingerprint: m0InputFingerprint(primarySubject), primarySubject, result: value.result };
 }
 
 function isEnvelope(value: unknown): value is ArchiveEnvelope {
@@ -255,7 +272,7 @@ function isArchiveList(value: unknown): value is AnalysisArchive[] {
     && new Set(value.map((archive) => archive.id)).size === value.length;
 }
 
-function archiveIdentityMatches(archive: AnalysisArchive): boolean { return archive.id === `archive-${archive.workspace.result.requestId}`; }
+function archiveIdentityMatches(archive: AnalysisArchive): boolean { return archive.id === archiveId(archive.workspace.analysisMode, archive.workspace.result.requestId); }
 
 function isArchive(value: unknown): value is AnalysisArchive {
   if (!value || typeof value !== "object") return false;
@@ -267,16 +284,22 @@ function isArchive(value: unknown): value is AnalysisArchive {
     && isWorkspace(archive.workspace);
 }
 
-function isWorkspace(value: unknown): value is AnalysisWorkspaceSnapshot {
+function isWorkspace(value: unknown): value is ArchiveWorkspaceSnapshot {
   if (!value || typeof value !== "object") return false;
-  const workspace = value as Partial<AnalysisWorkspaceSnapshot>;
-  return (workspace.analysisMode === "profile" || workspace.analysisMode === "evaluate")
-    && ["female_traditional", "male_traditional", "unspecified"].includes(String(workspace.roleBasis))
-    && isSubject(workspace.primarySubject) && isSubject(workspace.secondarySubject)
-    && typeof workspace.hasSecondarySubject === "boolean"
-    && isGateList(workspace.gates) && isObservationList(workspace.observations)
-    && isCrossState(workspace.crossState)
-    && Boolean(workspace.result && typeof workspace.result === "object");
+  const workspace = value as Partial<ArchiveWorkspaceSnapshot>;
+  if (workspace.analysisMode === "structure") {
+    const structure = workspace as Partial<M0WorkspaceSnapshot>;
+    return typeof structure.resultInputFingerprint === "string" && isSubject(structure.primarySubject)
+      && Boolean(structure.result && typeof structure.result === "object");
+  }
+  const relationship = workspace as Partial<AnalysisWorkspaceSnapshot>;
+  return (relationship.analysisMode === "profile" || relationship.analysisMode === "evaluate")
+    && ["female_traditional", "male_traditional", "unspecified"].includes(String(relationship.roleBasis))
+    && isSubject(relationship.primarySubject) && isSubject(relationship.secondarySubject)
+    && typeof relationship.hasSecondarySubject === "boolean"
+    && isGateList(relationship.gates) && isObservationList(relationship.observations)
+    && isCrossState(relationship.crossState)
+    && Boolean(relationship.result && typeof relationship.result === "object");
 }
 
 function isSubject(value: unknown): boolean {
@@ -309,6 +332,10 @@ function isPillarSummary(value: unknown): boolean {
 function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
   const value = structuredClone(archive);
   value.workspace.primarySubject = normalizeSubject(value.workspace.primarySubject);
+  if (value.workspace.analysisMode === "structure") {
+    value.workspace.resultInputFingerprint = m0InputFingerprint(value.workspace.primarySubject);
+    return value;
+  }
   value.workspace.secondarySubject = value.workspace.hasSecondarySubject ? normalizeSubject(value.workspace.secondarySubject) : inactiveSecondarySubject();
   for (const state of ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const) {
     if (value.workspace.analysisMode === "profile") value.workspace.crossState[state] = false;
@@ -322,11 +349,17 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
   return value;
 }
 
-function workspaceResultMatches(workspace: AnalysisWorkspaceSnapshot): boolean {
+function workspaceResultMatches(workspace: ArchiveWorkspaceSnapshot): boolean {
+  if (workspace.analysisMode === "structure") return workspace.resultInputFingerprint === m0InputFingerprint(workspace.primarySubject);
   return workspace.roleBasis === workspace.result.relationship.roleBasis
     && workspace.hasSecondarySubject === workspace.result.relationship.structuralSupplement.available
     && (workspace.resultInputFingerprint === undefined || workspace.resultInputFingerprint === analysisInputFingerprint(workspace))
     && workspaceObservationsMatch(workspace);
+}
+
+function parseWorkspaceResult(workspace: ArchiveWorkspaceSnapshot): void {
+  if (workspace.analysisMode === "structure") parseM0AnalysisResponse(workspace.result);
+  else parseAnalysisResponse(workspace.result);
 }
 
 function workspaceObservationsMatch(workspace: AnalysisWorkspaceSnapshot): boolean {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "./archive-store";
-import { analysisInputFingerprint, riskCandidateFingerprint } from "./domain";
-import { makeAnalysisResponse } from "./test/analysis-fixture";
-import type { AnalysisWorkspaceSnapshot } from "./types";
+import { analysisInputFingerprint, m0InputFingerprint, riskCandidateFingerprint } from "./domain";
+import { makeAnalysisResponse, makeM0AnalysisResponse } from "./test/analysis-fixture";
+import type { AnalysisArchive, AnalysisWorkspaceSnapshot, M0WorkspaceSnapshot } from "./types";
 
 describe("local analysis archive", () => {
   it("round-trips a complete workspace and replaces the same analysis instead of duplicating it", () => {
@@ -57,7 +57,7 @@ describe("local analysis archive", () => {
 
   it("upgrades legacy v1 subjects to an explicit manual input source", () => {
     const workspace = makeWorkspace();
-    const archive = saveArchive(workspace, memoryStorage(), new Date("2026-08-30T01:00:00Z"))[0]!;
+    const archive = relationshipArchive(saveArchive(workspace, memoryStorage(), new Date("2026-08-30T01:00:00Z"))[0]!);
     archive.workspace.primarySubject.birthTimeStatus = "unknown";
     archive.workspace.primarySubject.hour = "庚午";
     archive.workspace.primarySubject.birthInput = {
@@ -80,7 +80,7 @@ describe("local analysis archive", () => {
       basisFingerprint: "legacy", candidateFingerprint: "legacy", basisRequestId: archive.workspace.result.requestId,
     }];
     const storage = memoryStorage(JSON.stringify({ version: 1, archives: [archive] }));
-    const restored = loadArchives(storage)[0]!;
+    const restored = relationshipArchive(loadArchives(storage)[0]!);
     expect(restored.workspace.primarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
     expect(restored.workspace.primarySubject.hour).toBe("甲子");
     expect(restored.workspace.secondarySubject).toMatchObject({ subjectId: "另一方", birthInput: { method: "manual_four_pillars" } });
@@ -94,7 +94,7 @@ describe("local analysis archive", () => {
     const hiddenDraft = makeWorkspace();
     hiddenDraft.crossState.evidence.pressure = "不应保存的隐藏事实";
     hiddenDraft.resultInputFingerprint = analysisInputFingerprint(hiddenDraft);
-    expect(saveArchive(hiddenDraft, memoryStorage())[0]?.workspace.crossState.evidence.pressure).toBe("");
+    expect(relationshipArchive(saveArchive(hiddenDraft, memoryStorage())[0]!).workspace.crossState.evidence.pressure).toBe("");
   });
 
   it("deletes only the selected archive", () => {
@@ -177,9 +177,35 @@ describe("local analysis archive", () => {
     expect(loadArchives(readingStorage)[0]?.workspace.result.requestId).toBe(makeWorkspace().result.requestId);
   });
 
+  it("saves, restores, and imports standalone M0 archives through the same protected store", () => {
+    const source = memoryStorage();
+    const saved = saveArchive(makeM0Workspace(), source, new Date("2026-08-30T06:00:00Z"));
+    expect(saved[0]).toMatchObject({ title: "主命盘 · 甲寅日 · 原局结构", workspace: { analysisMode: "structure" } });
+    expect(loadArchives(source)[0]?.workspace.analysisMode).toBe("structure");
+
+    const mixed = saveArchive(makeWorkspace(), source, new Date("2026-08-30T07:00:00Z"));
+    const destination = memoryStorage();
+    expect(importArchiveBackup(serializeArchiveBackup(mixed), destination)).toMatchObject({ added: 2, updated: 0, skipped: 0 });
+
+    const reading = serializeReadingPackage(makeM0Workspace(), new Date("2026-08-30T08:00:00Z"));
+    expect(JSON.parse(reading)).toMatchObject({ schema: "bazi.m0.reading.v1", workspace: { analysisMode: "structure" } });
+    expect(previewArchiveBackup(reading, memoryStorage())).toMatchObject({ added: 1, updated: 0, skipped: 0 });
+
+    const legacyWorkspace = makeM0Workspace();
+    const legacyReading = JSON.stringify({
+      schema: "bazi.m0.reading.v1", exportedAt: "2026-08-30T08:00:00.000Z", containsSensitiveData: true,
+      resultInputFingerprint: "legacy-ui-fingerprint", subject: legacyWorkspace.primarySubject, result: legacyWorkspace.result,
+    });
+    expect(importArchiveBackup(legacyReading, memoryStorage())).toMatchObject({ added: 1, updated: 0, skipped: 0 });
+
+    const mismatched = JSON.parse(reading) as { workspace: M0WorkspaceSnapshot };
+    mismatched.workspace.primarySubject.subjectId = "被拼接的命盘";
+    expect(() => importArchiveBackup(JSON.stringify(mismatched), memoryStorage())).toThrow("输入与分析结果不一致");
+  });
+
   it("rejects unknown, duplicated, oversized, or response-invalid backups without mutating storage", () => {
     const storage = memoryStorage();
-    const current = saveArchive(makeWorkspace(), storage);
+    const current = saveArchive(makeWorkspace(), storage).map(relationshipArchive);
     const valid = JSON.parse(serializeArchiveBackup(current)) as Record<string, unknown>;
     const before = storage.value();
 
@@ -242,6 +268,16 @@ function workspaceWithRequestId(requestId: string): AnalysisWorkspaceSnapshot {
   const workspace = makeWorkspace();
   workspace.result = { ...workspace.result, requestId };
   return workspace;
+}
+
+function makeM0Workspace(): M0WorkspaceSnapshot {
+  const primarySubject = { subjectId: "主命盘", year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact" as const, dataQuality: "high" as const, birthInput: { method: "manual_four_pillars" as const } };
+  return { analysisMode: "structure", resultInputFingerprint: m0InputFingerprint(primarySubject), primarySubject, result: makeM0AnalysisResponse() };
+}
+
+function relationshipArchive(archive: AnalysisArchive): AnalysisArchive & { workspace: AnalysisWorkspaceSnapshot } {
+  if (archive.workspace.analysisMode === "structure") throw new Error("expected relationship archive");
+  return archive as AnalysisArchive & { workspace: AnalysisWorkspaceSnapshot };
 }
 
 function memoryStorage(initial?: string) {
