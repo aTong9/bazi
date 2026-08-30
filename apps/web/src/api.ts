@@ -158,6 +158,14 @@ export function parseAnalysisResponse(value: unknown): AnalysisResponse {
   ) {
     throw responseSchemaError("分析模块与发布报告互相矛盾");
   }
+  const expectedObservationPlan = report.safetyStatus === "safety_stop" || report.reportStatus === "stop"
+    ? []
+    : (m5.realityGates as Array<{ id: string; label: string; status: string }>).filter((gate) => gate.status !== "pass").slice(0, 5).map((gate) => ({ gateId: gate.id, observe: gate.label, directive: false }));
+  if (JSON.stringify(report.fields) !== JSON.stringify(m0.fields)
+    || JSON.stringify(report.realityGates) !== JSON.stringify(m5.realityGates)
+    || JSON.stringify(report.observationPlan) !== JSON.stringify(expectedObservationPlan)) {
+    throw responseSchemaError("分析模块与发布报告投影不一致");
+  }
   if (report.safetyStatus === "safety_stop" && (report.reportStatus !== "stop" || report.evidenceGrade !== "FG0" || report.assessment !== "AF09" || report.sections.some((section) => record(section)?.id !== "safety"))) {
     throw responseSchemaError("安全停止响应仍包含普通分析内容");
   }

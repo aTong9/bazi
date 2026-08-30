@@ -64,6 +64,20 @@ describe("API response guards", () => {
     expect(() => parseAnalysisResponse(response)).toThrow("分析模块与发布报告互相矛盾");
   });
 
+  it("rejects report facts that diverge from their module results", () => {
+    const fields = JSON.parse(JSON.stringify(makeAnalysisResponse())) as ReturnType<typeof makeAnalysisResponse>;
+    fields.report.fields.day_master_and_season!.value = { dayMaster: "乙" };
+    expect(() => parseAnalysisResponse(fields)).toThrow("分析模块与发布报告投影不一致");
+
+    const gates = JSON.parse(JSON.stringify(makeAnalysisResponse())) as ReturnType<typeof makeAnalysisResponse>;
+    gates.report.realityGates[0]!.status = "fail";
+    expect(() => parseAnalysisResponse(gates)).toThrow("分析模块与发布报告投影不一致");
+
+    const plan = JSON.parse(JSON.stringify(makeAnalysisResponse({ gateStatuses: { RG04: "unknown" } }))) as ReturnType<typeof makeAnalysisResponse>;
+    plan.report.observationPlan = [];
+    expect(() => parseAnalysisResponse(plan)).toThrow("分析模块与发布报告投影不一致");
+  });
+
   it("applies guards to successful fetch calls", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: "ready", catalog: { rulesetDigest: "digest", loadedRecords: 1, compiledRecords: 1, activeModules: ["M0"] } }), { status: 200, headers: { "content-type": "application/json" } }))

@@ -10,7 +10,7 @@ const validate = ajv.compile(JSON.parse(readFileSync(fileURLToPath(new URL("../s
 
 export function validateRelationshipResponse(value: unknown, expected?: { readonly rulesetDigest?: string; readonly integrationVersion?: string }): readonly string[] {
   if (!validate(value)) return Object.freeze((validate.errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message ?? error.keyword}`));
-  const response = value as { rulesetDigest: string; versionManifest: { integrationVersion: string }; m0: { fields: Record<string, unknown> }; relationship: { status: string; dependencyFlags: string[]; m3: { status?: string; repair?: unknown; state?: unknown; synthesis?: unknown }; m5: { mode: string; reportStatus: string; safetyStatus: string; fit: { grade: string; assessment: string }; realityGates: Array<{ id: string; status: string }>; observationPlan?: unknown[] } }; report: { logs?: { decisions?: Array<{ decisionId?: string }> } }; ruleTrace: string[] };
+  const response = value as { rulesetDigest: string; versionManifest: { integrationVersion: string }; m0: { fields: Record<string, unknown> }; relationship: { status: string; dependencyFlags: string[]; m3: { status?: string; repair?: unknown; state?: unknown; synthesis?: unknown }; m5: { mode: string; reportStatus: string; safetyStatus: string; fit: { grade: string; assessment: string }; realityGates: Array<{ id: string; label: string; status: string }>; observationPlan?: unknown[] } }; report: { reportStatus: string; safetyStatus: string; fields: Record<string, unknown>; realityGates: unknown[]; observationPlan: unknown[]; logs?: { decisions?: Array<{ decisionId?: string }> } }; ruleTrace: string[] };
   const errors = [...validateAnalysisReport(response.report)];
   if (expected?.rulesetDigest && response.rulesetDigest !== expected.rulesetDigest) errors.push("rulesetDigest does not match the fixed snapshot");
   if (expected?.integrationVersion && response.versionManifest.integrationVersion !== expected.integrationVersion) errors.push("integrationVersion does not match the fixed snapshot");
@@ -22,6 +22,12 @@ export function validateRelationshipResponse(value: unknown, expected?: { readon
   if (new Set(m5.realityGates.map((gate) => gate.id)).size !== 8) errors.push("M5 must publish RG01-RG08 exactly once");
   if (m5.safetyStatus === "safety_stop" && (m5.reportStatus !== "stop" || m5.fit.grade !== "FG0" || m5.fit.assessment !== "AF09")) errors.push("M5 safety stop requires stop/FG0/AF09");
   if ((m5.observationPlan?.length ?? 0) > 3) errors.push("M5 observation plan cannot exceed 3 items");
+  const expectedObservationPlan = response.report.safetyStatus === "safety_stop" || response.report.reportStatus === "stop"
+    ? []
+    : m5.realityGates.filter((gate) => gate.status !== "pass").slice(0, 5).map((gate) => ({ gateId: gate.id, observe: gate.label, directive: false }));
+  if (JSON.stringify(response.report.fields) !== JSON.stringify(response.m0.fields)) errors.push("report fields must project M0 fields unchanged");
+  if (JSON.stringify(response.report.realityGates) !== JSON.stringify(m5.realityGates)) errors.push("report reality gates must project M5 gates unchanged");
+  if (JSON.stringify(response.report.observationPlan) !== JSON.stringify(expectedObservationPlan)) errors.push("report observation plan must project M5 gates");
   if (response.report.logs?.decisions?.some((decision) => !decision.decisionId)) errors.push("every decision record requires decisionId");
   if (response.ruleTrace.length === 0) errors.push("published analysis requires rule trace");
   return Object.freeze(errors);

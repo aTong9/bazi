@@ -47,6 +47,8 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
     status: options.gateStatuses?.[id] ?? (isSafetyStop && id === "RG01" ? "fail" : "pass"),
     evidenceIds: id === "RG01" ? ["event-01"] : [],
   }));
+  const m5ObservationPlan = gates.filter((gate) => gate.status !== "pass").slice(0, 3).map((gate) => ({ gateId: gate.id, observe: gate.label, directive: false as const }));
+  const reportObservationPlan = isSafetyStop ? [] : gates.filter((gate) => gate.status !== "pass").slice(0, 5).map((gate) => ({ gateId: gate.id, observe: gate.label, directive: false as const }));
   const reportSections = isSafetyStop
     ? [
         { id: "safety", title: "安全与边界", body: "现实安全事实优先，普通适配叙事停止。" },
@@ -106,7 +108,7 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
         safetyStatus: isSafetyStop ? "safety_stop" : "standard",
         realityGates: gates,
         crossStateEvidence: [],
-        observationPlan: isSafetyStop ? [] : [{ gateId: "RG04", observe: "观察生活节奏", directive: false }],
+        observationPlan: m5ObservationPlan,
         fit: {
           grade: isSafetyStop ? "FG0" : "FG2",
           assessment: isSafetyStop ? "AF09" : "AF02",
@@ -125,7 +127,7 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
       fields,
       sections: reportSections,
       realityGates: gates,
-      observationPlan: isSafetyStop ? [] : [{ gateId: "RG04", observe: "观察生活节奏", directive: false }],
+      observationPlan: reportObservationPlan,
       boundaries: [{ code: "NOT_FATE", hard: true, text: "本报告不是命定结果。" }],
       trace: { ruleIds: [], sourceIds: [], eventIds: [] },
     },

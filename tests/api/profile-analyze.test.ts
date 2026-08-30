@@ -49,6 +49,9 @@ test("canonical relationship routes expose a bounded profile and safety-stop eva
     assert.equal(profileJson.relationship.m5.fit.grade, "FG1"); assert.equal(profileJson.relationship.m5.partnerFacts, null); assert.equal(profileJson.relationship.m5.realityGates.length, 8);
     assert.equal(profileJson.report.evidenceGrade, "FG1"); assert.ok(profileJson.report.boundaries.every((item) => item.hard));
     assert.deepEqual(validateRelationshipResponse(profileJson), []);
+    const mismatchedProjection = structuredClone(profileJson) as unknown as { m0: { fields: Record<string, { value: unknown }> }; report: { fields: Record<string, { value: unknown }> } };
+    mismatchedProjection.report.fields.input_validation!.value = { changed: true };
+    assert.ok(validateRelationshipResponse(mismatchedProjection).some((error) => error.includes("project M0 fields")));
     const evaluation = await fetch(`http://127.0.0.1:${port}/v1/relationship/evaluate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: [{ id: "RG01", status: "fail", evidenceIds: ["incident-1"], note: "safety failure" }] }) });
     assert.equal(evaluation.status, 200);
     const evaluationJson = await evaluation.json() as { relationship: { m5: { reportStatus: string; fit: { grade: string; assessment: string; ordinaryFindings: unknown[] } } }; report: { sections: Array<{ id: string }> } };
