@@ -159,6 +159,7 @@ export interface AnalysisWorkspaceSnapshot {
 export interface AnalysisArchive {
   id: string;
   title: string;
+  titleCustomized?: true;
   savedAt: string;
   rulesetDigest: string;
   workspace: AnalysisWorkspaceSnapshot;
