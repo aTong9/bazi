@@ -46,6 +46,7 @@ const currentInputFingerprint = computed(() => analysisInputFingerprint({
   gates: gates.value,
   crossState: crossState.value,
 }));
+const hasUnsavedResult = computed(() => Boolean(result.value && !archives.value.some((archive) => archive.id === `archive-${result.value?.requestId}`)));
 const observableRiskChains = computed(() => {
   if (!result.value || result.value.report.safetyStatus === "safety_stop") return [];
   return result.value.relationship.m4.riskChains;
@@ -91,6 +92,11 @@ watch(currentInputFingerprint, (fingerprint, previousFingerprint) => {
   observations.value = [];
 });
 
+watch(hasUnsavedResult, (unsaved) => {
+  if (unsaved) window.addEventListener("beforeunload", protectUnsavedResult);
+  else window.removeEventListener("beforeunload", protectUnsavedResult);
+});
+
 onMounted(() => {
   archives.value = loadArchives();
   window.addEventListener("online", updateNetworkState);
@@ -103,10 +109,16 @@ onBeforeUnmount(() => {
   window.removeEventListener("online", updateNetworkState);
   window.removeEventListener("offline", updateNetworkState);
   window.removeEventListener("bazi-offline-ready", markOfflineReady);
+  window.removeEventListener("beforeunload", protectUnsavedResult);
 });
 
 function updateNetworkState(): void { isOnline.value = navigator.onLine; }
 function markOfflineReady(): void { offlineReady.value = true; }
+function protectUnsavedResult(event: BeforeUnloadEvent): void {
+  if (!hasUnsavedResult.value) return;
+  event.preventDefault();
+  event.returnValue = true;
+}
 
 async function refreshHealth(): Promise<void> {
   try {
@@ -318,8 +330,7 @@ function resetWorkspace(): void {
 }
 
 function startNewAnalysis(): void {
-  const unsaved = result.value && !archives.value.some((archive) => archive.id === `archive-${result.value?.requestId}`);
-  if (unsaved && !window.confirm("本次看盘还未保存，仍要新建分析吗？")) return;
+  if (hasUnsavedResult.value && !window.confirm("本次看盘还未保存，仍要新建分析吗？")) return;
   resetWorkspace();
 }
 
