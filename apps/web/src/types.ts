@@ -69,12 +69,16 @@ export interface AnalysisResponse {
   requestId: string;
   generatedAt: string;
   rulesetDigest: string;
+  versionManifest: { integrationVersion: string; modelVersions: Record<string, string>; compilerVersion: string };
   sourceIds: string[];
   ruleTrace: string[];
+  discardLog: unknown[];
   m0: {
     status: string;
+    modules: Record<string, unknown>;
     fields: Record<string, ResultItem>;
     dependencyFlags: string[];
+    issues: unknown[];
   };
   relationship: {
     status: string;

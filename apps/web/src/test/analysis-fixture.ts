@@ -41,6 +41,7 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
     moisture_state: resultItem({ state: "balanced", evidence: [], candidateElements: [] }),
     primary_and_auxiliary_use: resultItem({ primary: [], auxiliary: [] }),
   };
+  while (Object.keys(fields).length < 45) fields[`fixture_field_${String(Object.keys(fields).length + 1).padStart(2, "0")}`] = resultItem(null, "unknown", "low");
   const gates = REALITY_GATES.map(({ id, label }) => ({
     id,
     label,
@@ -66,9 +67,11 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
     requestId: "11111111-1111-4111-8111-111111111111",
     generatedAt: "2026-08-30T08:00:00.000Z",
     rulesetDigest: "a".repeat(64),
+    versionManifest: { integrationVersion: "1.0", modelVersions: { M0: "1.9", M1: "1.0", M2: "1.0", M3: "1.0", M4: "1.0", M5: "1.0" }, compilerVersion: "1.0" },
     sourceIds: [],
     ruleTrace: [],
-    m0: { status: "complete", fields, dependencyFlags: [] },
+    discardLog: [],
+    m0: { status: "complete", modules: {}, fields, dependencyFlags: [], issues: [] },
     relationship: {
       status: "provisional",
       roleBasis: "female_traditional",

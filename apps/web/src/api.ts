@@ -95,12 +95,19 @@ export function parseHealthResponse(value: unknown): HealthResponse {
 
 export function parseAnalysisResponse(value: unknown): AnalysisResponse {
   const response = record(value);
-  if (!response || !hasStrings(response, ["requestId", "generatedAt", "rulesetDigest"]) || !isStringArray(response.ruleTrace) || !isStringArray(response.sourceIds)) {
+  const manifest = response && record(response.versionManifest);
+  const modelVersions = manifest && record(manifest.modelVersions);
+  if (!response || !manifest || !modelVersions
+    || !hasStrings(response, ["requestId", "generatedAt", "rulesetDigest"])
+    || !isString(manifest.integrationVersion) || !Object.values(modelVersions).every(isString) || !isString(manifest.compilerVersion)
+    || !isStringArray(response.ruleTrace) || !isStringArray(response.sourceIds) || !Array.isArray(response.discardLog)) {
     throw responseSchemaError("分析响应缺少顶层追踪字段");
   }
 
   const m0 = record(response.m0);
-  if (!m0 || !isOneOf(m0.status, ["complete", "limited"]) || !isResultFieldMap(m0.fields) || !isStringArray(m0.dependencyFlags)) {
+  if (!m0 || !isOneOf(m0.status, ["complete", "limited"]) || !record(m0.modules)
+    || !isResultFieldMap(m0.fields) || Object.keys(m0.fields as object).length !== 45
+    || !isStringArray(m0.dependencyFlags) || !Array.isArray(m0.issues)) {
     throw responseSchemaError("分析响应的 M0 字段无效");
   }
 

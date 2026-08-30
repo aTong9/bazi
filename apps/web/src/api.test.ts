@@ -25,6 +25,20 @@ describe("API response guards", () => {
     expect(parseAnalysisResponse(response)).toBe(response);
   });
 
+  it("rejects relationship responses missing authoritative runtime metadata", () => {
+    const version = makeAnalysisResponse() as unknown as Record<string, unknown>;
+    delete version.versionManifest;
+    expect(() => parseAnalysisResponse(version)).toThrow("顶层追踪字段");
+
+    const modules = makeAnalysisResponse() as unknown as { m0: Record<string, unknown> };
+    delete modules.m0.modules;
+    expect(() => parseAnalysisResponse(modules)).toThrow("M0 字段无效");
+
+    const fields = makeAnalysisResponse();
+    delete fields.m0.fields.fixture_field_45;
+    expect(() => parseAnalysisResponse(fields)).toThrow("M0 字段无效");
+  });
+
   it("accepts the standalone M0 response and rejects missing trace metadata", () => {
     expect(parseM0AnalysisResponse(makeM0AnalysisResponse()).m0.status).toBe("complete");
     const malformed = makeM0AnalysisResponse() as unknown as Record<string, unknown>;
