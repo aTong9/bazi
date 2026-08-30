@@ -27,7 +27,7 @@ npm run check
 
 正式发布执行 `npm run release:check`。真实案例校准保留为可选能力，不再作为工程发布前置条件。
 
-`npm run check` 会执行后端与前端严格类型检查、全部自动化测试、Vue 生产构建、161 文件文档包的清单/哈希/JSON/CSV/ZIP CRC 校验，以及权威来源锁校验。截至 2026-08-30，通用 runner 为 Node 核心 81 个用例加 Web 48 个用例；Pages 另有 5 个专项测试，407 项权威开发矩阵由 `npm run test:evidence` 另行严格执行。各类计数用途不同。原始整合包只读；所有勘误通过 `data/overlays/` 的版本化覆盖层表达。关键契约位于：
+`npm run check` 会执行后端与前端严格类型检查、全部自动化测试、Vue 生产构建、161 文件文档包的清单/哈希/JSON/CSV/ZIP CRC 校验，以及权威来源锁校验。截至 2026-08-30，通用 runner 为 Node 核心 81 个用例加 Web 49 个用例；Pages 另有 5 个专项测试，407 项权威开发矩阵由 `npm run test:evidence` 另行严格执行。各类计数用途不同。原始整合包只读；所有勘误通过 `data/overlays/` 的版本化覆盖层表达。关键契约位于：
 
 - `data/source-package.lock.json`：明确锁定运行时核心、语义权威源和覆盖层；
 - `data/migrations/integration-v1.0-canonical-mappings.json`：状态、置信、Excel 日期和夫妻星策略裁决；

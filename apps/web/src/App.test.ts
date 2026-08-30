@@ -130,6 +130,18 @@ describe("App analysis provenance", () => {
     expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
   });
 
+  it("blocks page unload until the completed reading is saved", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false);
+    findButton(mounted.host, "保存到档案").click();
+    await flushUi();
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true);
+  });
+
   it("saves a completed reading locally and restores it after starting over", async () => {
     const response = makeAnalysisResponse();
     const fetchMock = installBrowserMocks(response);
