@@ -293,6 +293,8 @@ function readableSummary(analysis: AnalysisResponse): string {
       `- 另一方命盘：${secondarySubject.value.subjectId.trim() || "另一方命盘"} · ${formatSubjectPillars(secondarySubject.value)}`,
       `- 另一方命盘来源：${formatBirthInputSource(secondarySubject.value)}`,
     ] : []),
+    `- 分析 ID：${analysis.requestId}`,
+    `- 规则快照：${analysis.rulesetDigest}`,
     `- 证据等级：${analysis.report.evidenceGrade}`,
     `- 报告状态：${analysis.report.reportStatus}`,
     `- 生成时间：${new Date(analysis.generatedAt).toLocaleString("zh-CN")}`,
