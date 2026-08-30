@@ -106,4 +106,13 @@ test("M5 requires evidence for every checked cross-state before publishing FG4",
   assert.equal(evidenced.fit.grade, "FG4");
   assert.equal(evidenced.fit.assessment, "AF07");
   assert.equal(evidenced.crossStateEvidence.length, 5);
+  const repeatedEvidence = analyzeM5({
+    mode: "specific_partner_with_reality_data",
+    m4: analyzeM4({ m3, observations: [] }),
+    gateAssessments: gates,
+    crossStateValidation: validation,
+    crossStateEvidence: (["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const)
+      .map((state) => ({ state, note: "同一事件", evidenceIds: ["same-event"] })),
+  });
+  assert.equal(repeatedEvidence.fit.grade, "FG3");
 });

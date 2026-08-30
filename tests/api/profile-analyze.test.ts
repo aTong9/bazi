@@ -79,6 +79,11 @@ test("canonical relationship routes expose a bounded profile and safety-stop eva
 
     const crossStateEvidence = (["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const)
       .map((state) => ({ state, note: `observed ${state}`, evidenceIds: [`event-cross-${state}`] }));
+    const repeatedCrossEvidence = await evaluate(port, { ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: allGates, cross_state_validation: crossStateValidation, cross_state_evidence: crossStateEvidence.map((item) => ({ ...item, evidenceIds: ["same-event"] })) });
+    assert.equal(repeatedCrossEvidence.status, 400);
+    const repeatedCrossEvidenceJson = await repeatedCrossEvidence.json() as { issues: Array<{ code: string; message: string }> };
+    assert.equal(repeatedCrossEvidenceJson.issues[0]?.code, "E_REQUEST_SCHEMA");
+    assert.match(repeatedCrossEvidenceJson.issues[0]?.message ?? "", /distinct evidence ids/u);
     const completeCrossEvidence = await evaluate(port, { ...body("female_traditional"), requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"], reality_gates: allGates, cross_state_validation: crossStateValidation, cross_state_evidence: crossStateEvidence });
     assert.equal(completeCrossEvidence.status, 200);
     const completeJson = await completeCrossEvidence.json() as { relationship: { m5: { fit: { grade: string }; crossStateEvidence: unknown[] } }; report: { trace: { eventIds: string[] } } };

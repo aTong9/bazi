@@ -51,6 +51,10 @@ export function parseProfileAnalyzeRequest(value: unknown): ParsedProfileRequest
 
   const crossEvidence = wire.cross_state_evidence ?? [];
   if (new Set(crossEvidence.map((item) => item.state)).size !== crossEvidence.length) return { valid: false, errors: ["/cross_state_evidence contains duplicate states"] };
+  const crossEvidenceIds = crossEvidence.flatMap((item) => item.evidenceIds.map((id) => id.trim()).filter(Boolean));
+  if (new Set(crossEvidenceIds).size !== crossEvidenceIds.length) return { valid: false, errors: ["/cross_state_evidence must use distinct evidence ids across states"] };
+  const crossEvidenceNotes = crossEvidence.map((item) => item.note.trim());
+  if (new Set(crossEvidenceNotes).size !== crossEvidenceNotes.length) return { valid: false, errors: ["/cross_state_evidence must describe distinct factual contexts across states"] };
   const crossEvidenceByState = new Map(crossEvidence.map((item) => [item.state, item]));
   for (const state of CROSS_STATE_KEYS) {
     const checked = wire.cross_state_validation?.[state] ?? false;
