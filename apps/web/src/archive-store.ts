@@ -22,26 +22,28 @@ export interface ArchiveImportResult {
 }
 
 export function loadArchives(storage: Pick<Storage, "getItem"> = localStorage): AnalysisArchive[] {
+  return readArchives(storage, false);
+}
+
+function readArchives(storage: Pick<Storage, "getItem">, failOnInvalid: boolean): AnalysisArchive[] {
   let raw: string | null;
   try {
-    if (typeof storage?.getItem !== "function") return [];
+    if (typeof storage?.getItem !== "function") throw new Error();
     raw = storage.getItem(ARCHIVE_STORAGE_KEY);
   } catch {
+    if (failOnInvalid) throw new Error("无法读取本机档案，已停止写入以保护现有数据。");
     return [];
   }
   if (!raw) return [];
   try {
     const envelope = JSON.parse(raw) as unknown;
-    if (!isEnvelope(envelope)) return [];
-    return envelope.archives.flatMap((archive) => {
-      try {
-        parseAnalysisResponse(archive.workspace.result);
-        return [normalizeArchive(archive)];
-      } catch {
-        return [];
-      }
+    if (!isEnvelope(envelope)) throw new Error();
+    return envelope.archives.map((archive) => {
+      parseAnalysisResponse(archive.workspace.result);
+      return normalizeArchive(archive);
     }).slice(0, MAX_ARCHIVES);
   } catch {
+    if (failOnInvalid) throw new Error("本机档案数据已损坏，已停止写入以避免覆盖；请先导出浏览器存储以便恢复。");
     return [];
   }
 }
@@ -53,7 +55,7 @@ export function saveArchive(
 ): AnalysisArchive[] {
   if (!isWorkspace(workspace)) throw new Error("当前工作区无法保存为有效档案。");
   parseAnalysisResponse(workspace.result);
-  const current = loadArchives(storage);
+  const current = readArchives(storage, true);
   const existing = current.find((item) => item.id === `archive-${workspace.result.requestId}`);
   const archive: AnalysisArchive = {
     id: `archive-${workspace.result.requestId}`,
@@ -72,7 +74,7 @@ export function saveArchive(
 }
 
 export function deleteArchive(id: string, storage: Pick<Storage, "getItem" | "setItem"> = localStorage): AnalysisArchive[] {
-  const archives = loadArchives(storage).filter((archive) => archive.id !== id);
+  const archives = readArchives(storage, true).filter((archive) => archive.id !== id);
   persist(archives, storage);
   return archives;
 }
@@ -86,7 +88,7 @@ export function renameArchive(
   const normalizedTitle = title.trim().replace(/\s+/gu, " ");
   if (!normalizedTitle) throw new Error("档案名称不能为空。");
   if (normalizedTitle.length > 300) throw new Error("档案名称不能超过 300 个字符。");
-  const archives = loadArchives(storage);
+  const archives = readArchives(storage, true);
   const archive = archives.find((item) => item.id === id);
   if (!archive) throw new Error("档案不存在。");
   const renamed = { ...archive, title: normalizedTitle, titleCustomized: true as const, savedAt: now.toISOString() };
@@ -120,7 +122,7 @@ export function previewArchiveBackup(
   storage: Pick<Storage, "getItem"> = localStorage,
 ): ArchiveImportResult {
   const imported = parseBackup(raw);
-  const current = loadArchives(storage);
+  const current = readArchives(storage, true);
   const merged = new Map(current.map((archive) => [archive.id, archive]));
   let added = 0;
   let updated = 0;

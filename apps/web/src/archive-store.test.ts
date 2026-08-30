@@ -29,6 +29,9 @@ describe("local analysis archive", () => {
   it("ignores corrupted or response-invalid browser data", () => {
     const malformed = memoryStorage("not-json");
     expect(loadArchives(malformed)).toEqual([]);
+    const before = malformed.value();
+    expect(() => saveArchive(makeWorkspace(), malformed)).toThrow("已停止写入以避免覆盖");
+    expect(malformed.value()).toBe(before);
 
     const invalid = memoryStorage(JSON.stringify({
       version: 1,
