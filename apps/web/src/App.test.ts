@@ -90,6 +90,13 @@ describe("App analysis provenance", () => {
     findButton(document.body, "清除损坏数据").click();
     await flushUi();
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toBe("damaged archive bytes");
+    vi.spyOn(localStorage, "removeItem").mockImplementationOnce(() => { throw new Error("storage denied"); });
+    findButton(document.body, "确认清除").click();
+    await flushUi();
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toBe("damaged archive bytes");
+    expect(document.body.textContent).toContain("清理失败，原始数据仍保留");
+    findButton(document.body, "清除损坏数据").click();
+    await flushUi();
     findButton(document.body, "确认清除").click();
     await flushUi();
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toBeNull();

@@ -537,9 +537,13 @@ function exportArchiveRecovery(): void {
 }
 
 function clearArchiveRecovery(): void {
-  localStorage.removeItem(ARCHIVE_STORAGE_KEY);
-  refreshArchives();
-  archiveNotice.value = "损坏的本机档案存储已清除，现在可以重新保存或导入备份。";
+  try {
+    localStorage.removeItem(ARCHIVE_STORAGE_KEY);
+    refreshArchives();
+    archiveNotice.value = "损坏的本机档案存储已清除，现在可以重新保存或导入备份。";
+  } catch {
+    archiveNotice.value = "损坏档案清理失败，原始数据仍保留；请检查浏览器存储权限。";
+  }
 }
 
 async function importArchives(file: File): Promise<void> {
