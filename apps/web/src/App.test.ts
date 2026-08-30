@@ -115,6 +115,21 @@ describe("App analysis provenance", () => {
     expect(print).toHaveBeenCalledOnce();
   });
 
+  it("keeps an unsaved reading when starting over is cancelled", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+
+    findButton(mounted.host, "新建分析").click();
+    await flushUi();
+
+    expect(confirm).toHaveBeenCalledWith("本次看盘还未保存，仍要新建分析吗？");
+    expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
+  });
+
   it("saves a completed reading locally and restores it after starting over", async () => {
     const response = makeAnalysisResponse();
     const fetchMock = installBrowserMocks(response);
