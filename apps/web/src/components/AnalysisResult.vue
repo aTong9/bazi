@@ -45,6 +45,8 @@ const secondaryStrength = computed(() => {
 const reportSections = computed(() => isSafetyStop.value ? props.result.report.sections.filter((section) => section.id === "safety") : props.result.report.sections);
 const primaryPillars = computed(() => props.primarySubject ? formatSubjectPillars(props.primarySubject) : "未记录");
 const secondaryPillars = computed(() => props.hasSecondarySubject && props.secondarySubject ? formatSubjectPillars(props.secondarySubject) : null);
+const primaryLabel = computed(() => props.primarySubject?.subjectId.trim() || "主要命盘");
+const secondaryLabel = computed(() => props.secondarySubject?.subjectId.trim() || "另一方命盘");
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
@@ -81,9 +83,9 @@ function formatInputSource(subject: SubjectDraft): string {
       </div>
       <dl class="result-context" aria-label="本次看盘输入摘要">
         <div><dt>分析方式</dt><dd>{{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</dd></div>
-        <div><dt>主要命盘</dt><dd>{{ primaryPillars }}</dd></div>
+        <div><dt>主要命盘</dt><dd>{{ primaryLabel }} · {{ primaryPillars }}</dd></div>
         <div v-if="primarySubject"><dt>主要命盘来源</dt><dd>{{ formatInputSource(primarySubject) }}</dd></div>
-        <div v-if="secondaryPillars"><dt>另一方命盘</dt><dd>{{ secondaryPillars }}</dd></div>
+        <div v-if="secondaryPillars"><dt>另一方命盘</dt><dd>{{ secondaryLabel }} · {{ secondaryPillars }}</dd></div>
         <div v-if="secondaryPillars && secondarySubject"><dt>另一方命盘来源</dt><dd>{{ formatInputSource(secondarySubject) }}</dd></div>
         <div><dt>生成时间</dt><dd>{{ new Date(result.generatedAt).toLocaleString('zh-CN') }}</dd></div>
       </dl>

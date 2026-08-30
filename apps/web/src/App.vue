@@ -118,13 +118,17 @@ async function refreshHealth(): Promise<void> {
 
 async function submitAnalysis(): Promise<void> {
   const inputIssues = [
+    subjectIdentityIssue(primarySubject.value, "主要命盘"),
     birthInputIssue(primarySubject.value, "主要命盘"),
-    ...(hasSecondarySubject.value ? [birthInputIssue(secondarySubject.value, "另一方命盘")] : []),
+    ...(hasSecondarySubject.value ? [
+      subjectIdentityIssue(secondarySubject.value, "另一方命盘"),
+      birthInputIssue(secondarySubject.value, "另一方命盘"),
+    ] : []),
   ].filter((issue): issue is string => Boolean(issue));
   if (inputIssues.length) {
     result.value = null;
     resultFingerprint = null;
-    errorMessage.value = "公历辅助记录尚未完成复核。";
+    errorMessage.value = "请先修正命盘输入。";
     errorDetails.value = inputIssues;
     await nextTick();
     document.querySelector<HTMLElement>(".error-summary")?.focus();
@@ -323,6 +327,10 @@ function birthInputIssue(subject: SubjectDraft, label: string): string | null {
   const current = [subject.year, subject.month, subject.day, subject.hour].join(" ");
   if (input.resolvedPillars !== current) return `${label}：四柱已在计算后修改，请重新计算或切换为手动四柱。`;
   return null;
+}
+
+function subjectIdentityIssue(subject: SubjectDraft, label: string): string | null {
+  return subject.subjectId.trim() ? null : `${label}：请填写用于区分报告和档案的称呼。`;
 }
 
 function createCrossState(): CrossStateDraft {

@@ -6,6 +6,25 @@ import type { SubjectDraft } from "@/types";
 import PillarEditor from "./PillarEditor.vue";
 
 describe("PillarEditor", () => {
+  it("edits the label used to distinguish reports and archives", async () => {
+    const modelValue = reactive<SubjectDraft>({
+      subjectId: "主命盘", year: "庚申", month: "己丑", day: "甲寅", hour: "庚午",
+      birthTimeStatus: "exact", dataQuality: "high",
+    });
+    const mounted = mountComponent(PillarEditor, {
+      modelValue, idPrefix: "subject-a", title: "主要命盘", description: "测试",
+      "onUpdate:modelValue": (value: SubjectDraft) => { Object.assign(modelValue, value); },
+    });
+    const input = mounted.host.querySelector<HTMLInputElement>("#subject-a-subject-id")!;
+    expect(input.required).toBe(true);
+    expect(input.maxLength).toBe(120);
+    input.value = "  小林  ";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    expect(modelValue.subjectId).toBe("小林");
+    mounted.unmount();
+  });
+
   it("normalizes linked stems immediately for an initial draft", () => {
     const modelValue = reactive<SubjectDraft>({
       subjectId: "subject-a",

@@ -114,8 +114,9 @@ export function importArchiveBackup(
 export function archiveTitle(workspace: AnalysisWorkspaceSnapshot): string {
   const day = workspace.primarySubject.day;
   const mode = workspace.analysisMode === "evaluate" ? "现实评估" : "关系画像";
-  const pair = workspace.hasSecondarySubject ? ` × ${workspace.secondarySubject.day}日` : "";
-  return `${workspace.primarySubject.subjectId || "主命盘"} · ${day}日${pair} · ${mode}`;
+  const secondaryLabel = workspace.secondarySubject.subjectId.trim() || "另一方命盘";
+  const pair = workspace.hasSecondarySubject ? ` × ${secondaryLabel} · ${workspace.secondarySubject.day}日` : "";
+  return `${workspace.primarySubject.subjectId.trim() || "主命盘"} · ${day}日${pair} · ${mode}`;
 }
 
 function persist(archives: AnalysisArchive[], storage: Pick<Storage, "setItem">): void {

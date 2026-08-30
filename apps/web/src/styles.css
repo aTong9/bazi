@@ -793,6 +793,11 @@
     border: 1px solid var(--ink-200);
   }
 
+  .subject-label-field {
+    max-width: 360px;
+    margin-top: 18px;
+  }
+
   .pillar-entry-switch button {
     min-height: 38px;
     padding: 0 14px;
@@ -825,7 +830,8 @@
     align-items: end;
   }
 
-  .field-control input[type="datetime-local"] {
+  .field-control input[type="datetime-local"],
+  .field-control input[type="text"] {
     width: 100%;
     height: 46px;
     padding: 0 12px;
