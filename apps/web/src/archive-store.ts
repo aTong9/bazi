@@ -53,14 +53,16 @@ export function saveArchive(
 ): AnalysisArchive[] {
   if (!isWorkspace(workspace)) throw new Error("当前工作区无法保存为有效档案。");
   parseAnalysisResponse(workspace.result);
+  const current = loadArchives(storage);
+  const existing = current.find((item) => item.id === `archive-${workspace.result.requestId}`);
   const archive: AnalysisArchive = {
     id: `archive-${workspace.result.requestId}`,
-    title: archiveTitle(workspace),
+    title: existing?.titleCustomized ? existing.title : archiveTitle(workspace),
+    ...(existing?.titleCustomized ? { titleCustomized: true as const } : {}),
     savedAt: now.toISOString(),
     rulesetDigest: workspace.result.rulesetDigest,
     workspace: structuredClone(workspace),
   };
-  const current = loadArchives(storage);
   if (current.length >= MAX_ARCHIVES && !current.some((item) => item.id === archive.id)) {
     throw new Error("看盘档案已满 20 份，请先导出备份并删除不再需要的档案。");
   }
@@ -87,7 +89,7 @@ export function renameArchive(
   const archives = loadArchives(storage);
   const archive = archives.find((item) => item.id === id);
   if (!archive) throw new Error("档案不存在。");
-  const renamed = { ...archive, title: normalizedTitle, savedAt: now.toISOString() };
+  const renamed = { ...archive, title: normalizedTitle, titleCustomized: true as const, savedAt: now.toISOString() };
   const updated = [renamed, ...archives.filter((item) => item.id !== id)];
   persist(updated, storage);
   return updated;
@@ -189,6 +191,7 @@ function isArchive(value: unknown): value is AnalysisArchive {
   if (!value || typeof value !== "object") return false;
   const archive = value as Partial<AnalysisArchive>;
   return typeof archive.id === "string" && archive.id.length > 0 && typeof archive.title === "string" && archive.title.length > 0 && archive.title.length <= 300
+    && (archive.titleCustomized === undefined || archive.titleCustomized === true)
     && typeof archive.savedAt === "string" && Number.isFinite(Date.parse(archive.savedAt))
     && typeof archive.rulesetDigest === "string" && archive.rulesetDigest === archive.workspace?.result?.rulesetDigest
     && isWorkspace(archive.workspace);
