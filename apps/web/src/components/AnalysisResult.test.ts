@@ -100,6 +100,17 @@ describe("AnalysisResult", () => {
     expect(printRequests).toBe(1);
     mounted.unmount();
   });
+
+  it("keeps both charts' complete M0 evidence independently readable", () => {
+    const result = makeAnalysisResponse();
+    result.relationship.structuralSupplement.available = true;
+    result.relationship.structuralSupplement.fields = structuredClone(result.m0.fields);
+    const mounted = mountComponent(AnalysisResult, { result, hasSecondarySubject: true });
+
+    const summaries = [...mounted.host.querySelectorAll(".m0-evidence > summary")].map((summary) => summary.textContent);
+    expect(summaries).toEqual(["查看完整 M0 字段证据（45 项）", "查看另一方完整 M0 字段证据（45 项）"]);
+    mounted.unmount();
+  });
 });
 
 describe("ModuleRail", () => {

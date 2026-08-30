@@ -4,7 +4,7 @@ import { computed, ref } from "vue";
 import { M0_FIELD_LABELS, STATUS_LABELS } from "@/constants";
 import type { ResultItem } from "@/types";
 
-const props = defineProps<{ fields: Record<string, ResultItem> }>();
+const props = withDefaults(defineProps<{ fields: Record<string, ResultItem>; title?: string }>(), { title: "查看完整 M0 字段证据" });
 const query = ref("");
 
 const entries = computed(() => Object.entries(props.fields).filter(([key]) => {
@@ -22,11 +22,11 @@ function formatValue(value: unknown): string {
 
 <template>
   <details class="evidence-details m0-evidence">
-    <summary>查看完整 M0 字段证据（{{ Object.keys(fields).length }} 项）</summary>
+    <summary>{{ title }}（{{ Object.keys(fields).length }} 项）</summary>
     <div class="evidence-toolbar">
       <label>
         <span>检索字段</span>
-        <input v-model="query" type="search" placeholder="输入中文名称或字段键" autocomplete="off">
+        <input v-model="query" type="search" :aria-label="`${title}检索`" placeholder="输入中文名称或字段键" autocomplete="off">
       </label>
       <small aria-live="polite">显示 {{ entries.length }} 项</small>
     </div>

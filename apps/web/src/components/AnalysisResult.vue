@@ -159,6 +159,11 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
             </dl>
           </aside>
           <M0EvidenceAppendix :fields="result.m0.fields" />
+          <M0EvidenceAppendix
+            v-if="result.relationship.structuralSupplement.available && result.relationship.structuralSupplement.fields"
+            :fields="result.relationship.structuralSupplement.fields"
+            title="查看另一方完整 M0 字段证据"
+          />
         </div>
       </section>
 
