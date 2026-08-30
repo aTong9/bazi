@@ -56,15 +56,22 @@ describe("local analysis archive", () => {
 
   it("upgrades legacy v1 subjects to an explicit manual input source", () => {
     const workspace = makeWorkspace();
-    delete workspace.primarySubject.birthInput;
-    delete workspace.secondarySubject.birthInput;
-    delete workspace.resultInputFingerprint;
     const archive = saveArchive(workspace, memoryStorage(), new Date("2026-08-30T01:00:00Z"))[0]!;
+    delete archive.workspace.primarySubject.birthInput;
+    delete archive.workspace.secondarySubject.birthInput;
+    delete archive.workspace.resultInputFingerprint;
+    archive.workspace.crossState.evidence.pressure = "未勾选但遗留的隐藏事实";
     const storage = memoryStorage(JSON.stringify({ version: 1, archives: [archive] }));
     const restored = loadArchives(storage)[0]!;
     expect(restored.workspace.primarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
     expect(restored.workspace.secondarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
+    expect(restored.workspace.crossState.evidence.pressure).toBe("");
     expect(restored.workspace.resultInputFingerprint).toBe(analysisInputFingerprint(restored.workspace));
+
+    const hiddenDraft = makeWorkspace();
+    hiddenDraft.crossState.evidence.pressure = "不应保存的隐藏事实";
+    hiddenDraft.resultInputFingerprint = analysisInputFingerprint(hiddenDraft);
+    expect(saveArchive(hiddenDraft, memoryStorage())[0]?.workspace.crossState.evidence.pressure).toBe("");
   });
 
   it("deletes only the selected archive", () => {

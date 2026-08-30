@@ -71,14 +71,14 @@ export function saveArchive(
   if (!workspaceResultMatches(workspace)) throw new Error("当前工作区输入与分析结果不一致，请重新生成分析。");
   const current = readArchives(storage, true);
   const existing = current.find((item) => item.id === `archive-${workspace.result.requestId}`);
-  const archive: AnalysisArchive = {
+  const archive = normalizeArchive({
     id: `archive-${workspace.result.requestId}`,
     title: existing?.titleCustomized ? existing.title : archiveTitle(workspace),
     ...(existing?.titleCustomized ? { titleCustomized: true as const } : {}),
     savedAt: now.toISOString(),
     rulesetDigest: workspace.result.rulesetDigest,
     workspace: structuredClone(workspace),
-  };
+  });
   if (current.length >= MAX_ARCHIVES && !current.some((item) => item.id === archive.id)) {
     throw new Error("看盘档案已满 20 份，请先导出备份并删除不再需要的档案。");
   }
@@ -273,7 +273,10 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
   const value = structuredClone(archive);
   value.workspace.primarySubject = normalizeSubject(value.workspace.primarySubject);
   value.workspace.secondarySubject = normalizeSubject(value.workspace.secondarySubject);
-  value.workspace.resultInputFingerprint ??= analysisInputFingerprint(value.workspace);
+  for (const state of ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const) {
+    if (!value.workspace.crossState[state]) value.workspace.crossState.evidence[state] = "";
+  }
+  value.workspace.resultInputFingerprint = analysisInputFingerprint(value.workspace);
   return value;
 }
 
