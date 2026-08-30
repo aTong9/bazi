@@ -170,11 +170,11 @@ npm run preview
 
 - `npm run test:core`：81 个 Node runner 用例通过；
 - `npm run test:web`：7 个前端测试文件、41 个 Vitest 用例通过；
-- `npm run test:pages`：4 个 Pages 规则包、运行时等价性、打印契约和产物用例通过；
+- `npm run test:pages`：5 个 Pages 规则包、运行时等价性、离线缓存、打印契约和产物用例通过；
 - `npm run test:evidence`：407 项权威矩阵全部通过；
 - `npm run typecheck`、`npm run build:web` 和静态 Web 集成测试通过。
 
-122 个通用 runner 用例、4 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
+122 个通用 runner 用例、5 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
 
 前端自动化至少覆盖：
 
@@ -239,7 +239,7 @@ GitHub Pages /bazi/
 npm run check:pages
 ```
 
-构建步骤会生成规则包、使用 `/bazi/` 基础路径编译前端，并产生 `404.html` 和 `.nojekyll`。Pages 专项测试验证规则包摘要/数量/45 项 M19 输出契约、浏览器与 SQLite 三条代表性业务路径结果等价、深链接 fallback，以及最终脚本不含 Node external stub。
+构建步骤会生成规则包、使用 `/bazi/` 基础路径编译前端，并产生 `404.html`、PWA 清单、版本化 `sw.js` 和 `.nojekyll`。Service Worker 从最终产物自动生成预缓存清单：界面、规则包和 fallback 必须一次性缓存成功，新版本才会接管；导航断网时回退同版本首页，旧会话不会被强制刷新。Pages 专项测试验证规则包摘要/数量/45 项 M19 输出契约、浏览器与 SQLite 三条代表性业务路径结果等价、深链接 fallback、离线缓存契约，以及最终脚本不含 Node external stub。
 
 隐私与限制：分析请求不发送到本项目 API。只有用户点击“保存到档案”时，公历辅助时间及历法版本、四柱、现实证据和完整结果才会写入当前浏览器；最多保留 20 份，可恢复、删除、导出和导入。旧版 v1 档案没有输入来源字段时会按“手动四柱”恢复。导入采用整包结构、字段、结果契约、重复 ID、数量与 20 MB 大小校验；同 ID 只保留较新的档案。导出的 JSON 未加密，必须由用户自行妥善保管。GitHub 作为静态托管方仍会收到资源请求的常规网络元数据。Pages 不提供 Node API、自定义服务端响应头、数据库或服务端保存功能。本地 API 与同源静态托管契约继续通过 `npm run preview` 验证。
 

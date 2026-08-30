@@ -17,7 +17,7 @@ npm run dev
 
 打开 `http://127.0.0.1:5173`。生产同源路径使用 `npm run preview`，然后打开 `http://127.0.0.1:3000`。
 
-公开静态版位于 [https://atong9.github.io/bazi/](https://atong9.github.io/bazi/)。执行 `npm run check:pages` 可在本地重建并校验 Pages 产物；它在浏览器内加载经过摘要校验的 10,918 条运行记录，不依赖远程分析 API。
+公开静态版位于 [https://atong9.github.io/bazi/](https://atong9.github.io/bazi/)。执行 `npm run check:pages` 可在本地重建并校验 Pages 产物；它在浏览器内加载经过摘要校验的 10,918 条运行记录，不依赖远程分析 API。首次加载完成后，同版本界面和规则包会作为一套原子离线缓存保留。
 
 完整校验使用：
 
@@ -27,7 +27,7 @@ npm run check
 
 正式发布执行 `npm run release:check`。真实案例校准保留为可选能力，不再作为工程发布前置条件。
 
-`npm run check` 会执行后端与前端严格类型检查、全部自动化测试、Vue 生产构建、161 文件文档包的清单/哈希/JSON/CSV/ZIP CRC 校验，以及权威来源锁校验。截至 2026-08-30，通用 runner 为 Node 核心 81 个用例加 Web 41 个用例；Pages 另有 4 个专项测试，407 项权威开发矩阵由 `npm run test:evidence` 另行严格执行。各类计数用途不同。原始整合包只读；所有勘误通过 `data/overlays/` 的版本化覆盖层表达。关键契约位于：
+`npm run check` 会执行后端与前端严格类型检查、全部自动化测试、Vue 生产构建、161 文件文档包的清单/哈希/JSON/CSV/ZIP CRC 校验，以及权威来源锁校验。截至 2026-08-30，通用 runner 为 Node 核心 81 个用例加 Web 41 个用例；Pages 另有 5 个专项测试，407 项权威开发矩阵由 `npm run test:evidence` 另行严格执行。各类计数用途不同。原始整合包只读；所有勘误通过 `data/overlays/` 的版本化覆盖层表达。关键契约位于：
 
 - `data/source-package.lock.json`：明确锁定运行时核心、语义权威源和覆盖层；
 - `data/migrations/integration-v1.0-canonical-mappings.json`：状态、置信、Excel 日期和夫妻星策略裁决；

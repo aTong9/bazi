@@ -1,0 +1,14 @@
+{
+  "name": "关系脉络 · 八字关系分析工作台",
+  "short_name": "关系脉络",
+  "description": "本地优先的八字情感看盘与现实证据工作台。",
+  "lang": "zh-CN",
+  "start_url": "/bazi/",
+  "scope": "/bazi/",
+  "display": "standalone",
+  "background_color": "#f7f8f4",
+  "theme_color": "#102a31",
+  "icons": [
+    { "src": "/bazi/bazi-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

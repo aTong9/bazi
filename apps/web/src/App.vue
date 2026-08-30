@@ -29,6 +29,8 @@ const errorDetails = ref<string[]>([]);
 const archives = ref<AnalysisArchive[]>([]);
 const archivesOpen = ref(false);
 const archiveNotice = ref("");
+const isOnline = ref(navigator.onLine);
+const offlineReady = ref(Boolean(navigator.serviceWorker?.controller));
 let activeRequest: AbortController | null = null;
 let resultFingerprint: string | null = null;
 
@@ -90,9 +92,20 @@ watch(currentInputFingerprint, (fingerprint, previousFingerprint) => {
 
 onMounted(() => {
   archives.value = loadArchives();
+  window.addEventListener("online", updateNetworkState);
+  window.addEventListener("offline", updateNetworkState);
+  window.addEventListener("bazi-offline-ready", markOfflineReady);
   void refreshHealth();
 });
-onBeforeUnmount(() => activeRequest?.abort());
+onBeforeUnmount(() => {
+  activeRequest?.abort();
+  window.removeEventListener("online", updateNetworkState);
+  window.removeEventListener("offline", updateNetworkState);
+  window.removeEventListener("bazi-offline-ready", markOfflineReady);
+});
+
+function updateNetworkState(): void { isOnline.value = navigator.onLine; }
+function markOfflineReady(): void { offlineReady.value = true; }
 
 async function refreshHealth(): Promise<void> {
   try {
@@ -345,9 +358,9 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         <span><strong>关系脉络</strong><small>M0—M5 证据工作台</small></span>
       </a>
-      <div class="service-state" :class="{ 'is-offline': healthError }" role="status">
+      <div class="service-state" :class="{ 'is-offline': healthError && !offlineReady }" role="status">
         <span aria-hidden="true"></span>
-        {{ healthError ? "分析服务未连接" : health ? `规则已就绪 · ${health.catalog.compiledRecords.toLocaleString('zh-CN')} 条` : "正在连接规则引擎" }}
+        {{ !isOnline && offlineReady ? "离线模式 · 规则可用" : healthError ? "分析服务未连接" : health ? `规则已就绪 · ${health.catalog.compiledRecords.toLocaleString('zh-CN')} 条${offlineReady ? ' · 离线可用' : ''}` : "正在连接规则引擎" }}
       </div>
       <div class="header-actions">
         <button type="button" class="quiet-button" @click="archivesOpen = true">看盘档案 <span v-if="archives.length">{{ archives.length }}</span></button>
