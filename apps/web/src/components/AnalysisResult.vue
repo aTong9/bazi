@@ -53,6 +53,7 @@ const secondaryPillars = computed(() => props.hasSecondarySubject && props.secon
 const primaryLabel = computed(() => props.primarySubject?.subjectId.trim() || "主要命盘");
 const secondaryLabel = computed(() => props.secondarySubject?.subjectId.trim() || "另一方命盘");
 const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档案" : props.saveState === "dirty" ? "更新档案" : "保存到档案");
+const crossStateLabels = { steady: "日常状态", pressure: "压力状态", repair: "修复之后", turningPoint: "关系转折", counterevidenceReviewed: "反例复核" } as const;
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
@@ -207,7 +208,14 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
           <div class="result-gates">
             <div v-for="gate in result.relationship.m5.realityGates" :key="gate.id" class="result-gate" :data-status="gate.status">
               <span>{{ gate.id }}</span><strong>{{ gate.label }}</strong><small>{{ label(gate.status) }}</small>
+              <p v-if="gate.note">{{ gate.note }}</p>
             </div>
+          </div>
+          <div v-if="result.relationship.m5.crossStateEvidence.length" class="observation-plan cross-state-results">
+            <p class="subheading">跨情境核验</p>
+            <p v-for="evidence in result.relationship.m5.crossStateEvidence" :key="evidence.state">
+              <strong>{{ crossStateLabels[evidence.state] }}</strong>{{ evidence.note }}
+            </p>
           </div>
           <div v-if="result.report.observationPlan.length" class="observation-plan">
             <p class="subheading">下一步可观察</p>

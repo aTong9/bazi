@@ -36,6 +36,18 @@ describe("AnalysisResult", () => {
     mounted.unmount();
   });
 
+  it("shows the reality facts used by the current adjudication", () => {
+    const result = makeAnalysisResponse();
+    result.relationship.m5.realityGates[0]!.note = "双方能自由表达并撤回同意";
+    result.relationship.m5.crossStateEvidence = [{ state: "pressure", note: "高压期仍能暂停并协商", evidenceIds: ["event-pressure"] }];
+    const mounted = mountComponent(AnalysisResult, { result, analysisMode: "evaluate" });
+
+    expect(mounted.host.querySelector('.result-gate[data-status="pass"] p')?.textContent).toBe("双方能自由表达并撤回同意");
+    expect(mounted.host.querySelector(".cross-state-results")?.textContent).toContain("压力状态");
+    expect(mounted.host.querySelector(".cross-state-results")?.textContent).toContain("高压期仍能暂停并协商");
+    mounted.unmount();
+  });
+
   it("shows the reviewed input summary and emits a print request", () => {
     let printRequests = 0;
     const result = makeAnalysisResponse();
