@@ -48,8 +48,10 @@ const currentInputFingerprint = computed(() => analysisInputFingerprint({
 }));
 const currentWorkspaceFingerprint = computed(() => JSON.stringify([currentInputFingerprint.value, observations.value]));
 const safeWorkspaceFingerprint = ref(currentWorkspaceFingerprint.value);
-const hasUnsavedResult = computed(() => Boolean(result.value && !archives.value.some((archive) => archive.id === `archive-${result.value?.requestId}`)));
+const isCurrentResultArchived = computed(() => Boolean(result.value && archives.value.some((archive) => archive.id === `archive-${result.value?.requestId}`)));
+const hasUnsavedResult = computed(() => Boolean(result.value && !isCurrentResultArchived.value));
 const hasUnsavedWork = computed(() => hasUnsavedResult.value || currentWorkspaceFingerprint.value !== safeWorkspaceFingerprint.value);
+const resultSaveState = computed<"new" | "saved" | "dirty">(() => !isCurrentResultArchived.value ? "new" : currentWorkspaceFingerprint.value === safeWorkspaceFingerprint.value ? "saved" : "dirty");
 const observableRiskChains = computed(() => {
   if (!result.value || result.value.report.safetyStatus === "safety_stop") return [];
   return result.value.relationship.m4.riskChains;
@@ -518,6 +520,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             :secondary-subject="secondarySubject"
             :has-secondary-subject="hasSecondarySubject"
             :can-add-observations="isEvaluate"
+            :save-state="resultSaveState"
             @save="saveCurrentAnalysis"
             @print="printResult"
             @download-summary="downloadReadableSummary"

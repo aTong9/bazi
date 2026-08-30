@@ -13,12 +13,14 @@ const props = withDefaults(defineProps<{
   secondarySubject?: SubjectDraft | null;
   hasSecondarySubject?: boolean;
   analysisMode?: AnalysisMode;
+  saveState?: "new" | "saved" | "dirty";
 }>(), {
   canAddObservations: false,
   primarySubject: null,
   secondarySubject: null,
   hasSecondarySubject: false,
   analysisMode: "profile",
+  saveState: "new",
 });
 const emit = defineEmits<{ download: []; downloadSummary: []; print: []; save: [] }>();
 
@@ -47,6 +49,7 @@ const primaryPillars = computed(() => props.primarySubject ? formatSubjectPillar
 const secondaryPillars = computed(() => props.hasSecondarySubject && props.secondarySubject ? formatSubjectPillars(props.secondarySubject) : null);
 const primaryLabel = computed(() => props.primarySubject?.subjectId.trim() || "主要命盘");
 const secondaryLabel = computed(() => props.secondarySubject?.subjectId.trim() || "另一方命盘");
+const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档案" : props.saveState === "dirty" ? "更新档案" : "保存到档案");
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
@@ -77,7 +80,7 @@ function formatInputSource(subject: SubjectDraft): string {
         <small>证据发布等级</small>
       </div>
       <div class="result-tools">
-        <button type="button" class="quiet-button" @click="emit('save')">保存到档案</button>
+        <button type="button" class="quiet-button" :disabled="saveState === 'saved'" @click="emit('save')">{{ saveLabel }}</button>
         <button type="button" class="quiet-button" @click="emit('print')">打印 / 存 PDF</button>
         <button type="button" class="quiet-button" @click="emit('downloadSummary')">下载可读摘要</button>
         <button type="button" class="quiet-button" @click="emit('download')">下载完整 JSON</button>

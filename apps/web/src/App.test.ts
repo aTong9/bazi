@@ -176,10 +176,12 @@ describe("App analysis provenance", () => {
     mounted = mountComponent(App, {});
     await flushUi();
     await submit(mounted.host);
+    expect(findButton(mounted.host, "保存到档案").disabled).toBe(false);
 
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false);
     findButton(mounted.host, "保存到档案").click();
     await flushUi();
+    expect(findButton(mounted.host, "已保存到档案").disabled).toBe(true);
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true);
   });
 
@@ -199,6 +201,7 @@ describe("App analysis provenance", () => {
     observation.value = "保存后补充的压力情境";
     observation.dispatchEvent(new Event("input", { bubbles: true }));
     await flushUi();
+    expect(findButton(mounted.host, "更新档案").disabled).toBe(false);
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false);
   });
 
