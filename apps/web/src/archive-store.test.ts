@@ -221,9 +221,13 @@ describe("local analysis archive", () => {
 
     expect(() => importArchiveBackup("not-json", storage)).toThrow("不是有效的 JSON");
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, schema: "future" }), storage)).toThrow("版本不受支持");
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, exportedAt: "2026-02-30T00:00:00.000Z" }), storage)).toThrow("元数据无效");
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, hiddenPayload: "不应随备份传播" }), storage)).toThrow("包含未声明字段");
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: Array.from({ length: 21 }, () => current[0]) }), storage)).toThrow("数量超过 20");
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [current[0], current[0]] }), storage)).toThrow("重复档案");
+    const invalidSavedAt = structuredClone(current[0]!);
+    invalidSavedAt.savedAt = "2026-08-30";
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [invalidSavedAt] }), storage)).toThrow("档案结构无效");
     const invalidResponse = structuredClone(current[0]!);
     invalidResponse.workspace.result = { rulesetDigest: invalidResponse.rulesetDigest } as typeof invalidResponse.workspace.result;
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [invalidResponse] }), storage)).toThrow("分析结果无效");

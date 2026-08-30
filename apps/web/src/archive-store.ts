@@ -221,7 +221,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
   const backup = value as Partial<ArchiveBackup>;
   if (!hasOnlyKeys(backup, ["schema", "exportedAt", "containsSensitiveData", "archives"])) throw new Error("备份文件包含未声明字段。");
   if (backup.schema !== BACKUP_SCHEMA) throw new Error("备份版本不受支持。");
-  if (backup.containsSensitiveData !== true || typeof backup.exportedAt !== "string" || !Number.isFinite(Date.parse(backup.exportedAt))) {
+  if (backup.containsSensitiveData !== true || !isIsoTimestamp(backup.exportedAt)) {
     throw new Error("备份文件元数据无效。");
   }
   if (!Array.isArray(backup.archives) || backup.archives.length > MAX_ARCHIVES || !backup.archives.every(isArchive)) {
@@ -247,7 +247,7 @@ function parseReadingPackage(value: Record<string, unknown>): AnalysisArchive {
   if (!hasOnlyKeys(value, legacy
     ? ["schema", "exportedAt", "containsSensitiveData", "resultInputFingerprint", "subject", "result"]
     : ["schema", "exportedAt", "containsSensitiveData", "workspace"])) throw new Error("完整看盘包包含未声明字段。");
-  if (value.containsSensitiveData !== true || typeof value.exportedAt !== "string" || !Number.isFinite(Date.parse(value.exportedAt))) {
+  if (value.containsSensitiveData !== true || !isIsoTimestamp(value.exportedAt)) {
     throw new Error("完整看盘包元数据无效。");
   }
   const workspaceValue = value.schema === M0_READING_SCHEMA && value.workspace === undefined
@@ -295,7 +295,7 @@ function isArchive(value: unknown): value is AnalysisArchive {
   return hasOnlyKeys(archive, ["id", "title", "titleCustomized", "savedAt", "rulesetDigest", "workspace"])
     && typeof archive.id === "string" && archive.id.length > 0 && typeof archive.title === "string" && archive.title.length > 0 && archive.title.length <= 300
     && (archive.titleCustomized === undefined || archive.titleCustomized === true)
-    && typeof archive.savedAt === "string" && Number.isFinite(Date.parse(archive.savedAt))
+    && isIsoTimestamp(archive.savedAt)
     && typeof archive.rulesetDigest === "string" && archive.rulesetDigest === archive.workspace?.result?.rulesetDigest
     && isWorkspace(archive.workspace);
 }
@@ -356,6 +356,12 @@ function isBirthInput(value: unknown): boolean {
 
 function isPillarSummary(value: unknown): boolean {
   return typeof value === "string" && value.split(" ").length === 4 && value.split(" ").every((pillar) => JIAZI.includes(pillar));
+}
+
+function isIsoTimestamp(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value;
 }
 
 function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
