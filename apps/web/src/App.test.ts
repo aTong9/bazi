@@ -490,7 +490,7 @@ describe("App analysis provenance", () => {
     findButton(mounted.host, "看盘档案 1").click();
     await flushUi();
 
-    const envelope = JSON.parse(localStorage.getItem(ARCHIVE_STORAGE_KEY)!) as { archives: Array<{ workspace: { result: { generatedAt: string } } }> };
+    const envelope = JSON.parse(localStorage.getItem(ARCHIVE_STORAGE_KEY)!) as { archives: Array<{ savedAt: string; workspace: { result: { generatedAt: string } } }> };
     envelope.archives[0]!.workspace.result.generatedAt = "2099-01-01T00:00:00.000Z";
     localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
     window.dispatchEvent(new StorageEvent("storage", { key: ARCHIVE_STORAGE_KEY }));
@@ -503,6 +503,15 @@ describe("App analysis provenance", () => {
     expect(cancelOverwrite).toHaveBeenCalledWith("这份档案已在另一标签页或备份中更新。继续会用当前工作区覆盖较新版本，是否继续？");
     expect(document.body.textContent).toContain("已取消覆盖");
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain("2099-01-01T00:00:00.000Z");
+
+    envelope.archives[0]!.savedAt = "2099-01-02T00:00:00.000Z";
+    localStorage.setItem(ARCHIVE_STORAGE_KEY, JSON.stringify(envelope));
+    findButton(document.body, "删除").click();
+    await flushUi();
+    findButton(document.body, "确认删除").click();
+    await flushUi();
+    expect(document.body.textContent).toContain("档案已在另一标签页更新");
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toContain("2099-01-02T00:00:00.000Z");
 
     localStorage.clear();
     window.dispatchEvent(new StorageEvent("storage", { key: ARCHIVE_STORAGE_KEY }));

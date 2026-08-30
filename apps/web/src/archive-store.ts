@@ -93,8 +93,12 @@ export function saveArchive(
   return archives;
 }
 
-export function deleteArchive(id: string, storage: Pick<Storage, "getItem" | "setItem"> = localStorage): AnalysisArchive[] {
-  const archives = readArchives(storage, true).filter((archive) => archive.id !== id);
+export function deleteArchive(id: string, expectedSavedAt: string, storage: Pick<Storage, "getItem" | "setItem"> = localStorage): AnalysisArchive[] {
+  const current = readArchives(storage, true);
+  const target = current.find((archive) => archive.id === id);
+  if (!target) throw new Error("档案已在另一标签页删除，请刷新档案列表。");
+  if (target.savedAt !== expectedSavedAt) throw new Error("档案已在另一标签页更新，请重新打开档案列表后再删除。");
+  const archives = current.filter((archive) => archive.id !== id);
   persist(archives, storage);
   return archives;
 }

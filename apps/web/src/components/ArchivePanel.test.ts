@@ -53,7 +53,7 @@ describe("ArchivePanel", () => {
       open: true,
       archives: [archive],
       recoveryAvailable: true,
-      onDelete: (id: string) => deleted.push(id),
+      onDelete: (value: AnalysisArchive) => deleted.push(value.id),
       onClearRecovery: () => { cleared += 1; },
     });
     await nextTick();

@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import type { AnalysisArchive, AnalysisMode } from "@/types";
 
 const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string; recoveryAvailable?: boolean; returnFocusTo?: HTMLElement | null }>();
-const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [id: string]; export: []; exportOne: [archive: AnalysisArchive]; exportRecovery: []; clearRecovery: []; import: [file: File] }>();
+const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [archive: AnalysisArchive]; export: []; exportOne: [archive: AnalysisArchive]; exportRecovery: []; clearRecovery: []; import: [file: File] }>();
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const pendingDeleteId = ref<string | null>(null);
@@ -90,8 +90,8 @@ async function cancelDelete(event: MouseEvent): Promise<void> {
   actions?.querySelector<HTMLButtonElement>(".danger-button")?.focus();
 }
 
-async function confirmDelete(id: string): Promise<void> {
-  emit("delete", id);
+async function confirmDelete(archive: AnalysisArchive): Promise<void> {
+  emit("delete", archive);
   pendingDeleteId.value = null;
   await nextTick();
   focusableElements()[0]?.focus({ preventScroll: true });
@@ -182,7 +182,7 @@ function archiveSearchText(archive: AnalysisArchive): string {
                 <button type="button" class="quiet-button" @click="requestRename(archive)">重命名</button>
                 <template v-if="pendingDeleteId === archive.id">
                   <span class="archive-delete-confirm" role="group" :aria-label="`确认删除 ${archive.title}`">
-                    <button type="button" class="quiet-button danger-button" @click="confirmDelete(archive.id)">确认删除</button>
+                    <button type="button" class="quiet-button danger-button" @click="confirmDelete(archive)">确认删除</button>
                     <button type="button" class="quiet-button" @click="cancelDelete">取消</button>
                   </span>
                 </template>

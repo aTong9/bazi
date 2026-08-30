@@ -103,8 +103,13 @@ describe("local analysis archive", () => {
     const second = { ...makeWorkspace(), result: { ...makeAnalysisResponse(), requestId: "request-second" } };
     saveArchive(first, storage);
     const two = saveArchive(second, storage);
-    const remaining = deleteArchive(two[1]!.id, storage);
+    const remaining = deleteArchive(two[1]!.id, two[1]!.savedAt, storage);
     expect(remaining.map((item) => item.id)).toEqual(["archive-request-second"]);
+
+    const stale = saveArchive(first, storage, new Date("2026-08-30T01:00:00Z")).find((archive) => archive.workspace.result.requestId === first.result.requestId)!;
+    saveArchive(first, storage, new Date("2026-08-30T02:00:00Z"));
+    expect(() => deleteArchive(stale.id, stale.savedAt, storage)).toThrow("已在另一标签页更新");
+    expect(loadArchives(storage)[0]?.savedAt).toBe("2026-08-30T02:00:00.000Z");
   });
 
   it("renames the selected archive and records it as the newest backup version", () => {

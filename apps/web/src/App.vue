@@ -493,12 +493,13 @@ async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   document.querySelector<HTMLElement>(".result-mast h2")?.focus({ preventScroll: true });
 }
 
-function removeArchive(id: string): void {
+function removeArchive(archive: AnalysisArchive): void {
   try {
-    archives.value = deleteArchive(id);
+    archives.value = deleteArchive(archive.id, archive.savedAt);
     archiveNotice.value = "档案已从这台设备删除。";
-  } catch {
-    archiveNotice.value = "档案删除失败，请检查浏览器存储权限。";
+  } catch (error) {
+    refreshArchives();
+    archiveNotice.value = error instanceof Error ? error.message : "档案删除失败，请检查浏览器存储权限。";
   }
 }
 
