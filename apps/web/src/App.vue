@@ -215,15 +215,56 @@ async function submitAnalysis(): Promise<void> {
 
 function downloadResult(): void {
   if (!result.value) return;
-  const blob = new Blob([`${JSON.stringify(result.value, null, 2)}\n`], { type: "application/json" });
+  downloadText(`${JSON.stringify(result.value, null, 2)}\n`, "application/json", `bazi-relationship-${result.value.requestId}.json`);
+}
+
+function downloadReadableSummary(): void {
+  if (!result.value) return;
+  downloadText(readableSummary(result.value), "text/markdown;charset=utf-8", `bazi-reading-${result.value.requestId}.md`);
+}
+
+function downloadText(content: string, type: string, filename: string): void {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `bazi-relationship-${result.value.requestId}.json`;
+  anchor.download = filename;
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function readableSummary(analysis: AnalysisResponse): string {
+  const safetyStop = analysis.report.safetyStatus === "safety_stop";
+  const sections = safetyStop ? analysis.report.sections.filter((section) => section.id === "safety") : analysis.report.sections;
+  const pillars = (subject: SubjectDraft) => [subject.year, subject.month, subject.day, subject.birthTimeStatus === "unknown" ? "时柱未知" : subject.hour].join(" · ");
+  const lines = [
+    "# 关系脉络看盘摘要",
+    "",
+    `- 分析方式：${analysisMode.value === "evaluate" ? "现实评估" : "关系画像"}`,
+    `- 主要命盘：${primarySubject.value.subjectId.trim() || "主要命盘"} · ${pillars(primarySubject.value)}`,
+    ...(hasSecondarySubject.value ? [`- 另一方命盘：${secondarySubject.value.subjectId.trim() || "另一方命盘"} · ${pillars(secondarySubject.value)}`] : []),
+    `- 证据等级：${analysis.report.evidenceGrade}`,
+    `- 报告状态：${analysis.report.reportStatus}`,
+    `- 生成时间：${new Date(analysis.generatedAt).toLocaleString("zh-CN")}`,
+    "",
+    ...sections.flatMap((section) => [`## ${section.title}`, "", section.body, ""]),
+    ...(safetyStop || !analysis.report.observationPlan.length ? [] : [
+      "## 下一步可观察",
+      "",
+      ...analysis.report.observationPlan.map((observation) => `- ${observation.gateId}：${observation.observe}`),
+      "",
+    ]),
+    "## 阅读边界",
+    "",
+    ...analysis.report.boundaries.map((boundary) => `- ${boundary.text}`),
+    "",
+    "---",
+    "关系脉络不是命运判决，也不替代安全、同意和现实决定。",
+    "",
+  ];
+  return lines.join("\n");
 }
 
 function printResult(): void {
@@ -276,15 +317,7 @@ function removeArchive(id: string): void {
 function exportArchives(): void {
   if (!archives.value.length) return;
   try {
-    const blob = new Blob([serializeArchiveBackup(archives.value)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `bazi-reading-archives-${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadText(serializeArchiveBackup(archives.value), "application/json", `bazi-reading-archives-${new Date().toISOString().slice(0, 10)}.json`);
     archiveNotice.value = `已导出 ${archives.value.length} 份档案；文件未加密，请妥善保管。`;
   } catch {
     archiveNotice.value = "档案导出失败，请重试。";
@@ -487,6 +520,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             :can-add-observations="isEvaluate"
             @save="saveCurrentAnalysis"
             @print="printResult"
+            @download-summary="downloadReadableSummary"
             @download="downloadResult"
           />
           <div v-else class="empty-result">
