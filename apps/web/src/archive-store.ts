@@ -1,10 +1,25 @@
 import { parseAnalysisResponse } from "./api";
+import { JIAZI } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot } from "./types";
 
 const STORAGE_KEY = "bazi.relationship.archives.v1";
 const MAX_ARCHIVES = 20;
+const BACKUP_SCHEMA = "bazi.relationship.archive-backup.v1";
 
 interface ArchiveEnvelope { version: 1; archives: AnalysisArchive[] }
+interface ArchiveBackup {
+  schema: typeof BACKUP_SCHEMA;
+  exportedAt: string;
+  containsSensitiveData: true;
+  archives: AnalysisArchive[];
+}
+
+export interface ArchiveImportResult {
+  readonly archives: AnalysisArchive[];
+  readonly added: number;
+  readonly updated: number;
+  readonly skipped: number;
+}
 
 export function loadArchives(storage: Pick<Storage, "getItem"> = localStorage): AnalysisArchive[] {
   let raw: string | null;
@@ -36,6 +51,8 @@ export function saveArchive(
   storage: Pick<Storage, "getItem" | "setItem"> = localStorage,
   now = new Date(),
 ): AnalysisArchive[] {
+  if (!isWorkspace(workspace)) throw new Error("当前工作区无法保存为有效档案。");
+  parseAnalysisResponse(workspace.result);
   const archive: AnalysisArchive = {
     id: `archive-${workspace.result.requestId}`,
     title: archiveTitle(workspace),
@@ -54,6 +71,46 @@ export function deleteArchive(id: string, storage: Pick<Storage, "getItem" | "se
   return archives;
 }
 
+export function serializeArchiveBackup(archives: readonly AnalysisArchive[], now = new Date()): string {
+  const backup: ArchiveBackup = {
+    schema: BACKUP_SCHEMA,
+    exportedAt: now.toISOString(),
+    containsSensitiveData: true,
+    archives: archives.map(cloneJson),
+  };
+  if (!backup.archives.every(isArchive)) throw new Error("档案中存在无法导出的无效记录。");
+  return `${JSON.stringify(backup, null, 2)}\n`;
+}
+
+export function importArchiveBackup(
+  raw: string,
+  storage: Pick<Storage, "getItem" | "setItem"> = localStorage,
+): ArchiveImportResult {
+  const imported = parseBackup(raw);
+  const current = loadArchives(storage);
+  const merged = new Map(current.map((archive) => [archive.id, archive]));
+  let added = 0;
+  let updated = 0;
+  let skipped = 0;
+  for (const candidate of imported) {
+    const existing = merged.get(candidate.id);
+    if (!existing) {
+      merged.set(candidate.id, candidate);
+      added += 1;
+    } else if (Date.parse(candidate.savedAt) > Date.parse(existing.savedAt)) {
+      merged.set(candidate.id, candidate);
+      updated += 1;
+    } else {
+      skipped += 1;
+    }
+  }
+  const ordered = [...merged.values()].sort((left, right) => Date.parse(right.savedAt) - Date.parse(left.savedAt));
+  if (ordered.length > MAX_ARCHIVES) skipped += ordered.length - MAX_ARCHIVES;
+  const archives = ordered.slice(0, MAX_ARCHIVES);
+  persist(archives, storage);
+  return { archives, added, updated, skipped };
+}
+
 export function archiveTitle(workspace: AnalysisWorkspaceSnapshot): string {
   const day = workspace.primarySubject.day;
   const mode = workspace.analysisMode === "evaluate" ? "现实评估" : "关系画像";
@@ -64,6 +121,36 @@ export function archiveTitle(workspace: AnalysisWorkspaceSnapshot): string {
 function persist(archives: AnalysisArchive[], storage: Pick<Storage, "setItem">): void {
   const envelope: ArchiveEnvelope = { version: 1, archives };
   storage.setItem(STORAGE_KEY, JSON.stringify(envelope));
+}
+
+function parseBackup(raw: string): AnalysisArchive[] {
+  if (raw.length > 20_000_000) throw new Error("备份文件超过 20 MB。");
+  let value: unknown;
+  try {
+    value = JSON.parse(raw) as unknown;
+  } catch {
+    throw new Error("备份文件不是有效的 JSON。");
+  }
+  if (!value || typeof value !== "object") throw new Error("备份文件结构无效。");
+  const backup = value as Partial<ArchiveBackup>;
+  if (backup.schema !== BACKUP_SCHEMA) throw new Error("备份版本不受支持。");
+  if (backup.containsSensitiveData !== true || typeof backup.exportedAt !== "string" || !Number.isFinite(Date.parse(backup.exportedAt))) {
+    throw new Error("备份文件元数据无效。");
+  }
+  if (!Array.isArray(backup.archives) || backup.archives.length > MAX_ARCHIVES || !backup.archives.every(isArchive)) {
+    throw new Error("备份中的档案结构无效或数量超过 20 份。");
+  }
+  const ids = new Set<string>();
+  for (const archive of backup.archives) {
+    if (ids.has(archive.id)) throw new Error("备份中包含重复档案。");
+    ids.add(archive.id);
+    try {
+      parseAnalysisResponse(archive.workspace.result);
+    } catch {
+      throw new Error(`档案“${archive.title}”的分析结果无效。`);
+    }
+  }
+  return backup.archives.map((archive) => structuredClone(archive));
 }
 
 function isEnvelope(value: unknown): value is ArchiveEnvelope {
@@ -77,7 +164,8 @@ function isArchive(value: unknown): value is AnalysisArchive {
   const archive = value as Partial<AnalysisArchive>;
   return typeof archive.id === "string" && archive.id.length > 0 && typeof archive.title === "string" && archive.title.length > 0
     && typeof archive.savedAt === "string" && Number.isFinite(Date.parse(archive.savedAt))
-    && typeof archive.rulesetDigest === "string" && isWorkspace(archive.workspace);
+    && typeof archive.rulesetDigest === "string" && archive.rulesetDigest === archive.workspace?.result?.rulesetDigest
+    && isWorkspace(archive.workspace);
 }
 
 function isWorkspace(value: unknown): value is AnalysisWorkspaceSnapshot {
@@ -87,15 +175,49 @@ function isWorkspace(value: unknown): value is AnalysisWorkspaceSnapshot {
     && ["female_traditional", "male_traditional", "unspecified"].includes(String(workspace.roleBasis))
     && isSubject(workspace.primarySubject) && isSubject(workspace.secondarySubject)
     && typeof workspace.hasSecondarySubject === "boolean"
-    && Array.isArray(workspace.gates) && Array.isArray(workspace.observations)
-    && Boolean(workspace.crossState && typeof workspace.crossState === "object")
+    && isGateList(workspace.gates) && isObservationList(workspace.observations)
+    && isCrossState(workspace.crossState)
     && Boolean(workspace.result && typeof workspace.result === "object");
 }
 
 function isSubject(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
   const subject = value as Record<string, unknown>;
-  return ["subjectId", "year", "month", "day", "hour"].every((key) => typeof subject[key] === "string")
+  return typeof subject.subjectId === "string" && subject.subjectId.length <= 120
+    && ["year", "month", "day", "hour"].every((key) => typeof subject[key] === "string" && JIAZI.includes(String(subject[key])))
     && ["exact", "approximate", "unknown"].includes(String(subject.birthTimeStatus))
     && ["high", "medium", "low", "unknown"].includes(String(subject.dataQuality));
 }
+
+function isGateList(value: unknown): boolean {
+  if (!Array.isArray(value) || value.length !== 8) return false;
+  const ids = new Set(value.map((gate) => record(gate)?.id));
+  return ids.size === 8 && value.every((gate) => {
+    const item = record(gate);
+    return item && /^RG0[1-8]$/u.test(String(item.id)) && typeof item.label === "string" && typeof item.note === "string"
+      && ["pass", "conditional", "fail", "unknown", "not_assessed"].includes(String(item.status));
+  });
+}
+
+function isCrossState(value: unknown): boolean {
+  const item = record(value);
+  const evidence = item && record(item.evidence);
+  const keys = ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"];
+  return Boolean(item && evidence && keys.every((key) => typeof item[key] === "boolean" && typeof evidence[key] === "string"));
+}
+
+function isObservationList(value: unknown): boolean {
+  return Array.isArray(value) && value.every((observation) => {
+    const item = record(observation);
+    return item && typeof item.chainId === "string" && (item.slot === 0 || item.slot === 1)
+      && ["self_report", "partner_report", "joint_record", "third_party_record"].includes(String(item.source))
+      && typeof item.context === "string" && ["supports", "contradicts"].includes(String(item.direction))
+      && ["basisFingerprint", "candidateFingerprint", "basisRequestId"].every((key) => typeof item[key] === "string");
+  });
+}
+
+function record(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function cloneJson<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }

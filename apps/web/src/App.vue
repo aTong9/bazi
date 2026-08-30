@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
-import { deleteArchive, loadArchives, saveArchive } from "@/archive-store";
+import { deleteArchive, importArchiveBackup, loadArchives, saveArchive, serializeArchiveBackup } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
 import { analysisInputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
@@ -219,6 +219,38 @@ function removeArchive(id: string): void {
   }
 }
 
+function exportArchives(): void {
+  if (!archives.value.length) return;
+  try {
+    const blob = new Blob([serializeArchiveBackup(archives.value)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `bazi-reading-archives-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    archiveNotice.value = `已导出 ${archives.value.length} 份档案；文件未加密，请妥善保管。`;
+  } catch {
+    archiveNotice.value = "档案导出失败，请重试。";
+  }
+}
+
+async function importArchives(file: File): Promise<void> {
+  if (file.size > 20_000_000) {
+    archiveNotice.value = "备份文件超过 20 MB，未执行导入。";
+    return;
+  }
+  try {
+    const imported = importArchiveBackup(await file.text());
+    archives.value = imported.archives;
+    archiveNotice.value = `导入完成：新增 ${imported.added}，更新 ${imported.updated}，跳过 ${imported.skipped}。`;
+  } catch (error) {
+    archiveNotice.value = error instanceof Error ? error.message : "备份导入失败。";
+  }
+}
+
 function currentWorkspace(analysisResult: AnalysisResponse): AnalysisWorkspaceSnapshot {
   return {
     analysisMode: analysisMode.value,
@@ -388,6 +420,6 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
       <p>关系脉络不是命运判决，也不替代安全、同意和现实决定。</p>
       <span v-if="health">规则快照 {{ health.catalog.rulesetDigest.slice(0, 10) }}</span>
     </footer>
-    <ArchivePanel :open="archivesOpen" :archives="archives" @close="archivesOpen = false" @restore="restoreArchive" @delete="removeArchive" />
+    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" @close="archivesOpen = false" @restore="restoreArchive" @delete="removeArchive" @export="exportArchives" @import="importArchives" />
   </div>
 </template>

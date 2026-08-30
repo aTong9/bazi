@@ -94,6 +94,12 @@ describe("App analysis provenance", () => {
   it("saves a completed reading locally and restores it after starting over", async () => {
     const response = makeAnalysisResponse();
     installBrowserMocks(response);
+    let backupBlob: Blob | undefined;
+    Object.defineProperties(URL, {
+      createObjectURL: { configurable: true, value: vi.fn((blob: Blob) => { backupBlob = blob; return "blob:archive-backup"; }) },
+      revokeObjectURL: { configurable: true, value: vi.fn() },
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     mounted = mountComponent(App, {});
     await flushUi();
     await submit(mounted.host);
@@ -109,6 +115,19 @@ describe("App analysis provenance", () => {
     findButton(mounted.host, "看盘档案 1").click();
     await flushUi();
     expect(document.body.textContent).toContain("看盘档案");
+    findButton(document.body, "导出全部备份").click();
+    const backup = await backupBlob!.text();
+    expect(JSON.parse(backup)).toMatchObject({ schema: "bazi.relationship.archive-backup.v1", containsSensitiveData: true });
+
+    const fileInput = document.body.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const backupFile = { size: backup.length, text: async () => backup } as File;
+    Object.defineProperty(fileInput, "files", { configurable: true, value: [backupFile] });
+    fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    await flushUi();
+    expect(document.body.textContent).toContain("新增 0，更新 0，跳过 1");
+
     findButton(document.body, "打开档案").click();
     await flushUi();
     expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
