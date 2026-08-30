@@ -71,10 +71,14 @@ export function resolveSolarBirth(localDateTime: string): SolarBirthResolution {
   }
   const minutesIntoDay = parsed.hour * 60 + parsed.minute;
   const nearestHourBoundary = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21]
-    .map((hour) => Math.abs(minutesIntoDay - hour * 60))
-    .reduce((best, value) => Math.min(best, value), Number.POSITIVE_INFINITY);
-  if (nearestHourBoundary < CALENDAR_ADAPTER.hourBoundarySafetyMinutes) {
-    return boundary("hour_boundary", "时间紧邻时辰交界，请核对更精确的出生分钟后再排盘。", localDateTime, []);
+    .map((hour) => ({ hour, distance: Math.abs(minutesIntoDay - hour * 60) }))
+    .sort((left, right) => left.distance - right.distance)[0]!;
+  if (nearestHourBoundary.distance <= CALENDAR_ADAPTER.hourBoundarySafetyMinutes) {
+    const boundaryValue = { ...parsed, hour: nearestHourBoundary.hour, minute: 0 };
+    return boundary("hour_boundary", "时间紧邻时辰交界，请核对更精确的出生分钟后再排盘。", localDateTime, [
+      pillarsAt(shiftLocalMinutes(boundaryValue, -(CALENDAR_ADAPTER.hourBoundarySafetyMinutes + 1))),
+      pillarsAt(shiftLocalMinutes(boundaryValue, CALENDAR_ADAPTER.hourBoundarySafetyMinutes + 1)),
+    ]);
   }
 
   const solar = Solar.fromYmdHms(parsed.year, parsed.month, parsed.day, parsed.hour, parsed.minute, 0);

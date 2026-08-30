@@ -36,7 +36,15 @@ test("stops at disputed Zi-hour and narrow hour boundaries", () => {
   assert.equal(resolveSolarBirth("2024-06-01T23:30").status, "boundary_unresolved");
   const boundary = resolveSolarBirth("2024-06-01T01:01");
   assert.equal(boundary.status, "boundary_unresolved");
-  if (boundary.status === "boundary_unresolved") assert.equal(boundary.reason, "hour_boundary");
+  if (boundary.status === "boundary_unresolved") {
+    assert.equal(boundary.reason, "hour_boundary");
+    assert.equal(boundary.candidates.length, 2);
+    assert.notEqual(formatFourPillars(boundary.candidates[0]!), formatFourPillars(boundary.candidates[1]!));
+  }
+  const edge = resolveSolarBirth("2024-06-01T00:58");
+  assert.equal(edge.status, "boundary_unresolved");
+  if (edge.status === "boundary_unresolved") assert.equal(edge.reason, "hour_boundary");
+  assert.equal(resolveSolarBirth("2024-06-01T00:57").status, "resolved");
 });
 
 test("rejects malformed and unsupported dates", () => {
