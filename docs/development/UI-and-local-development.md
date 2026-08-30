@@ -61,6 +61,8 @@ replacesRealityEvidence = false
 replacesRealityGates = false
 ```
 
+所有分析接口只接受 `Content-Type: application/json`，请求正文上限为 1 MiB；媒体类型错误返回 415，超限返回 413，JSON 语法错误返回 400。
+
 ## 3. 安全和状态呈现
 
 前端在 HTTP 200 后仍执行运行时响应校验。以下状态不能只靠颜色区分，并且不能互相折叠：

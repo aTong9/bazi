@@ -64,6 +64,22 @@ test("POST /v1/m0/analyze returns all 45 M19 fields and rejects exact input with
     const dynamicBody = await dynamicResponse.json() as { issues: Array<{ code: string }> };
     assert.equal(dynamicBody.issues[0]?.code, "E_DYNAMIC_MODEL_REQUIRED");
 
+    const wrongContentType = await fetch(`http://127.0.0.1:${port}/v1/m0/analyze`, { method: "POST", body: "{}" });
+    assert.equal(wrongContentType.status, 415);
+    assert.equal((await issueCode(wrongContentType)), "E_CONTENT_TYPE");
+
+    const malformed = await fetch(`http://127.0.0.1:${port}/v1/m0/analyze`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    });
+    assert.equal(malformed.status, 400);
+    assert.equal((await issueCode(malformed)), "E_JSON");
+
+    const oversized = await post(port, { value: "x".repeat(1_048_576) });
+    assert.equal(oversized.status, 413);
+    assert.equal((await issueCode(oversized)), "E_PAYLOAD_TOO_LARGE");
+
     const health = await fetch(`http://127.0.0.1:${port}/health`);
     assert.equal(health.status, 200);
     const healthBody = await health.json() as { status: string; catalog: { compiledRecords: number } };
@@ -108,4 +124,8 @@ async function post(port: number, body: unknown): Promise<Response> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
+}
+
+async function issueCode(response: Response): Promise<string | undefined> {
+  return ((await response.json()) as { issues: Array<{ code: string }> }).issues[0]?.code;
 }
