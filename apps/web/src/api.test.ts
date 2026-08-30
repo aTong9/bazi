@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { analyzeRelationship, ApiError, fetchHealth, parseAnalysisResponse, parseHealthResponse } from "./api";
-import { makeAnalysisResponse } from "./test/analysis-fixture";
+import { analyzeRelationship, ApiError, fetchHealth, parseAnalysisResponse, parseHealthResponse, parseM0AnalysisResponse } from "./api";
+import { makeAnalysisResponse, makeM0AnalysisResponse } from "./test/analysis-fixture";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -23,6 +23,13 @@ describe("API response guards", () => {
   it("accepts the complete browser-facing analysis contract", () => {
     const response = makeAnalysisResponse();
     expect(parseAnalysisResponse(response)).toBe(response);
+  });
+
+  it("accepts the standalone M0 response and rejects missing trace metadata", () => {
+    expect(parseM0AnalysisResponse(makeM0AnalysisResponse()).m0.status).toBe("complete");
+    const malformed = makeM0AnalysisResponse() as unknown as Record<string, unknown>;
+    delete malformed.versionManifest;
+    expect(() => parseM0AnalysisResponse(malformed)).toThrow("原局结构响应不符合前端契约");
   });
 
   it("requires both structural supplement non-replacement flags", () => {

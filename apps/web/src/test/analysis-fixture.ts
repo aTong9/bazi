@@ -1,4 +1,4 @@
-import type { AnalysisResponse, RealityGateId, RealityGateStatus, ResultItem } from "../types";
+import type { AnalysisResponse, M0AnalysisResponse, RealityGateId, RealityGateStatus, ResultItem } from "../types";
 
 interface AnalysisFixtureOptions {
   safetyStop?: boolean;
@@ -10,6 +10,20 @@ const gateIds: readonly RealityGateId[] = ["RG01", "RG02", "RG03", "RG04", "RG05
 
 function resultItem(value: unknown, status = "supported", confidence = "medium"): ResultItem {
   return { value, status, confidence, conditions: [], ruleIds: [] };
+}
+
+export function makeM0AnalysisResponse(): M0AnalysisResponse {
+  const relationship = makeAnalysisResponse();
+  return {
+    requestId: relationship.requestId,
+    generatedAt: relationship.generatedAt,
+    rulesetDigest: relationship.rulesetDigest,
+    versionManifest: { integrationVersion: "1.0", modelVersions: { M0: "1.9" }, compilerVersion: "1.0" },
+    m0: { ...relationship.m0, status: "complete", modules: {}, issues: [] },
+    ruleTrace: relationship.ruleTrace,
+    sourceIds: relationship.sourceIds,
+    discardLog: [],
+  };
 }
 
 export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): AnalysisResponse {

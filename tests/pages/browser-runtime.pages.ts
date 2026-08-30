@@ -4,8 +4,9 @@ import path from "node:path";
 import test from "node:test";
 
 import { analyzeProfile } from "../../packages/application/src/analyze-profile.js";
+import { analyzeM0 } from "../../packages/application/src/analyze-m0.js";
 import { openCatalogSnapshot } from "../../packages/catalog/src/open-catalog-snapshot.js";
-import { openBrowserCatalogPack, toAnalyzeProfileCommand } from "../../apps/web/src/browser-runtime.js";
+import { openBrowserCatalogPack, toAnalyzeM0Command, toAnalyzeProfileCommand } from "../../apps/web/src/browser-runtime.js";
 
 const root = path.resolve(".");
 const packPath = path.join(root, "apps/web/public/browser-catalog.json");
@@ -43,6 +44,22 @@ test("browser and SQLite runtimes return the same business result", async () => 
     if (rejected.ok) throw new Error("duplicate observations unexpectedly parsed");
     assert.equal(rejected.status, 400);
     assert.match(rejected.body.issues[0]?.message ?? "", /duplicate ids/u);
+  } finally {
+    sqliteCatalog.close();
+  }
+});
+
+test("standalone M0 uses the same browser and SQLite rule snapshot", async () => {
+  const value = JSON.parse(await readFile(packPath, "utf8")) as { manifest: { rulesetDigest: string } };
+  const browserCatalog = await openBrowserCatalogPack(value);
+  const sqliteCatalog = openCatalogSnapshot(path.join(root, "rulesets", value.manifest.rulesetDigest));
+  try {
+    const { role_basis: _roleBasis, ...payload } = basePayload();
+    payload.requested_sections = ["m0"];
+    const parsed = toAnalyzeM0Command(payload);
+    assert.equal(parsed.ok, true);
+    if (!("command" in parsed)) throw new Error("M0 request unexpectedly failed to parse");
+    assert.deepEqual(withoutRunIdentity(analyzeM0(parsed.command, browserCatalog)), withoutRunIdentity(analyzeM0(parsed.command, sqliteCatalog)));
   } finally {
     sqliteCatalog.close();
   }

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App.vue";
 import { ARCHIVE_STORAGE_KEY } from "./archive-store";
-import { makeAnalysisResponse } from "./test/analysis-fixture";
+import { makeAnalysisResponse, makeM0AnalysisResponse } from "./test/analysis-fixture";
 import { mountComponent, type MountedComponent } from "./test/mount-component";
 
 const health = { status: "ready", catalog: { rulesetDigest: "digest", loadedRecords: 10, compiledRecords: 10, activeModules: ["M0", "M1", "M2", "M3", "M4", "M5"] } };
@@ -26,6 +26,26 @@ afterEach(() => {
 });
 
 describe("App analysis provenance", () => {
+  it("runs the standalone M0 mode without relationship inputs or modules", async () => {
+    const fetchMock = installBrowserMocks(makeAnalysisResponse());
+    mounted = mountComponent(App, {});
+    await flushUi();
+    const structureMode = mounted.host.querySelector<HTMLInputElement>('input[value="structure"]')!;
+    structureMode.checked = true;
+    structureMode.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+
+    expect(mounted.host.textContent).not.toContain("传统夫妻星计算口径");
+    expect(mounted.host.textContent).toContain("仅 M0 原局结构");
+    await submit(mounted.host);
+
+    const calls = fetchMock.mock.calls.filter(([input]) => input === "/v1/m0/analyze");
+    expect(calls).toHaveLength(1);
+    expect(JSON.parse(String(calls[0]?.[1]?.body))).toMatchObject({ requested_sections: ["m0"] });
+    expect(mounted.host.textContent).toContain("原局结构已生成");
+    expect(mounted.host.querySelector("#result-m1")).toBeNull();
+  });
+
   it("exports unreadable archive storage before allowing a confirmed reset", async () => {
     installBrowserMocks(makeAnalysisResponse());
     localStorage.setItem(ARCHIVE_STORAGE_KEY, "damaged archive bytes");
@@ -421,7 +441,7 @@ describe("App analysis provenance", () => {
 
 function installBrowserMocks(response: ReturnType<typeof makeAnalysisResponse>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
-    const body = input === "/health" ? health : response;
+    const body = input === "/health" ? health : input === "/v1/m0/analyze" ? makeM0AnalysisResponse() : response;
     return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
   });
   vi.stubGlobal("fetch", fetchMock);

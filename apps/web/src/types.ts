@@ -3,7 +3,7 @@ export type EarthlyBranch = "子" | "丑" | "寅" | "卯" | "辰" | "巳" | "午
 export type BirthTimeStatus = "exact" | "approximate" | "unknown";
 export type DataQuality = "high" | "medium" | "low" | "unknown";
 export type RoleBasis = "female_traditional" | "male_traditional" | "unspecified";
-export type AnalysisMode = "profile" | "evaluate";
+export type AnalysisMode = "structure" | "profile" | "evaluate";
 export type RealityGateStatus = "pass" | "conditional" | "fail" | "unknown" | "not_assessed";
 export type RealityGateId = "RG01" | "RG02" | "RG03" | "RG04" | "RG05" | "RG06" | "RG07" | "RG08";
 export type CrossStateKey = "steady" | "pressure" | "repair" | "turningPoint" | "counterevidenceReviewed";
@@ -135,6 +135,23 @@ export interface AnalysisResponse {
     boundaries: Array<{ code: string; hard: true; text: string }>;
     trace: { ruleIds: string[]; sourceIds: string[]; eventIds: string[] };
   };
+}
+
+export interface M0AnalysisResponse {
+  requestId: string;
+  generatedAt: string;
+  rulesetDigest: string;
+  versionManifest: { integrationVersion: string; modelVersions: Record<string, string>; compilerVersion: string };
+  m0: {
+    status: "complete" | "limited";
+    modules: Record<string, unknown>;
+    fields: Record<string, ResultItem>;
+    dependencyFlags: string[];
+    issues: never[];
+  };
+  ruleTrace: string[];
+  sourceIds: string[];
+  discardLog: never[];
 }
 
 export interface ApiIssue { code: string; message: string; jsonPointer?: string }

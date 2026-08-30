@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
-import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
+import { analyzeM0Structure, analyzeRelationship, ApiError, fetchHealth } from "@/api";
 import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup, serializeReadingPackage } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
 import { analysisInputFingerprint, formatBirthInputSource, formatSubjectPillars, inactiveSecondarySubject, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
 import ArchivePanel from "@/components/ArchivePanel.vue";
+import M0Result from "@/components/M0Result.vue";
 import ObservationPanel from "@/components/ObservationPanel.vue";
 import PillarEditor from "@/components/PillarEditor.vue";
 import RealityGatePanel from "@/components/RealityGatePanel.vue";
-import type { AnalysisArchive, AnalysisMode, AnalysisResponse, AnalysisWorkspaceSnapshot, CrossStateDraft, HealthResponse, ObservationDraft, RealityGateDraft, RoleBasis, SubjectDraft } from "@/types";
+import type { AnalysisArchive, AnalysisMode, AnalysisResponse, AnalysisWorkspaceSnapshot, CrossStateDraft, HealthResponse, M0AnalysisResponse, ObservationDraft, RealityGateDraft, RoleBasis, SubjectDraft } from "@/types";
 
 const primarySubject = ref<SubjectDraft>(createSubject("主命盘"));
 const secondarySubject = ref<SubjectDraft>(inactiveSecondarySubject());
@@ -21,6 +22,7 @@ const gates = ref<RealityGateDraft[]>(REALITY_GATES.map((gate) => ({ ...gate, st
 const crossState = ref<CrossStateDraft>(createCrossState());
 const observations = ref<ObservationDraft[]>([]);
 const result = ref<AnalysisResponse | null>(null);
+const structureResult = ref<M0AnalysisResponse | null>(null);
 const health = ref<HealthResponse | null>(null);
 const healthError = ref(false);
 const isLoading = ref(false);
@@ -37,7 +39,8 @@ let activeRequest: AbortController | null = null;
 let resultFingerprint: string | null = null;
 
 const isEvaluate = computed(() => analysisMode.value === "evaluate");
-const submitLabel = computed(() => isEvaluate.value ? "生成现实评估" : "生成关系画像");
+const isStructure = computed(() => analysisMode.value === "structure");
+const submitLabel = computed(() => isStructure.value ? "生成原局结构" : isEvaluate.value ? "生成现实评估" : "生成关系画像");
 const currentInputFingerprint = computed(() => analysisInputFingerprint({
   analysisMode: analysisMode.value,
   roleBasis: roleBasis.value,
@@ -111,15 +114,18 @@ watch(currentInputFingerprint, (fingerprint, previousFingerprint) => {
   activeRequest?.abort();
   resultFingerprint = null;
   result.value = null;
+  structureResult.value = null;
   safeResultFingerprint.value = null;
   observations.value = [];
 });
 
 watch(analysisMode, (mode) => {
-  if (mode !== "profile") return;
-  gates.value = REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
-  crossState.value = createCrossState();
-  observations.value = [];
+  if (mode !== "evaluate") {
+    gates.value = REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
+    crossState.value = createCrossState();
+    observations.value = [];
+  }
+  if (mode === "structure") hasSecondarySubject.value = false;
 });
 
 watch(hasSecondarySubject, (enabled) => {
@@ -180,7 +186,7 @@ async function submitAnalysis(): Promise<void> {
   const inputIssues = [
     subjectIdentityIssue(primarySubject.value, "主要命盘"),
     birthInputIssue(primarySubject.value, "主要命盘"),
-    ...(hasSecondarySubject.value ? [
+    ...(!isStructure.value && hasSecondarySubject.value ? [
       subjectIdentityIssue(secondarySubject.value, "另一方命盘"),
       birthInputIssue(secondarySubject.value, "另一方命盘"),
     ] : []),
@@ -206,6 +212,7 @@ async function submitAnalysis(): Promise<void> {
   if (resultFingerprint !== null && resultFingerprint !== requestFingerprint) {
     resultFingerprint = null;
     result.value = null;
+    structureResult.value = null;
     observations.value = [];
   }
   const sourceResult = resultFingerprint === requestFingerprint ? result.value : null;
@@ -219,10 +226,12 @@ async function submitAnalysis(): Promise<void> {
   const crossStatePayload = toWireCrossState(crossState.value, runId);
   const payload = {
     analysis_mode: "production",
-    role_basis: roleBasis.value,
     subject: toWireSubject(primarySubject.value),
-    ...(hasSecondarySubject.value ? { subject_b: toWireSubject(secondarySubject.value) } : {}),
-    requested_sections: ["m0", "m1", "m2", "m3", "m4", "m5"],
+    requested_sections: isStructure.value ? ["m0"] : ["m0", "m1", "m2", "m3", "m4", "m5"],
+    ...(!isStructure.value ? {
+      role_basis: roleBasis.value,
+      ...(hasSecondarySubject.value ? { subject_b: toWireSubject(secondarySubject.value) } : {}),
+    } : {}),
     ...(isEvaluate.value ? {
       reality_gates: realityGates,
       cross_state_validation: crossStatePayload.validation,
@@ -233,10 +242,18 @@ async function submitAnalysis(): Promise<void> {
     } : {}),
   };
   try {
-    const response = await analyzeRelationship(isEvaluate.value ? "/v1/relationship/evaluate" : "/v1/relationship/profile", payload, controller.signal);
+    const response = isStructure.value
+      ? await analyzeM0Structure(payload, controller.signal)
+      : await analyzeRelationship(isEvaluate.value ? "/v1/relationship/evaluate" : "/v1/relationship/profile", payload, controller.signal);
     if (controller.signal.aborted || currentInputFingerprint.value !== requestFingerprint) return;
     resultFingerprint = requestFingerprint;
-    result.value = response;
+    if (isStructure.value) {
+      structureResult.value = response as M0AnalysisResponse;
+      result.value = null;
+    } else {
+      result.value = response as AnalysisResponse;
+      structureResult.value = null;
+    }
     if (healthError.value) void refreshHealth();
     await nextTick();
     document.querySelector<HTMLElement>(".result-mast h2")?.focus({ preventScroll: true });
@@ -259,11 +276,24 @@ async function submitAnalysis(): Promise<void> {
 }
 
 function downloadResult(): void {
+  if (structureResult.value) {
+    const reading = { schema: "bazi.m0.reading.v1", exportedAt: new Date().toISOString(), containsSensitiveData: true, resultInputFingerprint: resultFingerprint, subject: cloneJson(primarySubject.value), result: cloneJson(structureResult.value) };
+    downloadText(`${JSON.stringify(reading, null, 2)}\n`, "application/json", `bazi-m0-${structureResult.value.requestId}.json`);
+    return;
+  }
   if (!result.value) return;
   downloadText(serializeReadingPackage(currentWorkspace(result.value)), "application/json", `bazi-relationship-${result.value.requestId}.json`);
 }
 
 function downloadReadableSummary(): void {
+  if (structureResult.value) {
+    const analysis = structureResult.value;
+    const fields = analysis.m0.fields;
+    const value = (key: string) => JSON.stringify(fields[key]?.value ?? null, null, 2);
+    const lines = ["# 原局结构摘要", "", `- 分析方式：原局结构`, `- 主要命盘：${primarySubject.value.subjectId.trim() || "主要命盘"} · ${formatSubjectPillars(primarySubject.value)}`, `- 输入来源：${formatBirthInputSource(primarySubject.value)}`, `- 分析 ID：${analysis.requestId}`, `- 规则快照：${analysis.rulesetDigest}`, `- M0 状态：${analysis.m0.status}`, "", "## 日主与季节", "", `\`\`\`json\n${value("day_master_and_season")}\n\`\`\``, "", "## 日主强弱", "", `\`\`\`json\n${value("day_master_strength")}\n\`\`\``, "", "## 最终结构摘要", "", `\`\`\`json\n${value("final_structure_summary")}\n\`\`\``, "", "## 阅读边界", "", "- 本结果只描述静态原局结构，不评价具体关系对象。", "- 未知和资料限制不会被补成确定结论。", ""];
+    downloadText(lines.join("\n"), "text/markdown;charset=utf-8", `bazi-m0-${analysis.requestId}.md`);
+    return;
+  }
   if (!result.value) return;
   downloadText(readableSummary(result.value), "text/markdown;charset=utf-8", `bazi-reading-${result.value.requestId}.md`);
 }
@@ -318,7 +348,7 @@ function readableSummary(analysis: AnalysisResponse): string {
 }
 
 function printResult(): void {
-  if (!result.value) return;
+  if (!result.value && !structureResult.value) return;
   window.print();
 }
 
@@ -368,6 +398,7 @@ async function restoreArchive(archive: AnalysisArchive): Promise<void> {
   safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
   resultFingerprint = currentInputFingerprint.value;
   result.value = workspace.result;
+  structureResult.value = null;
   safeResultFingerprint.value = resultVersionFingerprint(workspace.result);
   archivesOpen.value = false;
   archiveNotice.value = `已打开“${archive.title}”。`;
@@ -484,6 +515,7 @@ function resetWorkspace(): void {
   hasSecondarySubject.value = false;
   resultFingerprint = null;
   result.value = null;
+  structureResult.value = null;
   safeResultFingerprint.value = null;
   errorMessage.value = "";
   safeWorkspaceFingerprint.value = currentWorkspaceFingerprint.value;
@@ -576,6 +608,10 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
 
           <fieldset class="mode-switch">
             <legend>分析方式</legend>
+            <label :class="{ active: analysisMode === 'structure' }">
+              <input v-model="analysisMode" type="radio" value="structure" />
+              <strong>原局结构</strong><small>只看 M0 静态底盘</small>
+            </label>
             <label :class="{ active: analysisMode === 'profile' }">
               <input v-model="analysisMode" type="radio" value="profile" />
               <strong>关系画像</strong><small>只读一张命盘的结构倾向</small>
@@ -588,7 +624,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
 
           <PillarEditor v-model="primarySubject" id-prefix="primary" title="主要命盘" description="请手动录入已核对的四柱，或用固定 UTC+8 公历时间辅助填入后复核。" />
 
-          <fieldset class="role-basis">
+          <fieldset v-if="!isStructure" class="role-basis">
             <legend>传统夫妻星计算口径</legend>
             <p class="field-help">这是明确的计算路径，不用于推断性别、身份或伴侣质量。</p>
             <label><input v-model="roleBasis" type="radio" value="female_traditional" /><span><strong>女性传统口径</strong><small>正官 / 七杀</small></span></label>
@@ -596,11 +632,11 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             <label><input v-model="roleBasis" type="radio" value="unspecified" /><span><strong>暂不指定</strong><small>相关模块保留等待依赖</small></span></label>
           </fieldset>
 
-          <div class="secondary-toggle">
+          <div v-if="!isStructure" class="secondary-toggle">
             <label><input v-model="hasSecondarySubject" type="checkbox" /><span><strong>加入另一方命盘</strong><small>只作结构辅助，不替代现实证据</small></span></label>
           </div>
           <Transition name="fold">
-            <PillarEditor v-if="hasSecondarySubject" v-model="secondarySubject" id-prefix="secondary" title="另一方命盘" description="双盘仅提供结构补充，不生成现实适配分数。" />
+            <PillarEditor v-if="!isStructure && hasSecondarySubject" v-model="secondarySubject" id-prefix="secondary" title="另一方命盘" description="双盘仅提供结构补充，不生成现实适配分数。" />
           </Transition>
 
           <Transition name="fold">
@@ -621,7 +657,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
           </div>
 
           <div class="submit-bar">
-            <div><span>输出范围</span><strong>M0—M5 全链路</strong></div>
+            <div><span>输出范围</span><strong>{{ isStructure ? '仅 M0 原局结构' : 'M0—M5 全链路' }}</strong></div>
             <button type="submit" class="primary-button" :disabled="isLoading">
               <span v-if="isLoading" class="spinner" aria-hidden="true"></span>
               {{ isLoading ? "正在沿证据链分析" : submitLabel }}
@@ -631,8 +667,16 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
 
         <section class="result-panel" aria-label="分析结果">
           <p v-if="archiveNotice" class="archive-notice" role="status">{{ archiveNotice }}</p>
+          <M0Result
+            v-if="structureResult"
+            :result="structureResult"
+            :subject="primarySubject"
+            @print="printResult"
+            @download-summary="downloadReadableSummary"
+            @download="downloadResult"
+          />
           <AnalysisResult
-            v-if="result"
+            v-else-if="result"
             :result="result"
             :analysis-mode="analysisMode"
             :primary-subject="primarySubject"
@@ -648,9 +692,10 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
           <div v-else class="empty-result">
             <div class="empty-orbit" aria-hidden="true"><span>命</span><i></i><i></i><i></i><i></i><i></i></div>
             <p class="eyebrow">等待一次完整输入</p>
-            <h2>结果会沿 M0—M5<br />逐层展开</h2>
-            <p>先读边界，再读结构；先看现实，再看适配。未知和候选会被明确保留，不会被包装成确定答案。</p>
-            <ul><li>45 项 M0 结构字段</li><li>吸引、选择与相处链路</li><li>现实闸门与安全停止</li><li>规则与快照追踪</li></ul>
+            <h2>{{ isStructure ? '结果会聚焦 M0' : '结果会沿 M0—M5' }}<br />逐层展开</h2>
+            <p>{{ isStructure ? '只读静态原局结构，不延伸到关系对象、现实适配或命定结论。' : '先读边界，再读结构；先看现实，再看适配。未知和候选会被明确保留，不会被包装成确定答案。' }}</p>
+            <ul v-if="isStructure"><li>45 项 M0 结构字段</li><li>日主、季节与气候双轴</li><li>五行作用候选与剂量边界</li><li>规则与快照追踪</li></ul>
+            <ul v-else><li>45 项 M0 结构字段</li><li>吸引、选择与相处链路</li><li>现实闸门与安全停止</li><li>规则与快照追踪</li></ul>
           </div>
         </section>
       </div>

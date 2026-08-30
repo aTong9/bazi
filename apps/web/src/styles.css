@@ -79,6 +79,7 @@
     font-size: 13pt;
     font-weight: 700;
   }
+  .m0-only-result::before { content: "关系脉络 · 八字原局结构报告"; }
   .result-mast { gap: 5mm 8mm; padding-bottom: 7mm; }
   .result-mast h2 { font-size: 25pt; }
   .grade-seal { width: 22mm; height: 22mm; }
@@ -736,7 +737,7 @@
 
   .mode-switch {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     margin-top: 30px;
     border: 1px solid var(--ink-200);
   }

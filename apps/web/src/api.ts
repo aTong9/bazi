@@ -1,4 +1,4 @@
-import type { AnalysisResponse, ApiErrorBody, HealthResponse } from "./types";
+import type { AnalysisResponse, ApiErrorBody, HealthResponse, M0AnalysisResponse } from "./types";
 
 type JsonRecord = Record<string, unknown>;
 const useBrowserRuntime = import.meta.env.VITE_ANALYSIS_RUNTIME === "browser";
@@ -40,6 +40,42 @@ export async function analyzeRelationship(endpoint: "/v1/relationship/profile" |
   });
   if (!response.ok) throw new ApiError(response.status, await safeJson(response));
   return parseAnalysisResponse(await safeSuccessJson(response));
+}
+
+export async function analyzeM0Structure(payload: unknown, signal?: AbortSignal): Promise<M0AnalysisResponse> {
+  if (useBrowserRuntime) {
+    const { analyzeM0InBrowser } = await import("./browser-runtime");
+    const result = await analyzeM0InBrowser(payload, signal);
+    if (!result.ok) throw new ApiError(result.status, result.body);
+    return parseM0AnalysisResponse(result.body);
+  }
+  const response = await fetch("/v1/m0/analyze", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify(payload),
+    ...(signal ? { signal } : {}),
+  });
+  if (!response.ok) throw new ApiError(response.status, await safeJson(response));
+  return parseM0AnalysisResponse(await safeSuccessJson(response));
+}
+
+export function parseM0AnalysisResponse(value: unknown): M0AnalysisResponse {
+  const response = record(value);
+  const m0 = response && record(response.m0);
+  const manifest = response && record(response.versionManifest);
+  const modelVersions = manifest && record(manifest.modelVersions);
+  if (
+    !response || !m0 || !manifest
+    || !hasStrings(response, ["requestId", "generatedAt", "rulesetDigest"])
+    || !isStringArray(response.ruleTrace) || !isStringArray(response.sourceIds)
+    || !isOneOf(m0.status, ["complete", "limited"]) || !record(m0.modules)
+    || !isResultFieldMap(m0.fields) || !isStringArray(m0.dependencyFlags)
+    || !Array.isArray(m0.issues) || m0.issues.length !== 0
+    || !isString(manifest.integrationVersion) || !modelVersions
+    || !Object.values(modelVersions).every(isString) || !isString(manifest.compilerVersion)
+    || !Array.isArray(response.discardLog) || response.discardLog.length !== 0
+  ) throw responseSchemaError("原局结构响应不符合前端契约");
+  return value as M0AnalysisResponse;
 }
 
 export function parseHealthResponse(value: unknown): HealthResponse {

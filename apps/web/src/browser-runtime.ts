@@ -1,7 +1,9 @@
 import { analyzeProfile, type AnalyzeProfileCommand } from "../../../packages/application/src/analyze-profile.js";
+import { analyzeM0, type AnalyzeM0Command } from "../../../packages/application/src/analyze-m0.js";
 import type { CatalogSnapshot } from "../../../packages/catalog/src/open-catalog-snapshot.js";
 import type { CanonicalCatalogRecord } from "../../../packages/catalog/src/import-catalog.js";
 import { parseProfileAnalyzeRequest } from "../../../packages/contracts/src/profile-analyze-contract.js";
+import { parseM0AnalyzeRequest } from "../../../packages/contracts/src/m0-analyze-contract.js";
 
 export type RelationshipEndpoint = "/v1/relationship/profile" | "/v1/relationship/evaluate";
 
@@ -31,6 +33,9 @@ export type BrowserAnalysisResult =
 export type BrowserCommandResult =
   | { readonly ok: true; readonly command: AnalyzeProfileCommand }
   | Extract<BrowserAnalysisResult, { readonly ok: false }>;
+export type M0BrowserCommandResult =
+  | { readonly ok: true; readonly command: AnalyzeM0Command }
+  | Extract<BrowserAnalysisResult, { readonly ok: false }>;
 
 let catalogPromise: Promise<CatalogSnapshot> | undefined;
 
@@ -56,6 +61,26 @@ export async function analyzeRelationshipInBrowser(
   return result.ok
     ? { ok: true, status: 200, body: result.response }
     : { ok: false, status: result.httpStatus, body: { issues: result.issues } };
+}
+
+export async function analyzeM0InBrowser(payload: unknown, signal?: AbortSignal): Promise<BrowserAnalysisResult> {
+  signal?.throwIfAborted();
+  const parsed = toAnalyzeM0Command(payload);
+  if (!parsed.ok) return parsed;
+  const catalog = await loadBrowserCatalog();
+  signal?.throwIfAborted();
+  const result = analyzeM0(parsed.command, catalog);
+  signal?.throwIfAborted();
+  return result.ok
+    ? { ok: true, status: 200, body: result.response }
+    : { ok: false, status: result.httpStatus, body: { issues: result.issues } };
+}
+
+export function toAnalyzeM0Command(payload: unknown): M0BrowserCommandResult {
+  const parsed = parseM0AnalyzeRequest(payload);
+  return parsed.valid
+    ? { ok: true, command: parsed.command }
+    : { ok: false, status: 400, body: { issues: parsed.errors.map((message) => ({ code: "E_REQUEST_SCHEMA", message })) } };
 }
 
 export function toAnalyzeProfileCommand(endpoint: RelationshipEndpoint, payload: unknown): BrowserCommandResult {
