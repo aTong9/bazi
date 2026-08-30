@@ -126,8 +126,26 @@ describe("App analysis provenance", () => {
     findButton(mounted.host, "新建分析").click();
     await flushUi();
 
-    expect(confirm).toHaveBeenCalledWith("本次看盘还未保存，仍要新建分析吗？");
+    expect(confirm).toHaveBeenCalledWith("当前输入或看盘尚未保存，仍要新建分析吗？");
     expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
+  });
+
+  it("protects edited inputs before a reading has been generated", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
+    mounted = mountComponent(App, {});
+    await flushUi();
+    const subjectLabel = mounted.host.querySelector<HTMLInputElement>("#primary-subject-id")!;
+    subjectLabel.value = "尚未提交的草稿";
+    subjectLabel.dispatchEvent(new Event("input", { bubbles: true }));
+    await flushUi();
+
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false);
+    findButton(mounted.host, "新建分析").click();
+    await flushUi();
+    expect(confirm).toHaveBeenCalledWith("当前输入或看盘尚未保存，仍要新建分析吗？");
+    expect(subjectLabel.value).toBe("尚未提交的草稿");
   });
 
   it("blocks page unload until the completed reading is saved", async () => {
@@ -140,6 +158,25 @@ describe("App analysis provenance", () => {
     findButton(mounted.host, "保存到档案").click();
     await flushUi();
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true);
+  });
+
+  it("protects reality observations edited after the reading was saved", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    mounted = mountComponent(App, {});
+    await flushUi();
+    const evaluateMode = mounted.host.querySelector<HTMLInputElement>('input[value="evaluate"]')!;
+    evaluateMode.checked = true;
+    evaluateMode.dispatchEvent(new Event("change", { bubbles: true }));
+    await submit(mounted.host);
+    findButton(mounted.host, "保存到档案").click();
+    await flushUi();
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true);
+
+    const observation = mounted.host.querySelector<HTMLInputElement>('.observation-context input[aria-label*="M4-C01"]')!;
+    observation.value = "保存后补充的压力情境";
+    observation.dispatchEvent(new Event("input", { bubbles: true }));
+    await flushUi();
+    expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false);
   });
 
   it("saves a completed reading locally and restores it after starting over", async () => {
@@ -189,8 +226,14 @@ describe("App analysis provenance", () => {
     await flushUi();
     expect(document.body.textContent).toContain("新增 0，更新 0，跳过 1");
 
+    const draftLabel = mounted.host.querySelector<HTMLInputElement>("#primary-subject-id")!;
+    draftLabel.value = "未保存的新草稿";
+    draftLabel.dispatchEvent(new Event("input", { bubbles: true }));
+    const confirm = vi.fn(() => true);
+    vi.stubGlobal("confirm", confirm);
     findButton(document.body, "打开档案").click();
     await flushUi();
+    expect(confirm).toHaveBeenCalledWith("当前输入或看盘尚未保存，仍要打开档案吗？");
     expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
     expect(mounted.host.textContent).toContain("已打开");
     expect(mounted.host.querySelector<HTMLInputElement>("#primary-subject-id")?.value).toBe("小林");
