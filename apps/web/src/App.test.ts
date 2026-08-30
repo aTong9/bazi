@@ -100,6 +100,10 @@ describe("App analysis provenance", () => {
     await flushUi();
     expect(mounted.host.textContent).toContain("请先修正分析输入");
     expect(mounted.host.textContent).toContain("请完成公历时间计算，或切换为手动四柱");
+    const solarInput = mounted.host.querySelector<HTMLInputElement>("#primary-solar-datetime")!;
+    expect(solarInput.getAttribute("aria-invalid")).toBe("true");
+    expect(solarInput.getAttribute("aria-describedby")).toBe("primary-birth-input-error");
+    expect(mounted.host.querySelector("#primary-birth-input-error")?.textContent).toContain("请完成公历时间计算");
     expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/profile")).toHaveLength(0);
   });
 

@@ -255,7 +255,7 @@ npm run check
 - 两种模式下的可选另一方命盘及“只作结构辅助”边界；
 - 首次分析后出现 M4 风险链，两份独立现实观察可录入并随再次评估发送；
 - RG01 安全失败后只显示 safety 章节，普通 M0—M5 轨道和适配叙事隐藏；
-- API 离线状态、错误提示与服务恢复后的重新连接；
+- API 离线状态、错误提示与服务恢复后的重新连接；公历辅助未完成时，错误摘要获焦且日期时间输入同步标记无效并关联字段级说明；
 - 键盘焦点、跳转链接、窄屏无横向溢出和 reduced-motion 路径；
 - 生产深链接 SPA fallback；`/v1/*` 继续返回 JSON，JS/CSS MIME、HEAD、HTML `no-cache`、指纹资源 immutable cache、CSP、`nosniff`、frame deny 与 referrer policy 符合静态托管契约。
 

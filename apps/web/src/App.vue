@@ -29,6 +29,8 @@ const healthError = ref(false);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const errorDetails = ref<string[]>([]);
+const primaryBirthInputError = computed(() => errorDetails.value.find((detail) => detail.startsWith("主要命盘：") && !detail.includes("称呼")) ?? "");
+const secondaryBirthInputError = computed(() => errorDetails.value.find((detail) => detail.startsWith("另一方命盘：") && !detail.includes("称呼")) ?? "");
 const archives = ref<AnalysisArchive[]>([]);
 const archiveRecoveryRaw = ref<string | null>(null);
 const archivesOpen = ref(false);
@@ -720,7 +722,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             </label>
           </fieldset>
 
-          <PillarEditor v-model="primarySubject" id-prefix="primary" title="主要命盘" description="请手动录入已核对的四柱，或用固定 UTC+8 公历时间辅助填入后复核。" />
+          <PillarEditor v-model="primarySubject" id-prefix="primary" title="主要命盘" description="请手动录入已核对的四柱，或用固定 UTC+8 公历时间辅助填入后复核。" :birth-input-error="primaryBirthInputError" />
 
           <fieldset v-if="!isStructure" class="role-basis">
             <legend>传统夫妻星计算口径</legend>
@@ -734,7 +736,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
             <label><input v-model="hasSecondarySubject" type="checkbox" /><span><strong>加入另一方命盘</strong><small>只作结构辅助，不替代现实证据</small></span></label>
           </div>
           <Transition name="fold">
-            <PillarEditor v-if="!isStructure && hasSecondarySubject" v-model="secondarySubject" id-prefix="secondary" title="另一方命盘" description="双盘仅提供结构补充，不生成现实适配分数。" />
+            <PillarEditor v-if="!isStructure && hasSecondarySubject" v-model="secondarySubject" id-prefix="secondary" title="另一方命盘" description="双盘仅提供结构补充，不生成现实适配分数。" :birth-input-error="secondaryBirthInputError" />
           </Transition>
 
           <Transition name="fold">

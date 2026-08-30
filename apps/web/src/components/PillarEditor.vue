@@ -5,7 +5,7 @@ import { hourOptions, JIAZI, monthOptions, normalizeLinkedPillars } from "@/doma
 import type { BirthInputRecord, SolarResolutionStatus, SubjectDraft } from "@/types";
 import { CALENDAR_ADAPTER, formatFourPillars, isCurrentCalendarAdapter, resolveSolarBirth, type SolarBirthResolution } from "../../../../packages/calendar/src/resolve-solar-birth";
 
-const props = defineProps<{ idPrefix: string; title: string; description: string }>();
+const props = defineProps<{ idPrefix: string; title: string; description: string; birthInputError?: string }>();
 const model = defineModel<SubjectDraft>({ required: true });
 const calendarResolution = ref<SolarBirthResolution | null>(null);
 const inputRecord = computed<BirthInputRecord>(() => model.value.birthInput ?? { method: "manual_four_pillars" });
@@ -135,7 +135,7 @@ function inputIdentity(input: BirthInputRecord): string {
       <div class="solar-input-row">
         <label class="field-control">
           <span>公历出生日期与时间</span>
-          <input :id="`${idPrefix}-solar-datetime`" v-model="solarLocalDateTime" type="datetime-local" min="1901-01-01T00:00" max="2099-12-31T23:59" @input="updateSolarInput">
+          <input :id="`${idPrefix}-solar-datetime`" v-model="solarLocalDateTime" type="datetime-local" min="1901-01-01T00:00" max="2099-12-31T23:59" :aria-invalid="birthInputError ? 'true' : undefined" :aria-describedby="birthInputError ? `${idPrefix}-birth-input-error` : undefined" @input="updateSolarInput">
         </label>
         <button type="button" class="secondary-action" @click="calculateFromSolar">计算并填入四柱</button>
       </div>
@@ -159,6 +159,7 @@ function inputIdentity(input: BirthInputRecord): string {
       <div v-else-if="storedSolarIsStale" class="calendar-resolution is-boundary_unresolved" role="alert">
         当前四柱已在公历辅助计算后被修改。请重新计算，或切换为手动四柱再分析。
       </div>
+      <p v-if="birthInputError" :id="`${idPrefix}-birth-input-error`" class="inline-notice" role="alert">{{ birthInputError }}</p>
       <p class="solar-policy-note">交节前后、时辰交界和 23 时不会自动选盘；此功能是录入辅助，不代表历法结果已获独立权威校验。</p>
     </section>
 
