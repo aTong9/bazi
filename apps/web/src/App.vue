@@ -28,6 +28,7 @@ const errorMessage = ref("");
 const errorDetails = ref<string[]>([]);
 const archives = ref<AnalysisArchive[]>([]);
 const archivesOpen = ref(false);
+const archiveTrigger = ref<HTMLButtonElement | null>(null);
 const archiveNotice = ref("");
 const isOnline = ref(navigator.onLine);
 const offlineReady = ref(Boolean(navigator.serviceWorker?.controller));
@@ -371,7 +372,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
         {{ !isOnline && offlineReady ? "离线模式 · 规则可用" : healthError ? "分析服务未连接" : health ? `规则已就绪 · ${health.catalog.compiledRecords.toLocaleString('zh-CN')} 条${offlineReady ? ' · 离线可用' : ''}` : "正在连接规则引擎" }}
       </div>
       <div class="header-actions">
-        <button type="button" class="quiet-button" @click="archivesOpen = true">看盘档案 <span v-if="archives.length">{{ archives.length }}</span></button>
+        <button ref="archiveTrigger" type="button" class="quiet-button" @click="archivesOpen = true">看盘档案 <span v-if="archives.length">{{ archives.length }}</span></button>
         <button type="button" class="quiet-button" @click="resetWorkspace">新建分析</button>
       </div>
     </header>
@@ -479,6 +480,6 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
       <p>关系脉络不是命运判决，也不替代安全、同意和现实决定。</p>
       <span v-if="health">规则快照 {{ health.catalog.rulesetDigest.slice(0, 10) }}</span>
     </footer>
-    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" @close="archivesOpen = false" @restore="restoreArchive" @delete="removeArchive" @export="exportArchives" @import="importArchives" />
+    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" :return-focus-to="archiveTrigger" @close="archivesOpen = false" @restore="restoreArchive" @delete="removeArchive" @export="exportArchives" @import="importArchives" />
   </div>
 </template>

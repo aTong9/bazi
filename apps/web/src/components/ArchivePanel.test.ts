@@ -31,12 +31,12 @@ describe("ArchivePanel", () => {
     const buttons = [...dialog.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")];
     expect(document.activeElement).toBe(buttons[0]);
     buttons.at(-1)!.focus();
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    buttons.at(-1)!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(buttons[0]);
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
+    buttons[0]!.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }));
     expect(document.activeElement).toBe(buttons.at(-1));
 
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    buttons.at(-1)!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
     await nextTick();
     await nextTick();
     await new Promise((resolve) => window.setTimeout(resolve, 50));
