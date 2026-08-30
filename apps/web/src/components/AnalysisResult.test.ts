@@ -36,6 +36,17 @@ describe("AnalysisResult", () => {
     mounted.unmount();
   });
 
+  it("explains why an unknown-hour result is limited without exposing dependency codes", () => {
+    const result = makeAnalysisResponse();
+    result.m0.dependencyFlags = ["HOUR_UNKNOWN"];
+    result.relationship.dependencyFlags = ["M3_HOUR_DEPENDENCY_LIMITED"];
+    const mounted = mountComponent(AnalysisResult, { result });
+
+    expect(mounted.host.querySelector(".result-mast .inline-notice")?.textContent).toContain("出生时辰未知");
+    expect(mounted.host.querySelector(".result-mast")?.textContent).not.toMatch(/HOUR_UNKNOWN|M3_HOUR/u);
+    mounted.unmount();
+  });
+
   it("keeps internal assessment and theme codes out of the ordinary reading surface", () => {
     const result = makeAnalysisResponse();
     result.relationship.m2.gate.themes = ["G07 平等尊重", "G13 选择自主度"];
