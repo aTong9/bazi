@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<{
   hasSecondarySubject: false,
   analysisMode: "profile",
 });
-const emit = defineEmits<{ download: []; print: []; save: [] }>();
+const emit = defineEmits<{ download: []; downloadSummary: []; print: []; save: [] }>();
 
 interface DayMasterView { dayMaster?: string; element?: string; yinYang?: string; monthBranch?: string; seasonElement?: string }
 interface ClimateView { state?: string; evidence?: string[]; candidateElements?: string[] }
@@ -79,6 +79,7 @@ function formatInputSource(subject: SubjectDraft): string {
       <div class="result-tools">
         <button type="button" class="quiet-button" @click="emit('save')">保存到档案</button>
         <button type="button" class="quiet-button" @click="emit('print')">打印 / 存 PDF</button>
+        <button type="button" class="quiet-button" @click="emit('downloadSummary')">下载可读摘要</button>
         <button type="button" class="quiet-button" @click="emit('download')">下载完整 JSON</button>
       </div>
       <dl class="result-context" aria-label="本次看盘输入摘要">

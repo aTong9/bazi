@@ -104,6 +104,29 @@ describe("App analysis provenance", () => {
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:test-result");
   });
 
+  it("downloads a readable safety summary without ordinary report content", async () => {
+    const response = makeAnalysisResponse({ safetyStop: true });
+    installBrowserMocks(response);
+    let downloadedBlob: Blob | undefined;
+    Object.defineProperty(URL, "createObjectURL", { configurable: true, value: vi.fn((blob: Blob) => { downloadedBlob = blob; return "blob:readable-summary"; }) });
+    Object.defineProperty(URL, "revokeObjectURL", { configurable: true, value: vi.fn() });
+    let downloadName = "";
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) { downloadName = this.download; });
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+
+    findButton(mounted.host, "下载可读摘要").click();
+    const summary = await readBlob(downloadedBlob!);
+    expect(downloadName).toBe(`bazi-reading-${response.requestId}.md`);
+    expect(summary).toContain("# 关系脉络看盘摘要");
+    expect(summary).toContain("## 安全与边界");
+    expect(summary).toContain("证据等级：FG0");
+    expect(summary).toContain("本报告不是命定结果");
+    expect(summary).not.toContain("ORDINARY-CONTENT-MUST-STAY-HIDDEN");
+    expect(summary).not.toContain("下一步可观察");
+  });
+
   it("opens the system print flow for the adjudicated reading", async () => {
     installBrowserMocks(makeAnalysisResponse());
     const print = vi.fn();
