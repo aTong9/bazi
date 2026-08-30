@@ -9,6 +9,7 @@ const MAX_ARCHIVES = 20;
 const BACKUP_SCHEMA = "bazi.relationship.archive-backup.v1";
 const READING_SCHEMA = "bazi.relationship.reading.v1";
 const M0_READING_SCHEMA = "bazi.m0.reading.v1";
+const CROSS_STATE_KEYS = ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const;
 
 interface ArchiveEnvelope { version: 1; archives: AnalysisArchive[] }
 interface ArchiveBackup {
@@ -381,7 +382,7 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
   }
   value.workspace.secondarySubject = value.workspace.hasSecondarySubject ? normalizeSubject(value.workspace.secondarySubject) : inactiveSecondarySubject();
   value.workspace.gates = value.workspace.gates.map((gate) => ({ ...gate, label: REALITY_GATES.find((canonical) => canonical.id === gate.id)!.label }));
-  for (const state of ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const) {
+  for (const state of CROSS_STATE_KEYS) {
     if (value.workspace.analysisMode === "profile") value.workspace.crossState[state] = false;
     if (!value.workspace.crossState[state]) value.workspace.crossState.evidence[state] = "";
   }
@@ -399,6 +400,7 @@ function workspaceResultMatches(workspace: ArchiveWorkspaceSnapshot): boolean {
     && workspace.hasSecondarySubject === workspace.result.relationship.structuralSupplement.available
     && (workspace.resultInputFingerprint === undefined || workspace.resultInputFingerprint === analysisInputFingerprint(workspace))
     && (workspace.analysisMode === "profile" || workspaceGatesMatch(workspace))
+    && (workspace.analysisMode === "profile" || workspaceCrossStateMatches(workspace))
     && workspaceObservationsMatch(workspace);
 }
 
@@ -434,6 +436,15 @@ function workspaceGatesMatch(workspace: AnalysisWorkspaceSnapshot): boolean {
   });
 }
 
+function workspaceCrossStateMatches(workspace: AnalysisWorkspaceSnapshot): boolean {
+  const expected = CROSS_STATE_KEYS.flatMap((state) => {
+    const note = workspace.crossState.evidence[state].trim();
+    return workspace.crossState[state] && note ? [{ state, note }] : [];
+  });
+  const actual = workspace.result.relationship.m5.crossStateEvidence;
+  return actual.length === expected.length && expected.every((item, index) => actual[index]?.state === item.state && actual[index]?.note.trim() === item.note);
+}
+
 function normalizeSubject(subject: SubjectDraft): SubjectDraft {
   if (subject.birthTimeStatus === "unknown") return { ...subject, hour: hourOptions(subject.day)[0]!, birthInput: { method: "manual_four_pillars" } };
   return { ...subject, birthInput: subject.birthInput ?? { method: "manual_four_pillars" } };
@@ -453,9 +464,8 @@ function isGateList(value: unknown): boolean {
 function isCrossState(value: unknown): boolean {
   const item = record(value);
   const evidence = item && record(item.evidence);
-  const keys = ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"];
-  return Boolean(item && evidence && hasOnlyKeys(item, [...keys, "evidence"]) && hasOnlyKeys(evidence, keys)
-    && keys.every((key) => typeof item[key] === "boolean" && typeof evidence[key] === "string"));
+  return Boolean(item && evidence && hasOnlyKeys(item, [...CROSS_STATE_KEYS, "evidence"]) && hasOnlyKeys(evidence, CROSS_STATE_KEYS)
+    && CROSS_STATE_KEYS.every((key) => typeof item[key] === "boolean" && typeof evidence[key] === "string"));
 }
 
 function isObservationList(value: unknown): boolean {
