@@ -222,6 +222,32 @@ describe("local analysis archive", () => {
     expect(() => importArchiveBackup(JSON.stringify(mismatched), memoryStorage())).toThrow("输入与分析结果不一致");
   });
 
+  it("migrates the complete legacy structural supplement shape before validating it", () => {
+    const workspace = makeWorkspace();
+    workspace.hasSecondarySubject = true;
+    workspace.secondarySubject.dataQuality = "low";
+    workspace.result.relationship.structuralSupplement = {
+      ...workspace.result.relationship.structuralSupplement,
+      available: true,
+      status: "limited",
+      dependencyFlags: ["DATA_QUALITY_LOW"],
+      fields: makeAnalysisResponse({ pillars: { year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子" } }).m0.fields,
+    };
+    workspace.resultInputFingerprint = analysisInputFingerprint(workspace);
+    const archive = saveArchive(workspace, memoryStorage())[0]!;
+    const legacy = JSON.parse(serializeArchiveBackup([archive])) as { archives: Array<{ workspace: { result: { relationship: { structuralSupplement: Record<string, unknown> } } } }> };
+    delete legacy.archives[0]!.workspace.result.relationship.structuralSupplement.status;
+    delete legacy.archives[0]!.workspace.result.relationship.structuralSupplement.dependencyFlags;
+
+    const imported = importArchiveBackup(JSON.stringify(legacy), memoryStorage()).archives[0]!;
+    if (imported.workspace.analysisMode === "structure") throw new Error("expected relationship archive");
+    expect(imported.workspace.result.relationship.structuralSupplement).toMatchObject({ status: "limited", dependencyFlags: ["DATA_QUALITY_LOW"] });
+
+    delete legacy.archives[0]!.workspace.result.relationship.structuralSupplement.status;
+    legacy.archives[0]!.workspace.result.relationship.structuralSupplement.dependencyFlags = [];
+    expect(() => importArchiveBackup(JSON.stringify(legacy), memoryStorage())).toThrow("分析结果无效");
+  });
+
   it("rejects unknown, duplicated, oversized, or response-invalid backups without mutating storage", () => {
     const storage = memoryStorage();
     const current = saveArchive(makeWorkspace(), storage).map(relationshipArchive);

@@ -3,6 +3,7 @@ import { REALITY_GATES } from "./constants";
 import { analysisInputFingerprint, hourOptions, inactiveSecondarySubject, JIAZI, m0InputFingerprint, monthOptions, riskCandidateFingerprint } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, ArchiveWorkspaceSnapshot, M0WorkspaceSnapshot, SubjectDraft } from "./types";
 import { formatFourPillars, isCurrentCalendarAdapter, resolveSolarBirth } from "../../../packages/calendar/src/resolve-solar-birth";
+import { birthInputDependencyFlags } from "../../../packages/domain/src/birth-input";
 
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
 const MAX_ARCHIVES = 20;
@@ -60,9 +61,10 @@ function readArchives(storage: Pick<Storage, "getItem">, failOnInvalid: boolean)
     const envelope = JSON.parse(raw) as unknown;
     if (!isEnvelope(envelope)) throw new Error();
     return envelope.archives.map((archive) => {
-      parseWorkspaceResult(archive.workspace);
-      if (!workspaceResultMatches(archive.workspace)) throw new Error();
-      return normalizeArchive(archive);
+      const migrated = migrateLegacyStructuralSupplement(archive);
+      parseWorkspaceResult(migrated.workspace);
+      if (!workspaceResultMatches(migrated.workspace)) throw new Error();
+      return normalizeArchive(migrated);
     });
   } catch {
     if (failOnInvalid) throw new Error("本机档案数据已损坏，已停止写入以避免覆盖；请先导出浏览器存储以便恢复。");
@@ -230,8 +232,9 @@ function parseBackup(raw: string): AnalysisArchive[] {
   if (!Array.isArray(backup.archives) || backup.archives.length > MAX_ARCHIVES || !backup.archives.every(isArchive)) {
     throw new Error("备份中的档案结构无效或数量超过 20 份。");
   }
+  const migrated = backup.archives.map(migrateLegacyStructuralSupplement);
   const ids = new Set<string>();
-  for (const archive of backup.archives) {
+  for (const archive of migrated) {
     if (ids.has(archive.id)) throw new Error("备份中包含重复档案。");
     ids.add(archive.id);
     try {
@@ -242,7 +245,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
     if (!workspaceResultMatches(archive.workspace)) throw new Error(`档案“${archive.title}”的输入与分析结果不一致。`);
     if (!archiveIdentityMatches(archive)) throw new Error(`档案“${archive.title}”的身份无效。`);
   }
-  return backup.archives.map(normalizeArchive);
+  return migrated.map(normalizeArchive);
 }
 
 function parseReadingPackage(value: Record<string, unknown>): AnalysisArchive {
@@ -258,19 +261,20 @@ function parseReadingPackage(value: Record<string, unknown>): AnalysisArchive {
     : value.workspace;
   if (!isWorkspace(workspaceValue)) throw new Error("完整看盘包工作区无效。");
   if ((value.schema === M0_READING_SCHEMA) !== (workspaceValue.analysisMode === "structure")) throw new Error("完整看盘包类型与工作区不一致。");
-  try {
-    parseWorkspaceResult(workspaceValue);
-  } catch {
-    throw new Error("完整看盘包的分析结果无效。");
-  }
-  if (!workspaceResultMatches(workspaceValue)) throw new Error("完整看盘包的输入与分析结果不一致。");
-  return normalizeArchive({
+  const archive = migrateLegacyStructuralSupplement({
     id: archiveId(workspaceValue.analysisMode, workspaceValue.result.requestId),
     title: archiveTitle(workspaceValue),
     savedAt: value.exportedAt,
     rulesetDigest: workspaceValue.result.rulesetDigest,
     workspace: structuredClone(workspaceValue),
   });
+  try {
+    parseWorkspaceResult(archive.workspace);
+  } catch {
+    throw new Error("完整看盘包的分析结果无效。");
+  }
+  if (!workspaceResultMatches(archive.workspace)) throw new Error("完整看盘包的输入与分析结果不一致。");
+  return normalizeArchive(archive);
 }
 
 function legacyM0Workspace(value: Record<string, unknown>): unknown {
@@ -391,6 +395,19 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
     value.workspace.observations = [];
   }
   value.workspace.resultInputFingerprint = analysisInputFingerprint(value.workspace);
+  return value;
+}
+
+function migrateLegacyStructuralSupplement(archive: AnalysisArchive): AnalysisArchive {
+  const value = structuredClone(archive);
+  if (value.workspace.analysisMode === "structure") return value;
+  const result = record(value.workspace.result);
+  const relationship = record(result?.relationship);
+  const supplement = record(relationship?.structuralSupplement);
+  if (!supplement || Object.hasOwn(supplement, "status") || Object.hasOwn(supplement, "dependencyFlags")) return value;
+  const dependencyFlags = value.workspace.hasSecondarySubject ? birthInputDependencyFlags(value.workspace.secondarySubject) : [];
+  supplement.status = value.workspace.hasSecondarySubject ? dependencyFlags.length ? "limited" : "complete" : null;
+  supplement.dependencyFlags = dependencyFlags;
   return value;
 }
 
