@@ -58,6 +58,29 @@ describe("local analysis archive", () => {
     expect(remaining.map((item) => item.id)).toEqual(["archive-request-second"]);
   });
 
+  it("never evicts an existing archive when the 20-item limit is reached", () => {
+    const storage = memoryStorage();
+    for (let index = 0; index < 20; index += 1) saveArchive(workspaceWithRequestId(`request-${index}`), storage);
+    const before = storage.value();
+    expect(() => saveArchive(workspaceWithRequestId("request-20"), storage)).toThrow("档案已满 20 份");
+    expect(storage.value()).toBe(before);
+
+    const updated = saveArchive(workspaceWithRequestId("request-0"), storage, new Date("2026-08-30T05:00:00Z"));
+    expect(updated).toHaveLength(20);
+    expect(updated[0]?.id).toBe("archive-request-0");
+  });
+
+  it("keeps all local archives when an import exceeds remaining capacity", () => {
+    const destination = memoryStorage();
+    for (let index = 0; index < 20; index += 1) saveArchive(workspaceWithRequestId(`local-${index}`), destination);
+    const beforeIds = loadArchives(destination).map((archive) => archive.id).sort();
+    const source = memoryStorage();
+    const incoming = saveArchive(workspaceWithRequestId("incoming"), source);
+    const imported = importArchiveBackup(serializeArchiveBackup(incoming), destination);
+    expect(imported).toMatchObject({ added: 0, updated: 0, skipped: 1 });
+    expect(imported.archives.map((archive) => archive.id).sort()).toEqual(beforeIds);
+  });
+
   it("exports a self-describing backup and imports new and newer records", () => {
     const source = memoryStorage();
     const first = saveArchive(makeWorkspace(), source, new Date("2026-08-30T01:00:00Z"));
@@ -111,6 +134,12 @@ function makeWorkspace(): AnalysisWorkspaceSnapshot {
     observations: [],
     result: makeAnalysisResponse(),
   };
+}
+
+function workspaceWithRequestId(requestId: string): AnalysisWorkspaceSnapshot {
+  const workspace = makeWorkspace();
+  workspace.result = { ...workspace.result, requestId };
+  return workspace;
 }
 
 function memoryStorage(initial?: string) {

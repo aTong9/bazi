@@ -7,9 +7,13 @@ const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[];
 const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; delete: [id: string]; export: []; import: [file: File] }>();
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+const pendingDeleteId = ref<string | null>(null);
 
 watch(() => props.open, async (open) => {
-  if (!open) return;
+  if (!open) {
+    pendingDeleteId.value = null;
+    return;
+  }
   await nextTick();
   panel.value?.querySelector<HTMLElement>("button")?.focus();
 });
@@ -30,6 +34,11 @@ function selectBackup(event: Event): void {
   const file = input.files?.[0];
   if (file) emit("import", file);
   input.value = "";
+}
+
+function confirmDelete(id: string): void {
+  emit("delete", id);
+  pendingDeleteId.value = null;
 }
 </script>
 
@@ -57,7 +66,13 @@ function selectBackup(event: Event): void {
               </div>
               <div class="archive-actions">
                 <button type="button" class="primary-button" @click="emit('restore', archive)">打开档案</button>
-                <button type="button" class="quiet-button danger-button" @click="emit('delete', archive.id)">删除</button>
+                <template v-if="pendingDeleteId === archive.id">
+                  <span class="archive-delete-confirm" role="group" :aria-label="`确认删除 ${archive.title}`">
+                    <button type="button" class="quiet-button danger-button" @click="confirmDelete(archive.id)">确认删除</button>
+                    <button type="button" class="quiet-button" @click="pendingDeleteId = null">取消</button>
+                  </span>
+                </template>
+                <button v-else type="button" class="quiet-button danger-button" @click="pendingDeleteId = archive.id">删除</button>
               </div>
             </article>
           </div>

@@ -60,7 +60,11 @@ export function saveArchive(
     rulesetDigest: workspace.result.rulesetDigest,
     workspace: structuredClone(workspace),
   };
-  const archives = [archive, ...loadArchives(storage).filter((item) => item.id !== archive.id)].slice(0, MAX_ARCHIVES);
+  const current = loadArchives(storage);
+  if (current.length >= MAX_ARCHIVES && !current.some((item) => item.id === archive.id)) {
+    throw new Error("看盘档案已满 20 份，请先导出备份并删除不再需要的档案。");
+  }
+  const archives = [archive, ...current.filter((item) => item.id !== archive.id)];
   persist(archives, storage);
   return archives;
 }
@@ -95,8 +99,12 @@ export function importArchiveBackup(
   for (const candidate of imported) {
     const existing = merged.get(candidate.id);
     if (!existing) {
-      merged.set(candidate.id, candidate);
-      added += 1;
+      if (merged.size >= MAX_ARCHIVES) {
+        skipped += 1;
+      } else {
+        merged.set(candidate.id, candidate);
+        added += 1;
+      }
     } else if (Date.parse(candidate.savedAt) > Date.parse(existing.savedAt)) {
       merged.set(candidate.id, candidate);
       updated += 1;
@@ -105,8 +113,7 @@ export function importArchiveBackup(
     }
   }
   const ordered = [...merged.values()].sort((left, right) => Date.parse(right.savedAt) - Date.parse(left.savedAt));
-  if (ordered.length > MAX_ARCHIVES) skipped += ordered.length - MAX_ARCHIVES;
-  const archives = ordered.slice(0, MAX_ARCHIVES);
+  const archives = ordered;
   persist(archives, storage);
   return { archives, added, updated, skipped };
 }
