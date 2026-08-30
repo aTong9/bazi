@@ -323,6 +323,8 @@ function isWorkspace(value: unknown): value is ArchiveWorkspaceSnapshot {
 function isSubject(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
   const subject = value as Record<string, unknown>;
+  const input = record(subject.birthInput);
+  const pillars = [subject.year, subject.month, subject.day, subject.hour].join(" ");
   return hasOnlyKeys(subject, ["subjectId", "year", "month", "day", "hour", "birthTimeStatus", "dataQuality", "birthInput"])
     && typeof subject.subjectId === "string" && subject.subjectId.length <= 120
     && ["year", "month", "day", "hour"].every((key) => typeof subject[key] === "string" && JIAZI.includes(String(subject[key])))
@@ -330,7 +332,11 @@ function isSubject(value: unknown): boolean {
     && (subject.birthTimeStatus === "unknown" || hourOptions(String(subject.day)).includes(String(subject.hour)))
     && ["exact", "approximate", "unknown"].includes(String(subject.birthTimeStatus))
     && ["high", "medium", "low", "unknown"].includes(String(subject.dataQuality))
-    && (subject.birthInput === undefined || isBirthInput(subject.birthInput));
+    && (subject.birthInput === undefined || isBirthInput(subject.birthInput))
+    && (!input || input.method === "manual_four_pillars" || (
+      (input.resolutionStatus === "resolved") === (input.resolvedPillars !== null)
+      && (subject.birthTimeStatus === "unknown" || input.resolutionStatus !== "resolved" || input.resolvedPillars === pillars)
+    ));
 }
 
 function isBirthInput(value: unknown): boolean {

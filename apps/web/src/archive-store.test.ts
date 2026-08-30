@@ -239,6 +239,14 @@ describe("local analysis archive", () => {
     const mismatchedLinkedPillars = structuredClone(current[0]!);
     mismatchedLinkedPillars.workspace.primarySubject.month = "甲子";
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedLinkedPillars] }), storage)).toThrow("档案结构无效");
+    const mismatchedSolarSource = structuredClone(current[0]!);
+    mismatchedSolarSource.workspace.primarySubject.birthInput = {
+      method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved", resolvedPillars: "丙寅 癸巳 癸酉 戊午",
+      adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
+    };
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedSolarSource] }), storage)).toThrow("档案结构无效");
+    mismatchedSolarSource.workspace.primarySubject.birthInput.resolvedPillars = null;
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedSolarSource] }), storage)).toThrow("档案结构无效");
     const mismatchedSupplement = structuredClone(current[0]!);
     mismatchedSupplement.workspace.hasSecondarySubject = true;
     mismatchedSupplement.workspace.resultInputFingerprint = analysisInputFingerprint(mismatchedSupplement.workspace);
