@@ -94,8 +94,8 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
         <button type="button" class="quiet-button" :disabled="actionsDisabled" @click="emit('download')">下载完整 JSON</button>
       </div>
       <p v-if="actionsDisabled" class="inline-notice" role="status">独立现实观察尚未进入当前结果，请再次评估后再保存、打印或导出。</p>
-      <p v-if="hasUnknownHourLimit" class="inline-notice" role="status">出生时辰未知：位置关系与部分互动结论按受限结果发布；补全时辰后需重新生成。</p>
-      <p v-if="hasDataQualityLimit" class="inline-notice" role="status">输入资料尚未标记为已核对：本次按受限结果发布；核对四柱与时间后请重新生成。</p>
+      <p v-if="hasUnknownHourLimit" class="inline-notice" role="status">出生时辰未知：位置关系与部分互动结论按受限结果发布；补全时辰后需重新生成。<a class="notice-link" href="#primary-time-status">返回出生时间状态</a></p>
+      <p v-if="hasDataQualityLimit" class="inline-notice" role="status">输入资料尚未标记为已核对：本次按受限结果发布；核对四柱与时间后请重新生成。<a class="notice-link" href="#primary-quality">返回资料质量</a></p>
       <dl class="result-context" aria-label="本次看盘输入摘要">
         <div><dt>分析方式</dt><dd>{{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</dd></div>
         <div><dt>主要命盘</dt><dd>{{ primaryLabel }} · {{ primaryPillars }}</dd></div>

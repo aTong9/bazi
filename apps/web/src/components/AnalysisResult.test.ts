@@ -43,6 +43,7 @@ describe("AnalysisResult", () => {
     const mounted = mountComponent(AnalysisResult, { result });
 
     expect(mounted.host.querySelector(".result-mast .inline-notice")?.textContent).toContain("出生时辰未知");
+    expect(mounted.host.querySelector<HTMLAnchorElement>('.result-mast .inline-notice a')?.getAttribute("href")).toBe("#primary-time-status");
     expect(mounted.host.querySelector(".result-mast")?.textContent).not.toMatch(/HOUR_UNKNOWN|M3_HOUR/u);
     mounted.unmount();
   });
@@ -53,6 +54,7 @@ describe("AnalysisResult", () => {
     const mounted = mountComponent(AnalysisResult, { result });
 
     expect(mounted.host.querySelector(".result-mast .inline-notice")?.textContent).toContain("输入资料尚未标记为已核对");
+    expect(mounted.host.querySelector<HTMLAnchorElement>('.result-mast .inline-notice a')?.getAttribute("href")).toBe("#primary-quality");
     expect(mounted.host.querySelector(".result-mast")?.textContent).not.toContain("DATA_QUALITY_UNKNOWN");
     mounted.unmount();
   });

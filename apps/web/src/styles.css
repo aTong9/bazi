@@ -970,6 +970,19 @@
     line-height: 1.65;
   }
 
+  .notice-link {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    margin-top: 6px;
+    color: var(--teal-700);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .notice-link:hover { color: var(--ink-950); }
+
   .role-basis {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1432,6 +1445,8 @@
   .result-mast > div:first-child {
     max-width: 600px;
   }
+
+  .result-mast > .inline-notice { grid-column: 1 / -1; }
 
   .result-mast h2 {
     margin-top: 9px;
