@@ -47,7 +47,7 @@ export function normalizeLinkedPillars(subject: SubjectDraft): SubjectDraft {
 export function toWireSubject(subject: SubjectDraft) {
   return {
     input_mode: "four_pillars_provided" as const,
-    subject_id: subject.subjectId,
+    subject_id: subject.subjectId.trim(),
     four_pillars: {
       year: parsePillar(subject.year),
       month: parsePillar(subject.month),
@@ -138,7 +138,7 @@ function isNonNeutralGateStatus(status: RealityGateDraft["status"]): boolean {
 
 function fingerprintSubject(subject: SubjectDraft) {
   return {
-    subjectId: subject.subjectId,
+    subjectId: subject.subjectId.trim(),
     year: subject.year,
     month: subject.month,
     day: subject.day,

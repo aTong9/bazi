@@ -33,7 +33,7 @@ describe("App analysis provenance", () => {
     await nextTick();
     mounted.host.querySelector<HTMLFormElement>("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     await flushUi();
-    expect(mounted.host.textContent).toContain("公历辅助记录尚未完成复核");
+    expect(mounted.host.textContent).toContain("请先修正命盘输入");
     expect(mounted.host.textContent).toContain("请完成公历时间计算，或切换为手动四柱");
     expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/profile")).toHaveLength(0);
   });
@@ -117,7 +117,7 @@ describe("App analysis provenance", () => {
 
   it("saves a completed reading locally and restores it after starting over", async () => {
     const response = makeAnalysisResponse();
-    installBrowserMocks(response);
+    const fetchMock = installBrowserMocks(response);
     let backupBlob: Blob | undefined;
     Object.defineProperties(URL, {
       createObjectURL: { configurable: true, value: vi.fn((blob: Blob) => { backupBlob = blob; return "blob:archive-backup"; }) },
@@ -126,16 +126,26 @@ describe("App analysis provenance", () => {
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
     mounted = mountComponent(App, {});
     await flushUi();
+    const subjectLabel = mounted.host.querySelector<HTMLInputElement>("#primary-subject-id")!;
+    subjectLabel.value = "小林";
+    subjectLabel.dispatchEvent(new Event("input", { bubbles: true }));
+    await flushUi();
     await submit(mounted.host);
+
+    const analysisCall = fetchMock.mock.calls.find(([input]) => input === "/v1/relationship/profile")!;
+    const request = JSON.parse(String(analysisCall[1]?.body)) as { subject: { subject_id: string } };
+    expect(request.subject.subject_id).toBe("小林");
 
     findButton(mounted.host, "保存到档案").click();
     await flushUi();
     expect(localStorage.getItem("bazi.relationship.archives.v1")).toContain(response.requestId);
+    expect(localStorage.getItem("bazi.relationship.archives.v1")).toContain("小林 · 甲寅日 · 关系画像");
     expect(mounted.host.textContent).toContain("本次看盘已保存到这台设备");
 
     findButton(mounted.host, "新建分析").click();
     await flushUi();
     expect(mounted.host.querySelector(".analysis-result")).toBeNull();
+    expect(mounted.host.querySelector<HTMLInputElement>("#primary-subject-id")?.value).toBe("主命盘");
     findButton(mounted.host, "看盘档案 1").click();
     await flushUi();
     expect(document.body.textContent).toContain("看盘档案");
@@ -156,6 +166,7 @@ describe("App analysis provenance", () => {
     await flushUi();
     expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
     expect(mounted.host.textContent).toContain("已打开");
+    expect(mounted.host.querySelector<HTMLInputElement>("#primary-subject-id")?.value).toBe("小林");
   });
 });
 

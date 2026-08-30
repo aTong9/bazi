@@ -12,8 +12,18 @@ describe("local analysis archive", () => {
     const archives = saveArchive(workspace, storage, new Date("2026-08-30T02:00:00Z"));
     expect(archives).toHaveLength(1);
     expect(archives[0]?.savedAt).toBe("2026-08-30T02:00:00.000Z");
+    expect(archives[0]?.title).toBe("主命盘 · 甲寅日 · 关系画像");
     expect(archives[0]?.workspace).toEqual(workspace);
     expect(archives[0]?.workspace).not.toBe(workspace);
+  });
+
+  it("names a two-chart archive with both user labels", () => {
+    const workspace = makeWorkspace();
+    workspace.primarySubject.subjectId = "小林";
+    workspace.secondarySubject.subjectId = "阿青";
+    workspace.hasSecondarySubject = true;
+    const archive = saveArchive(workspace, memoryStorage())[0]!;
+    expect(archive.title).toBe("小林 · 甲寅日 × 阿青 · 乙卯日 · 关系画像");
   });
 
   it("ignores corrupted or response-invalid browser data", () => {

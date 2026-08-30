@@ -48,6 +48,10 @@ function chooseEntryMode(value: "manual" | "solar"): void {
   };
 }
 
+function updateSubjectId(event: Event): void {
+  model.value = { ...model.value, subjectId: (event.target as HTMLInputElement).value.trim() };
+}
+
 function updateSolarInput(): void {
   calendarResolution.value = null;
   const nextInput = solarRecord(solarLocalDateTime.value, "not_calculated", null);
@@ -102,6 +106,12 @@ function inputIdentity(input: BirthInputRecord): string {
   <fieldset class="pillar-editor">
     <legend>{{ title }}</legend>
     <p class="field-help">{{ description }}</p>
+
+    <label class="field-control subject-label-field">
+      <span>{{ title }}称呼</span>
+      <input :id="`${idPrefix}-subject-id`" :value="model.subjectId" type="text" required maxlength="120" autocomplete="off" :placeholder="title" @input="updateSubjectId">
+      <small>仅用于区分本次报告和本机档案。</small>
+    </label>
 
     <div class="pillar-entry-switch" role="group" :aria-label="`${title}录入方式`">
       <button type="button" :class="{ active: entryMode === 'manual' }" @click="chooseEntryMode('manual')">手动四柱</button>
