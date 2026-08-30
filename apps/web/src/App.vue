@@ -165,6 +165,12 @@ function protectUnsavedWork(event: BeforeUnloadEvent): void {
   event.returnValue = true;
 }
 
+function protectAnalysisModeChange(event: MouseEvent): void {
+  const nextMode = (event.currentTarget as HTMLInputElement).value as AnalysisMode;
+  if (nextMode === analysisMode.value || !hasUnsavedResult.value) return;
+  if (!window.confirm("当前看盘尚未保存，切换分析方式会清除结果，是否继续？")) event.preventDefault();
+}
+
 async function refreshHealth(): Promise<void> {
   try {
     health.value = await fetchHealth();
@@ -638,15 +644,15 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
           <fieldset class="mode-switch">
             <legend>分析方式</legend>
             <label :class="{ active: analysisMode === 'structure' }">
-              <input v-model="analysisMode" type="radio" value="structure" />
+              <input v-model="analysisMode" type="radio" value="structure" @click="protectAnalysisModeChange" />
               <strong>原局结构</strong><small>只看 M0 静态底盘</small>
             </label>
             <label :class="{ active: analysisMode === 'profile' }">
-              <input v-model="analysisMode" type="radio" value="profile" />
+              <input v-model="analysisMode" type="radio" value="profile" @click="protectAnalysisModeChange" />
               <strong>关系画像</strong><small>只读一张命盘的结构倾向</small>
             </label>
             <label :class="{ active: analysisMode === 'evaluate' }">
-              <input v-model="analysisMode" type="radio" value="evaluate" />
+              <input v-model="analysisMode" type="radio" value="evaluate" @click="protectAnalysisModeChange" />
               <strong>现实评估</strong><small>加入八道现实闸门</small>
             </label>
           </fieldset>

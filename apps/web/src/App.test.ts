@@ -303,6 +303,22 @@ describe("App analysis provenance", () => {
     expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
   });
 
+  it("keeps an unsaved reading when an analysis mode switch is cancelled", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+
+    mounted.host.querySelector<HTMLInputElement>('input[value="structure"]')!.click();
+    await flushUi();
+
+    expect(confirm).toHaveBeenCalledWith("当前看盘尚未保存，切换分析方式会清除结果，是否继续？");
+    expect(mounted.host.querySelector<HTMLInputElement>('input[value="profile"]')?.checked).toBe(true);
+    expect(mounted.host.querySelector(".analysis-result")).not.toBeNull();
+  });
+
   it("protects edited inputs before a reading has been generated", async () => {
     installBrowserMocks(makeAnalysisResponse());
     const confirm = vi.fn(() => false);
