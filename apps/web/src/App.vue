@@ -317,6 +317,12 @@ function resetWorkspace(): void {
   window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
 }
 
+function startNewAnalysis(): void {
+  const unsaved = result.value && !archives.value.some((archive) => archive.id === `archive-${result.value?.requestId}`);
+  if (unsaved && !window.confirm("本次看盘还未保存，仍要新建分析吗？")) return;
+  resetWorkspace();
+}
+
 function createSubject(subjectId: string, overrides: Partial<Pick<SubjectDraft, "year" | "month" | "day" | "hour">> = {}): SubjectDraft {
   return { subjectId, year: "庚申", month: "己丑", day: "甲寅", hour: "庚午", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" }, ...overrides };
 }
@@ -373,7 +379,7 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
       </div>
       <div class="header-actions">
         <button ref="archiveTrigger" type="button" class="quiet-button" @click="archivesOpen = true">看盘档案 <span v-if="archives.length">{{ archives.length }}</span></button>
-        <button type="button" class="quiet-button" @click="resetWorkspace">新建分析</button>
+        <button type="button" class="quiet-button" @click="startNewAnalysis">新建分析</button>
       </div>
     </header>
 
