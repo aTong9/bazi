@@ -125,7 +125,7 @@ apps/web/
 
 普通开发构建通过 browser-safe DTO 和运行时 guard 验证 API 响应。Pages 构建则在编译期把契约 Schema 转成浏览器资源，并使用 Web Crypto 校验规则包摘要；最终产物不得包含 Node external stub。
 
-API 与 Pages 浏览器运行时共用同一请求解析器。现实观察在进入 M4 前必须具有唯一 ID，且 ID、来源和事实情境不能只包含空白字符；重复 ID 会返回 `E_REQUEST_SCHEMA`，不会落入 M4 冲突异常或被计为独立证据。五种跨情境状态还必须使用互不重复的事件 ID 和事实说明；共享解析器会拒绝重复包装，M5 核心即使被直接调用也只会把相互独立的跨状态证据提升到 FG4。
+API 与 Pages 浏览器运行时共用同一请求解析器。现实观察在进入 M4 前必须具有唯一 ID，且 ID、来源和事实情境不能只包含空白字符；重复 ID 会返回 `E_REQUEST_SCHEMA`，不会落入 M4 冲突异常或被计为独立证据。五种跨情境状态还必须使用互不重复的事件 ID 和事实说明；前端在发起请求前提示缺失或重复事实，共享解析器继续作为信任边界拒绝重复包装，M5 核心即使被直接调用也只会把相互独立的跨状态证据提升到 FG4。
 
 ## 5. 本地开发拓扑
 
@@ -179,12 +179,12 @@ npm run preview
 截至 2026-08-30：
 
 - `npm run test:core`：81 个 Node runner 用例通过；
-- `npm run test:web`：8 个前端测试文件、57 个 Vitest 用例通过；
+- `npm run test:web`：8 个前端测试文件、58 个 Vitest 用例通过；
 - `npm run test:pages`：5 个 Pages 规则包、运行时等价性、离线缓存、打印契约和产物用例通过；
 - `npm run test:evidence`：407 项权威矩阵全部通过；
 - `npm run typecheck`、`npm run build:web` 和静态 Web 集成测试通过。
 
-138 个通用 runner 用例、5 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
+139 个通用 runner 用例、5 个 Pages 专项用例与 407 项权威矩阵口径不同：它们分别验证代码/组件、静态发布产物、原始测试矩阵 ID，不能相加为一个测试总数。
 
 前端自动化至少覆盖：
 

@@ -60,7 +60,7 @@ describe("App analysis provenance", () => {
     await nextTick();
     mounted.host.querySelector<HTMLFormElement>("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     await flushUi();
-    expect(mounted.host.textContent).toContain("请先修正命盘输入");
+    expect(mounted.host.textContent).toContain("请先修正分析输入");
     expect(mounted.host.textContent).toContain("请完成公历时间计算，或切换为手动四柱");
     expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/profile")).toHaveLength(0);
   });
@@ -96,6 +96,29 @@ describe("App analysis provenance", () => {
     expect(request.observations).toBeUndefined();
     expect(request.subject.four_pillars.day).toEqual({ stem: "乙", branch: "卯" });
     expect(mounted.host.querySelector<HTMLInputElement>('.observation-context input[aria-label*="M4-C01"]')?.value).toBe("");
+  });
+
+  it("blocks repeated cross-state facts before sending an evaluation request", async () => {
+    const fetchMock = installBrowserMocks(makeAnalysisResponse());
+    mounted = mountComponent(App, {});
+    await flushUi();
+    const evaluateMode = mounted.host.querySelector<HTMLInputElement>('input[value="evaluate"]')!;
+    evaluateMode.checked = true;
+    evaluateMode.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+    for (const state of ["steady", "pressure"]) {
+      const checkbox = mounted.host.querySelector<HTMLInputElement>(`#cross-${state}`)!;
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+      await flushUi();
+      const evidence = mounted.host.querySelector<HTMLInputElement>(`#cross-${state}-evidence`)!;
+      evidence.value = "同一事件被重复填写";
+      evidence.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    mounted.host.querySelector<HTMLFormElement>("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await flushUi();
+    expect(mounted.host.textContent).toContain("不同跨情境状态必须填写不同的事实依据");
+    expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/evaluate")).toHaveLength(0);
   });
 
   it("downloads the exact response through a connected anchor and then releases the blob URL", async () => {

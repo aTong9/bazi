@@ -76,7 +76,7 @@ npm run release:check
 - `npm run test:core` / `npm run test:web`：只运行后端或前端测试；
 - `npm run typecheck:core` / `npm run typecheck:web`：只检查对应工程。
 
-截至 2026-08-30，通用测试 runner 共执行 138 个测试用例（Node 核心 81、Web 57）；另有 5 个 Pages 产物/等价性专项测试和 407 项权威开发矩阵。各组口径不同，不合并成一个测试总数。桌面、手机和生产同源路径的浏览器验收记录见 [用户界面与本地开发说明](./docs/development/UI-and-local-development.md)。
+截至 2026-08-30，通用测试 runner 共执行 139 个测试用例（Node 核心 81、Web 58）；另有 5 个 Pages 产物/等价性专项测试和 407 项权威开发矩阵。各组口径不同，不合并成一个测试总数。桌面、手机和生产同源路径的浏览器验收记录见 [用户界面与本地开发说明](./docs/development/UI-and-local-development.md)。
 
 ## 当前产品边界
 

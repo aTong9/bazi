@@ -173,11 +173,12 @@ async function submitAnalysis(): Promise<void> {
       subjectIdentityIssue(secondarySubject.value, "另一方命盘"),
       birthInputIssue(secondarySubject.value, "另一方命盘"),
     ] : []),
+    ...(isEvaluate.value ? [crossStateInputIssue(crossState.value)] : []),
   ].filter((issue): issue is string => Boolean(issue));
   if (inputIssues.length) {
     result.value = null;
     resultFingerprint = null;
-    errorMessage.value = "请先修正命盘输入。";
+    errorMessage.value = "请先修正分析输入。";
     errorDetails.value = inputIssues;
     await nextTick();
     document.querySelector<HTMLElement>(".error-summary")?.focus();
@@ -448,6 +449,14 @@ function currentWorkspace(analysisResult: AnalysisResponse): AnalysisWorkspaceSn
 }
 
 function cloneJson<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
+
+function crossStateInputIssue(value: CrossStateDraft): string | null {
+  const states = ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const;
+  const notes = states.filter((state) => value[state]).map((state) => value.evidence[state].trim());
+  if (notes.some((note) => !note)) return "已勾选的跨情境状态必须填写事实依据。";
+  if (new Set(notes).size !== notes.length) return "不同跨情境状态必须填写不同的事实依据，不能重复使用同一事件。";
+  return null;
+}
 
 function resetWorkspace(): void {
   activeRequest?.abort();
