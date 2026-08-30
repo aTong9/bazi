@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { buildAnalysisReport, validateReportLanguage } from "../../packages/reporting/src/build-report.js";
+import { formatProfileLayers } from "../../packages/reporting/src/profile-layers.js";
 import { validateAnalysisReport } from "../../packages/contracts/src/analysis-report-contract.js";
 
 const base = {
@@ -25,6 +26,12 @@ test("ReportBuilder projects adjudicated data without changing status, confidenc
   assert.equal(report.sections.find((section) => section.id === "risk")?.body, "压力下表达可能收缩（未经现实核验）");
   assert.ok(report.sections.find((section) => section.id === "reality")?.body.includes("RG01 现实闸门 RG01：未评估"));
   assert.deepEqual(validateAnalysisReport(report), []);
+});
+
+test("relationship profile layers stay labeled and readable without doubled punctuation", () => {
+  const report = buildAnalysisReport({ ...base, profileStatements: formatProfileLayers({ attraction: ["先看吸引"], selection: ["再看选择。"], interaction: ["最后看相处。"] }) });
+  assert.equal(report.sections[0]?.body, "【吸引入口】先看吸引。\n【选择机制】再看选择。\n【相处惯性】最后看相处。");
+  assert.equal(report.sections[0]?.body.includes("。；"), false);
 });
 
 test("safety stop publishes only the necessary safety section and no ordinary fit narrative", () => {

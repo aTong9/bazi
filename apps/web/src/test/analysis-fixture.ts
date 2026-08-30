@@ -1,6 +1,7 @@
 import type { AnalysisResponse, M0AnalysisResponse, RealityGateId, RealityGateStatus, ResultItem } from "../types";
 import { REALITY_GATES } from "../constants";
 import { reportStatusLabel } from "../../../../packages/reporting/src/status-labels";
+import { formatProfileLayers } from "../../../../packages/reporting/src/profile-layers";
 
 interface AnalysisFixtureOptions {
   safetyStop?: boolean;
@@ -60,7 +61,7 @@ export function makeAnalysisResponse(options: AnalysisFixtureOptions = {}): Anal
         ...(options.includeOrdinarySectionDuringStop ? [{ id: "profile", title: "不应显示", body: "ORDINARY-CONTENT-MUST-STAY-HIDDEN" }] : []),
       ]
     : [
-        { id: "profile", title: "关系结构候选", body: ["需要多轮现实核验", ...profileStatements].join("；") },
+        { id: "profile", title: "关系结构候选", body: formatProfileLayers({ attraction: [], selection: ["需要多轮现实核验"], interaction: profileStatements }).join("\n") },
         { id: "risk", title: "风险与现实核验", body: riskChains.map((chain) => `${chain.structuralCandidate}（${reportStatusLabel(chain.realityStatus)}）`).join("；") },
         { id: "reality", title: "现实闸门", body: gates.map((gate) => `${gate.id} ${gate.label}：${reportStatusLabel(gate.status)}`).join("；") },
       ];

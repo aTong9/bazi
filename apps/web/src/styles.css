@@ -1659,6 +1659,7 @@
     font-family: var(--serif);
     font-size: 17px;
     line-height: 1.95;
+    white-space: pre-line;
   }
 
   .result-section {

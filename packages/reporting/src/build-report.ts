@@ -30,7 +30,7 @@ export function buildAnalysisReport(input: ReportProjectionInput) {
   const sections = stopped
     ? [{ id: "safety" as const, title: "安全与边界", body: input.safetyReason ?? "现实资料触发安全停止；普通适配叙事已停止。" }]
     : [
-        { id: "profile" as const, title: "关系结构候选", body: input.profileStatements.join("；") || "当前没有足够资料形成结构候选。" },
+        { id: "profile" as const, title: "关系结构候选", body: input.profileStatements.join("\n") || "当前没有足够资料形成结构候选。" },
         { id: "risk" as const, title: "风险与现实核验", body: input.riskChains.map((chain) => `${chain.candidate}（${reportStatusLabel(chain.realityStatus)}）`).join("；") || "暂无已确认风险模式。" },
         { id: "reality" as const, title: "现实闸门", body: input.realityGates.map((gate) => `${gate.id} ${gate.label}：${reportStatusLabel(gate.status)}`).join("；") },
       ];
