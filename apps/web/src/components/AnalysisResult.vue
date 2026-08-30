@@ -63,6 +63,7 @@ const adjudicationReasons = computed(() => [
 ]);
 
 function label(value: string | undefined): string { return value ? STATUS_LABELS[value] ?? value.replaceAll("_", " ") : "未形成"; }
+function themeLabel(value: string): string { return value.replace(/^G\d+\s*/u, ""); }
 function item(key: string): ResultItem | undefined { return props.result.m0.fields[key]; }
 function chainObservations(chainId: string): readonly ObservationDraft[] { return props.actionsDisabled ? [] : props.observations.filter((observation) => observation.chainId === chainId && observation.context.trim()); }
 function list(values: readonly string[] | undefined, fallback = "当前没有形成稳定陈述。"): string[] {
@@ -75,7 +76,7 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
   <article class="analysis-result" aria-live="polite">
     <header class="result-mast" :class="{ 'is-safety': isSafetyStop }">
       <div>
-        <p class="eyebrow">本次分析 · {{ result.report.assessment }}</p>
+        <p class="eyebrow">本次分析 · {{ analysisMode === 'evaluate' ? '现实评估' : '关系画像' }}</p>
         <h2 tabindex="-1">{{ gradeCopy.title }}</h2>
         <p>{{ gradeCopy.detail }}</p>
       </div>
@@ -184,7 +185,7 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
         <div class="section-body">
           <div class="section-heading compact"><div><p class="eyebrow">确认与选择</p><h3 id="m2-title">关系选择机制</h3></div><span class="status-pill" :data-status="result.relationship.m2.status">{{ label(result.relationship.m2.status) }}</span></div>
           <div class="two-column-copy">
-            <div><small>入口主题</small><p>{{ list(result.relationship.m2.gate.themes).join("；") }}</p></div>
+            <div><small>入口主题</small><p>{{ list(result.relationship.m2.gate.themes).map(themeLabel).join("；") }}</p></div>
             <div><small>确认节奏</small><p>{{ label(result.relationship.m2.tempo.class) }} · {{ result.relationship.m2.tempo.evidenceRounds }} 轮证据</p></div>
           </div>
           <ul class="plain-list"><li v-for="line in list(result.relationship.m2.synthesis.summary)" :key="line">{{ line }}</li></ul>
@@ -261,6 +262,7 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
         <div><dt>分析 ID</dt><dd>{{ result.requestId }}</dd></div>
         <div><dt>规则快照</dt><dd :title="result.rulesetDigest">{{ shortDigest(result.rulesetDigest) }}</dd></div>
         <div><dt>规则命中</dt><dd>{{ result.ruleTrace.length + result.relationship.ruleTrace.length }} 条</dd></div>
+        <div><dt>裁决状态</dt><dd>{{ result.report.assessment }}</dd></div>
         <div><dt>生成时间</dt><dd>{{ new Date(result.generatedAt).toLocaleString('zh-CN') }}</dd></div>
       </dl>
     </details>

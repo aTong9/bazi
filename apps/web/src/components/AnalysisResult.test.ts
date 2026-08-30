@@ -36,6 +36,18 @@ describe("AnalysisResult", () => {
     mounted.unmount();
   });
 
+  it("keeps internal assessment and theme codes out of the ordinary reading surface", () => {
+    const result = makeAnalysisResponse();
+    result.relationship.m2.gate.themes = ["G07 平等尊重", "G13 选择自主度"];
+    const mounted = mountComponent(AnalysisResult, { result, analysisMode: "profile" });
+
+    expect(mounted.host.querySelector(".result-mast .eyebrow")?.textContent).toContain("关系画像");
+    expect(mounted.host.querySelector("#result-m2 .two-column-copy")?.textContent).toContain("平等尊重；选择自主度");
+    expect(mounted.host.querySelector("#result-m2 .two-column-copy")?.textContent).not.toMatch(/G07|G13/u);
+    expect(mounted.host.querySelector(".technical-trace")?.textContent).toContain(`裁决状态${result.report.assessment}`);
+    mounted.unmount();
+  });
+
   it("shows the reality facts used by the current adjudication", () => {
     const result = makeAnalysisResponse();
     result.relationship.m5.realityGates[0]!.note = "双方能自由表达并撤回同意";
