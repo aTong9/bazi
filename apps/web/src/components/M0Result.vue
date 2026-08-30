@@ -4,6 +4,7 @@ import { computed } from "vue";
 import { STATUS_LABELS } from "@/constants";
 import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
 import type { M0AnalysisResponse, ResultItem, SubjectDraft } from "@/types";
+import M0EvidenceAppendix from "./M0EvidenceAppendix.vue";
 
 const props = withDefaults(defineProps<{ result: M0AnalysisResponse; subject: SubjectDraft; saveState?: "new" | "saved" | "dirty" }>(), { saveState: "new" });
 const emit = defineEmits<{ download: []; downloadSummary: []; print: []; save: [] }>();
@@ -68,14 +69,7 @@ const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档�
             <strong>{{ use.element }}</strong><span>{{ label(use.classification) }}</span><small>{{ use.doseBoundary?.slice(0, 2).map(label).join('；') || '保留条件边界' }}</small>
           </div>
         </div>
-        <details class="evidence-details">
-          <summary>查看 M0 字段证据</summary>
-          <div class="evidence-grid">
-            <div v-for="key in ['overall_confidence','roots_and_exposure','identified_relations','pattern_candidates','root_disease','final_structure_summary']" :key="key">
-              <code>{{ key }}</code><span>{{ label(item(key)?.status) }} · {{ label(item(key)?.confidence) }}</span>
-            </div>
-          </div>
-        </details>
+        <M0EvidenceAppendix :fields="result.m0.fields" />
       </div>
     </section>
 

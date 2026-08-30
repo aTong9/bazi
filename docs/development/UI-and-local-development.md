@@ -28,7 +28,7 @@
 
 ### 2.1 原局结构
 
-调用 `POST /v1/m0/analyze`，请求只包含主要命盘和 `requested_sections: ["m0"]`。界面隐藏夫妻星口径、另一方命盘、M1—M5 与现实证据输入，只投影 45 项 M0 静态结构字段、依赖限制和规则追踪。结果可打印、保存到本机档案，也可下载可读 Markdown 或版本化 `bazi.m0.reading.v1` JSON；完整看盘包可由同一档案入口校验并恢复，不输出具体关系对象、现实适配或命定结论。
+调用 `POST /v1/m0/analyze`，请求只包含主要命盘和 `requested_sections: ["m0"]`。界面隐藏夫妻星口径、另一方命盘、M1—M5 与现实证据输入，只投影 45 项 M0 静态结构字段、依赖限制和规则追踪。结果页的完整证据附录可按中文字段名或稳定 JSON 键检索，并逐项展开结构化值；原局与关系模式共用同一投影组件。结果可打印、保存到本机档案，也可下载可读 Markdown 或版本化 `bazi.m0.reading.v1` JSON；完整看盘包可由同一档案入口校验并恢复，不输出具体关系对象、现实适配或命定结论。
 
 ### 2.2 关系画像
 
@@ -114,6 +114,7 @@ apps/web/
 - `ObservationPanel.vue`：首次分析后，按 M4 chain ID 录入两份独立现实观察；
 - `AnalysisResult.vue`：安全优先的报告投影和 M0—M5 详细依据；
 - `M0Result.vue`：独立原局模式的 M0 投影、边界和追踪；
+- `M0EvidenceAppendix.vue`：两种结果共用的 45 项 M0 字段检索与结构化值展开；
 - `ArchivePanel.vue`：本地看盘档案按名称、称呼或四柱搜索，以及恢复、重命名、单份导出、可取消删除确认、模态焦点循环与关闭后焦点恢复；
 - `archive-store.ts`：以原局/关系判别工作区承载三种模式，带版本信封、模式化档案 ID、结果输入指纹和响应/工作区校验；最多保留 20 份，达到上限时禁止静默淘汰，并负责混合备份、完整看盘包的导入导出与新旧冲突合并；
 - `styles.css`：桌面、平板、390px 手机、键盘焦点和 reduced-motion 行为。
@@ -196,7 +197,7 @@ npm run preview
 截至 2026-08-30：
 
 - `npm run test:core`：81 个 Node runner 用例通过；
-- `npm run test:web`：8 个前端测试文件、64 个 Vitest 用例通过；
+- `npm run test:web`：9 个前端测试文件、65 个 Vitest 用例通过；
 - `npm run test:pages`：6 个 Pages 规则包、运行时等价性、离线缓存、打印契约和产物用例通过；
 - `npm run test:evidence`：407 项权威矩阵全部通过；
 - `npm run typecheck`、`npm run build:web` 和静态 Web 集成测试通过。

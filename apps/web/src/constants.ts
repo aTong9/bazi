@@ -40,6 +40,21 @@ export const GRADE_COPY: Readonly<Record<string, { title: string; detail: string
   FG4: { title: "跨情境稳定", detail: "多种状态下证据一致，仍不是成功概率。" },
 };
 
+export const M0_FIELD_LABELS: Readonly<Record<string, string>> = {
+  input_validation: "输入完整度与交节核验", scope_boundary: "分析适用范围与模型边界", overall_confidence: "总体置信度与待核查项",
+  day_master_and_season: "日主与月令", pillar_element_ten_god_map: "四柱五行与十神映射", roots_and_exposure: "主要根气与透干", natal_structure_summary: "原局结构总览",
+  identified_relations: "已成立关系清单", relation_effects: "关系实际效应", pending_or_rejected_relations: "未成立与待定关系",
+  element_effective_strength_matrix: "五行有效旺衰矩阵", element_strength_ranking: "五行旺衰排序与主导气势", strength_adjustment_reasons: "关键力量修正原因",
+  day_master_strength: "日主旺衰等级", support_side_evidence: "扶身侧核心证据", load_side_evidence: "负荷侧核心证据", adjacent_grade_exclusion: "相邻等级排除与结论置信度",
+  ten_god_status_matrix: "十神状态总表", dominant_ten_gods: "主要有力十神及其功能", constrained_or_overused_ten_gods: "受限、失效或过度十神", ten_god_purity: "十神清纯度与混杂",
+  established_ten_god_combinations: "已成立十神组合", weak_or_rejected_combinations: "弱成立、不成立与被否决组合", dominant_function_chain: "主导生化、制化与承载功能",
+  main_flow_path: "主流通路径", primary_flow_block: "主卡点", secondary_blocks_and_alternatives: "次级卡点与替代路径", bridge_candidates_and_side_effects: "通关候选、有效性与副作用",
+  temperature_state: "温度状态", moisture_state: "湿度状态", climate_problem_and_urgency: "主要气候问题与调候紧急度", climate_candidates_and_conflicts: "调候候选、有效性与跨模块冲突",
+  pattern_candidates: "格局候选清单与排序", final_pattern: "最终格局与格局状态", pattern_evidence_and_level: "成格证据、清纯度与层次", pattern_failure_factors: "破格因素与破格等级", pattern_rescue_and_alternatives: "救应、有效性与替代候选说明",
+  root_disease: "根本主病", secondary_diseases: "次级病及其与主病的关系", primary_and_auxiliary_medicine: "主药、辅助药与药理", medicine_risks: "药力不足、过量、伤格与新病风险",
+  five_element_use_matrix: "木火土金水五维用神矩阵", primary_and_auxiliary_use: "主用神与辅助用神", favorable_unfavorable_roles: "喜神、条件性喜神、中性、忌神与仇神", final_structure_summary: "最终结构摘要、条件边界与下游接口",
+};
+
 export const MODULES = [
   { id: "M0", title: "原局结构", note: "静态事实与候选" },
   { id: "M1", title: "吸引入口", note: "偏好信号，不推断对象" },

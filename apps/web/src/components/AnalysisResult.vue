@@ -5,6 +5,7 @@ import { GRADE_COPY, STATUS_LABELS } from "@/constants";
 import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
 import type { AnalysisMode, AnalysisResponse, ResultItem, SubjectDraft } from "@/types";
 import ModuleRail from "./ModuleRail.vue";
+import M0EvidenceAppendix from "./M0EvidenceAppendix.vue";
 
 const props = withDefaults(defineProps<{
   result: AnalysisResponse;
@@ -145,15 +146,7 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
               <div><dt>日主强弱</dt><dd>{{ label(secondaryStrength ?? undefined) }}</dd></div>
             </dl>
           </aside>
-          <details class="evidence-details">
-            <summary>查看 M0 字段证据</summary>
-            <div class="evidence-grid">
-              <div v-for="key in ['overall_confidence','roots_and_exposure','identified_relations','pattern_candidates','root_disease','final_structure_summary']" :key="key">
-                <code>{{ key }}</code>
-                <span>{{ label(item(key)?.status) }} · {{ label(item(key)?.confidence) }}</span>
-              </div>
-            </div>
-          </details>
+          <M0EvidenceAppendix :fields="result.m0.fields" />
         </div>
       </section>
 
