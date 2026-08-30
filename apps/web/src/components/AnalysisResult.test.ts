@@ -35,6 +35,21 @@ describe("AnalysisResult", () => {
     expect(mounted.host.querySelector("#result-m1 .statement-list")?.textContent).toContain("当前没有形成稳定陈述");
     mounted.unmount();
   });
+
+  it("shows the reviewed input summary and emits a print request", () => {
+    let printRequests = 0;
+    const mounted = mountComponent(AnalysisResult, {
+      result: makeAnalysisResponse(),
+      analysisMode: "evaluate",
+      primarySubject: { subjectId: "a", year: "丙寅", month: "癸巳", day: "癸酉", hour: "戊午", birthTimeStatus: "exact", dataQuality: "high" },
+      onPrint: () => { printRequests += 1; },
+    });
+    expect(mounted.host.querySelector(".result-context")?.textContent).toContain("丙寅 · 癸巳 · 癸酉 · 戊午");
+    expect(mounted.host.querySelector(".result-context")?.textContent).toContain("现实评估");
+    [...mounted.host.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent?.includes("打印 / 存 PDF"))!.click();
+    expect(printRequests).toBe(1);
+    mounted.unmount();
+  });
 });
 
 describe("ModuleRail", () => {

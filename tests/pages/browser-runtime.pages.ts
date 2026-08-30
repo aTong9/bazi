@@ -59,6 +59,19 @@ test("Pages artifact has a base-path SPA fallback and no Node external stubs", a
   }
 });
 
+test("Pages artifact keeps the printable reading contract", async () => {
+  const index = await readFile(path.join(dist, "index.html"), "utf8");
+  const stylesheets = [...index.matchAll(/href="([^"]+\.css)"/gu)]
+    .map((match) => path.join(dist, match[1]!.replace(/^\/bazi\//u, "")));
+  assert.ok(stylesheets.length > 0);
+  const source = (await Promise.all(stylesheets.map((stylesheet) => readFile(stylesheet, "utf8")))).join("\n");
+  assert.match(source, /@media print/u);
+  assert.match(source, /关系脉络 · 八字情感看盘报告/u);
+  assert.match(source, /\.input-panel/u);
+  assert.match(source, /\.result-tools/u);
+  assert.match(source, /\.analysis-result:before/u);
+});
+
 function basePayload() {
   return {
     analysis_mode: "production",

@@ -91,6 +91,17 @@ describe("App analysis provenance", () => {
     expect(revokeObjectURL).toHaveBeenCalledWith("blob:test-result");
   });
 
+  it("opens the system print flow for the adjudicated reading", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    const print = vi.fn();
+    Object.defineProperty(window, "print", { configurable: true, value: print });
+    mounted = mountComponent(App, {});
+    await flushUi();
+    await submit(mounted.host);
+    findButton(mounted.host, "打印 / 存 PDF").click();
+    expect(print).toHaveBeenCalledOnce();
+  });
+
   it("saves a completed reading locally and restores it after starting over", async () => {
     const response = makeAnalysisResponse();
     installBrowserMocks(response);

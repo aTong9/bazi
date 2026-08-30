@@ -48,6 +48,54 @@
   }
 }
 
+@media print {
+  @page { size: A4; margin: 14mm 13mm 16mm; }
+
+  html { color-scheme: light; }
+  body { min-width: 0; background: #fff; color: #111; font-size: 10.5pt; }
+  .app-header,
+  .intro-panel,
+  .input-panel,
+  .app-footer,
+  .archive-overlay,
+  .archive-notice,
+  .result-tools,
+  .module-rail,
+  .observation-link,
+  .technical-trace,
+  .evidence-details { display: none !important; }
+
+  .workspace,
+  .workbench,
+  .result-panel { display: block; width: 100%; min-height: 0; padding: 0; border: 0; background: #fff; }
+  .analysis-result { max-width: none; color: #111; }
+  .analysis-result::before {
+    display: block;
+    margin-bottom: 8mm;
+    padding-bottom: 3mm;
+    border-bottom: 1px solid #999;
+    content: "关系脉络 · 八字情感看盘报告";
+    font-family: var(--serif);
+    font-size: 13pt;
+    font-weight: 700;
+  }
+  .result-mast { gap: 5mm 8mm; padding-bottom: 7mm; }
+  .result-mast h2 { font-size: 25pt; }
+  .grade-seal { width: 22mm; height: 22mm; }
+  .result-context { gap: 2mm 7mm; }
+  .report-prose,
+  .result-section,
+  .result-boundaries,
+  .safety-only { break-inside: avoid; box-shadow: none; }
+  .result-section { grid-template-columns: 12mm minmax(0, 1fr); padding-block: 7mm; }
+  .section-heading,
+  .risk-line,
+  .result-gate { break-inside: avoid; }
+  .report-prose { margin-top: 8mm; }
+  .result-gates { grid-template-columns: 1fr 1fr; }
+  a { color: inherit; text-decoration: none; }
+}
+
 @layer foundation {
   :root {
     --ink-950: #10262b;
@@ -1363,6 +1411,19 @@
   .result-mast.is-safety {
     border-bottom-color: var(--red-700);
   }
+
+  .result-context {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 28px;
+    margin: 0;
+    padding-top: 4px;
+  }
+
+  .result-context div { min-width: 0; }
+  .result-context dt { color: var(--ink-500); font-size: 9px; font-weight: 700; letter-spacing: .08em; }
+  .result-context dd { margin: 3px 0 0; color: var(--ink-800); font-size: 12px; overflow-wrap: anywhere; }
 
   .grade-seal {
     display: grid;
