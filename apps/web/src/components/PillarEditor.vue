@@ -2,27 +2,70 @@
 import { computed, ref, watch } from "vue";
 
 import { hourOptions, JIAZI, monthOptions, normalizeLinkedPillars } from "@/domain";
-import type { SubjectDraft } from "@/types";
-import { formatFourPillars, resolveSolarBirth, type SolarBirthResolution } from "../../../../packages/calendar/src/resolve-solar-birth";
+import type { BirthInputRecord, SolarResolutionStatus, SubjectDraft } from "@/types";
+import { CALENDAR_ADAPTER, formatFourPillars, resolveSolarBirth, type SolarBirthResolution } from "../../../../packages/calendar/src/resolve-solar-birth";
 
 const props = defineProps<{ idPrefix: string; title: string; description: string }>();
 const model = defineModel<SubjectDraft>({ required: true });
-const entryMode = ref<"manual" | "solar">("manual");
-const solarLocalDateTime = ref("");
 const calendarResolution = ref<SolarBirthResolution | null>(null);
+const inputRecord = computed<BirthInputRecord>(() => model.value.birthInput ?? { method: "manual_four_pillars" });
+const entryMode = ref<"manual" | "solar">(inputRecord.value.method === "solar_utc8_assist" ? "solar" : "manual");
+const solarLocalDateTime = ref(inputRecord.value.method === "solar_utc8_assist" ? inputRecord.value.solarLocalDateTime : "");
+let birthInputIdentity = inputIdentity(inputRecord.value);
 
 const availableMonths = computed(() => monthOptions(model.value.year));
 const availableHours = computed(() => hourOptions(model.value.day));
 const isHourUnknown = computed(() => model.value.birthTimeStatus === "unknown");
+const currentPillars = computed(() => [model.value.year, model.value.month, model.value.day, model.value.hour].join(" "));
+const storedSolarIsCurrent = computed(() => inputRecord.value.method === "solar_utc8_assist"
+  && inputRecord.value.resolutionStatus === "resolved"
+  && inputRecord.value.resolvedPillars === currentPillars.value);
+const storedSolarIsStale = computed(() => inputRecord.value.method === "solar_utc8_assist"
+  && inputRecord.value.resolutionStatus === "resolved"
+  && inputRecord.value.resolvedPillars !== currentPillars.value);
 
 watch([() => model.value.year, () => model.value.day], () => {
   model.value = normalizeLinkedPillars(model.value);
 }, { immediate: true });
+watch(() => model.value.birthInput, (input) => {
+  const record = input ?? { method: "manual_four_pillars" as const };
+  const nextIdentity = inputIdentity(record);
+  if (nextIdentity !== birthInputIdentity) calendarResolution.value = null;
+  birthInputIdentity = nextIdentity;
+  entryMode.value = record.method === "solar_utc8_assist" ? "solar" : "manual";
+  solarLocalDateTime.value = record.method === "solar_utc8_assist" ? record.solarLocalDateTime : "";
+}, { deep: true });
+
+function chooseEntryMode(value: "manual" | "solar"): void {
+  entryMode.value = value;
+  calendarResolution.value = null;
+  solarLocalDateTime.value = "";
+  const nextInput: BirthInputRecord = value === "manual" ? { method: "manual_four_pillars" } : solarRecord("", "not_calculated", null);
+  birthInputIdentity = inputIdentity(nextInput);
+  model.value = {
+    ...model.value,
+    birthInput: nextInput,
+  };
+}
+
+function updateSolarInput(): void {
+  calendarResolution.value = null;
+  const nextInput = solarRecord(solarLocalDateTime.value, "not_calculated", null);
+  birthInputIdentity = inputIdentity(nextInput);
+  model.value = { ...model.value, birthInput: nextInput };
+}
 
 function calculateFromSolar(): void {
   calendarResolution.value = resolveSolarBirth(solarLocalDateTime.value);
-  if (calendarResolution.value.status !== "resolved") return;
+  if (calendarResolution.value.status !== "resolved") {
+    model.value = {
+      ...model.value,
+      birthInput: solarRecord(solarLocalDateTime.value, calendarResolution.value.status, null),
+    };
+    return;
+  }
   const { year, month, day, hour } = calendarResolution.value.fourPillars;
+  const resolvedPillars = formatFourPillars(calendarResolution.value.fourPillars);
   model.value = {
     ...model.value,
     year: `${year.stem}${year.branch}`,
@@ -31,7 +74,27 @@ function calculateFromSolar(): void {
     hour: `${hour.stem}${hour.branch}`,
     birthTimeStatus: "exact",
     dataQuality: "high",
+    birthInput: solarRecord(solarLocalDateTime.value, "resolved", resolvedPillars),
   };
+}
+
+function solarRecord(solarLocalDateTime: string, resolutionStatus: SolarResolutionStatus, resolvedPillars: string | null): BirthInputRecord {
+  return {
+    method: "solar_utc8_assist",
+    solarLocalDateTime,
+    resolutionStatus,
+    resolvedPillars,
+    adapter: {
+      id: CALENDAR_ADAPTER.id,
+      version: CALENDAR_ADAPTER.version,
+      civilTimeBasis: CALENDAR_ADAPTER.civilTimeBasis,
+      trueSolarTimeApplied: CALENDAR_ADAPTER.trueSolarTimeApplied,
+    },
+  };
+}
+
+function inputIdentity(input: BirthInputRecord): string {
+  return input.method === "solar_utc8_assist" ? `${input.method}:${input.solarLocalDateTime}` : input.method;
 }
 </script>
 
@@ -41,8 +104,8 @@ function calculateFromSolar(): void {
     <p class="field-help">{{ description }}</p>
 
     <div class="pillar-entry-switch" role="group" :aria-label="`${title}录入方式`">
-      <button type="button" :class="{ active: entryMode === 'manual' }" @click="entryMode = 'manual'">手动四柱</button>
-      <button type="button" :class="{ active: entryMode === 'solar' }" @click="entryMode = 'solar'">公历排盘辅助</button>
+      <button type="button" :class="{ active: entryMode === 'manual' }" @click="chooseEntryMode('manual')">手动四柱</button>
+      <button type="button" :class="{ active: entryMode === 'solar' }" @click="chooseEntryMode('solar')">公历排盘辅助</button>
     </div>
 
     <section v-if="entryMode === 'solar'" class="solar-birth-assist" :aria-labelledby="`${idPrefix}-solar-title`">
@@ -53,7 +116,7 @@ function calculateFromSolar(): void {
       <div class="solar-input-row">
         <label class="field-control">
           <span>公历出生日期与时间</span>
-          <input :id="`${idPrefix}-solar-datetime`" v-model="solarLocalDateTime" type="datetime-local" min="1901-01-01T00:00" max="2099-12-31T23:59">
+          <input :id="`${idPrefix}-solar-datetime`" v-model="solarLocalDateTime" type="datetime-local" min="1901-01-01T00:00" max="2099-12-31T23:59" @input="updateSolarInput">
         </label>
         <button type="button" class="secondary-action" @click="calculateFromSolar">计算并填入四柱</button>
       </div>
@@ -67,6 +130,12 @@ function calculateFromSolar(): void {
             候选：{{ calendarResolution.candidates.map(formatFourPillars).join('；') }}。
           </span>
         </template>
+      </div>
+      <div v-else-if="storedSolarIsCurrent" class="calendar-resolution is-resolved" role="status">
+        已恢复公历记录：{{ solarLocalDateTime.replace('T', ' ') }}（UTC+8），与当前四柱一致。
+      </div>
+      <div v-else-if="storedSolarIsStale" class="calendar-resolution is-boundary_unresolved" role="alert">
+        当前四柱已在公历辅助计算后被修改。请重新计算，或切换为手动四柱再分析。
       </div>
       <p class="solar-policy-note">交节前后、时辰交界和 23 时不会自动选盘；此功能是录入辅助，不代表历法结果已获独立权威校验。</p>
     </section>

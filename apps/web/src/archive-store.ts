@@ -1,6 +1,6 @@
 import { parseAnalysisResponse } from "./api";
 import { JIAZI } from "./domain";
-import type { AnalysisArchive, AnalysisWorkspaceSnapshot } from "./types";
+import type { AnalysisArchive, AnalysisWorkspaceSnapshot, SubjectDraft } from "./types";
 
 const STORAGE_KEY = "bazi.relationship.archives.v1";
 const MAX_ARCHIVES = 20;
@@ -36,7 +36,7 @@ export function loadArchives(storage: Pick<Storage, "getItem"> = localStorage): 
     return envelope.archives.flatMap((archive) => {
       try {
         parseAnalysisResponse(archive.workspace.result);
-        return [structuredClone(archive)];
+        return [normalizeArchive(archive)];
       } catch {
         return [];
       }
@@ -150,7 +150,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
       throw new Error(`档案“${archive.title}”的分析结果无效。`);
     }
   }
-  return backup.archives.map((archive) => structuredClone(archive));
+  return backup.archives.map(normalizeArchive);
 }
 
 function isEnvelope(value: unknown): value is ArchiveEnvelope {
@@ -186,7 +186,36 @@ function isSubject(value: unknown): boolean {
   return typeof subject.subjectId === "string" && subject.subjectId.length <= 120
     && ["year", "month", "day", "hour"].every((key) => typeof subject[key] === "string" && JIAZI.includes(String(subject[key])))
     && ["exact", "approximate", "unknown"].includes(String(subject.birthTimeStatus))
-    && ["high", "medium", "low", "unknown"].includes(String(subject.dataQuality));
+    && ["high", "medium", "low", "unknown"].includes(String(subject.dataQuality))
+    && (subject.birthInput === undefined || isBirthInput(subject.birthInput));
+}
+
+function isBirthInput(value: unknown): boolean {
+  const input = record(value);
+  if (!input) return false;
+  if (input.method === "manual_four_pillars") return true;
+  if (input.method !== "solar_utc8_assist") return false;
+  const adapter = record(input.adapter);
+  return typeof input.solarLocalDateTime === "string" && input.solarLocalDateTime.length <= 32
+    && ["not_calculated", "resolved", "boundary_unresolved", "invalid", "unsupported"].includes(String(input.resolutionStatus))
+    && (input.resolvedPillars === null || isPillarSummary(input.resolvedPillars))
+    && Boolean(adapter && typeof adapter.id === "string" && typeof adapter.version === "string"
+      && adapter.civilTimeBasis === "UTC+08:00" && adapter.trueSolarTimeApplied === false);
+}
+
+function isPillarSummary(value: unknown): boolean {
+  return typeof value === "string" && value.split(" ").length === 4 && value.split(" ").every((pillar) => JIAZI.includes(pillar));
+}
+
+function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
+  const value = structuredClone(archive);
+  value.workspace.primarySubject = normalizeSubject(value.workspace.primarySubject);
+  value.workspace.secondarySubject = normalizeSubject(value.workspace.secondarySubject);
+  return value;
+}
+
+function normalizeSubject(subject: SubjectDraft): SubjectDraft {
+  return { ...subject, birthInput: subject.birthInput ?? { method: "manual_four_pillars" } };
 }
 
 function isGateList(value: unknown): boolean {

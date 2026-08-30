@@ -41,11 +41,18 @@ describe("AnalysisResult", () => {
     const mounted = mountComponent(AnalysisResult, {
       result: makeAnalysisResponse(),
       analysisMode: "evaluate",
-      primarySubject: { subjectId: "a", year: "丙寅", month: "癸巳", day: "癸酉", hour: "戊午", birthTimeStatus: "exact", dataQuality: "high" },
+      primarySubject: {
+        subjectId: "a", year: "丙寅", month: "癸巳", day: "癸酉", hour: "戊午", birthTimeStatus: "exact", dataQuality: "high",
+        birthInput: {
+          method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved", resolvedPillars: "丙寅 癸巳 癸酉 戊午",
+          adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
+        },
+      },
       onPrint: () => { printRequests += 1; },
     });
     expect(mounted.host.querySelector(".result-context")?.textContent).toContain("丙寅 · 癸巳 · 癸酉 · 戊午");
     expect(mounted.host.querySelector(".result-context")?.textContent).toContain("现实评估");
+    expect(mounted.host.querySelector(".result-context")?.textContent).toContain("1986-05-29 12:00 · UTC+08:00 · lunar-typescript-standard-time 1.8.6");
     [...mounted.host.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent?.includes("打印 / 存 PDF"))!.click();
     expect(printRequests).toBe(1);
     mounted.unmount();

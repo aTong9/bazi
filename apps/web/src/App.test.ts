@@ -25,6 +25,19 @@ afterEach(() => {
 });
 
 describe("App analysis provenance", () => {
+  it("blocks analysis while a solar assist record is unresolved", async () => {
+    const fetchMock = installBrowserMocks(makeAnalysisResponse());
+    mounted = mountComponent(App, {});
+    await flushUi();
+    findButton(mounted.host, "公历排盘辅助").click();
+    await nextTick();
+    mounted.host.querySelector<HTMLFormElement>("form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await flushUi();
+    expect(mounted.host.textContent).toContain("公历辅助记录尚未完成复核");
+    expect(mounted.host.textContent).toContain("请完成公历时间计算，或切换为手动四柱");
+    expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/profile")).toHaveLength(0);
+  });
+
   it("clears a prior M4 observation and excludes it after the primary day pillar changes", async () => {
     const response = makeAnalysisResponse();
     const fetchMock = installBrowserMocks(response);
