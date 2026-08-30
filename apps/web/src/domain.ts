@@ -4,6 +4,10 @@ export const HEAVENLY_STEMS: readonly HeavenlyStem[] = ["甲", "乙", "丙", "�
 export const EARTHLY_BRANCHES: readonly EarthlyBranch[] = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 export const JIAZI: readonly string[] = Array.from({ length: 60 }, (_, index) => `${HEAVENLY_STEMS[index % 10]}${EARTHLY_BRANCHES[index % 12]}`);
 
+export function inactiveSecondarySubject(): SubjectDraft {
+  return { subjectId: "另一方", year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子", birthTimeStatus: "exact", dataQuality: "high", birthInput: { method: "manual_four_pillars" } };
+}
+
 const TIGER_STARTS: Readonly<Record<HeavenlyStem, HeavenlyStem>> = {
   甲: "丙", 己: "丙", 乙: "戊", 庚: "戊", 丙: "庚", 辛: "庚", 丁: "壬", 壬: "壬", 戊: "甲", 癸: "甲",
 };

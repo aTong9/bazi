@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
 import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
-import { analysisInputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
+import { analysisInputFingerprint, inactiveSecondarySubject, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
 import ArchivePanel from "@/components/ArchivePanel.vue";
 import ObservationPanel from "@/components/ObservationPanel.vue";
@@ -13,7 +13,7 @@ import RealityGatePanel from "@/components/RealityGatePanel.vue";
 import type { AnalysisArchive, AnalysisMode, AnalysisResponse, AnalysisWorkspaceSnapshot, CrossStateDraft, HealthResponse, ObservationDraft, RealityGateDraft, RoleBasis, SubjectDraft } from "@/types";
 
 const primarySubject = ref<SubjectDraft>(createSubject("主命盘"));
-const secondarySubject = ref<SubjectDraft>(createSubject("另一方", { year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子" }));
+const secondarySubject = ref<SubjectDraft>(inactiveSecondarySubject());
 const analysisMode = ref<AnalysisMode>("profile");
 const roleBasis = ref<RoleBasis>("female_traditional");
 const hasSecondarySubject = ref(false);
@@ -120,6 +120,10 @@ watch(analysisMode, (mode) => {
   gates.value = REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
   crossState.value = createCrossState();
   observations.value = [];
+});
+
+watch(hasSecondarySubject, (enabled) => {
+  if (!enabled) secondarySubject.value = inactiveSecondarySubject();
 });
 
 watch(hasUnsavedWork, (unsaved) => {
@@ -468,7 +472,7 @@ function crossStateInputIssue(value: CrossStateDraft): string | null {
 function resetWorkspace(): void {
   activeRequest?.abort();
   primarySubject.value = createSubject("主命盘");
-  secondarySubject.value = createSubject("另一方", { year: "己巳", month: "丙寅", day: "乙卯", hour: "丙子" });
+  secondarySubject.value = inactiveSecondarySubject();
   gates.value = REALITY_GATES.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
   crossState.value = createCrossState();
   observations.value = [];

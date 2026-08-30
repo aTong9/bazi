@@ -63,14 +63,20 @@ describe("local analysis archive", () => {
       method: "solar_utc8_assist", solarLocalDateTime: "1986-05-29T12:00", resolutionStatus: "resolved", resolvedPillars: "丙寅 癸巳 癸酉 戊午",
       adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
     };
-    delete archive.workspace.secondarySubject.birthInput;
+    archive.workspace.hasSecondarySubject = false;
+    archive.workspace.secondarySubject.subjectId = "不应保留的旧另一方";
+    archive.workspace.secondarySubject.birthInput = {
+      method: "solar_utc8_assist", solarLocalDateTime: "1991-02-03T04:05", resolutionStatus: "not_calculated", resolvedPillars: null,
+      adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
+    };
     delete archive.workspace.resultInputFingerprint;
     archive.workspace.crossState.evidence.pressure = "未勾选但遗留的隐藏事实";
     const storage = memoryStorage(JSON.stringify({ version: 1, archives: [archive] }));
     const restored = loadArchives(storage)[0]!;
     expect(restored.workspace.primarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
     expect(restored.workspace.primarySubject.hour).toBe("甲子");
-    expect(restored.workspace.secondarySubject.birthInput).toEqual({ method: "manual_four_pillars" });
+    expect(restored.workspace.secondarySubject).toMatchObject({ subjectId: "另一方", birthInput: { method: "manual_four_pillars" } });
+    expect(JSON.stringify(restored)).not.toContain("1991-02-03T04:05");
     expect(restored.workspace.crossState.evidence.pressure).toBe("");
     expect(restored.workspace.resultInputFingerprint).toBe(analysisInputFingerprint(restored.workspace));
 

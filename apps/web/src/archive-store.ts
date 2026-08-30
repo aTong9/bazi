@@ -1,5 +1,5 @@
 import { parseAnalysisResponse } from "./api";
-import { analysisInputFingerprint, hourOptions, JIAZI, riskCandidateFingerprint } from "./domain";
+import { analysisInputFingerprint, hourOptions, inactiveSecondarySubject, JIAZI, riskCandidateFingerprint } from "./domain";
 import type { AnalysisArchive, AnalysisWorkspaceSnapshot, SubjectDraft } from "./types";
 
 export const ARCHIVE_STORAGE_KEY = "bazi.relationship.archives.v1";
@@ -272,7 +272,7 @@ function isPillarSummary(value: unknown): boolean {
 function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
   const value = structuredClone(archive);
   value.workspace.primarySubject = normalizeSubject(value.workspace.primarySubject);
-  value.workspace.secondarySubject = normalizeSubject(value.workspace.secondarySubject);
+  value.workspace.secondarySubject = value.workspace.hasSecondarySubject ? normalizeSubject(value.workspace.secondarySubject) : inactiveSecondarySubject();
   for (const state of ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const) {
     if (!value.workspace.crossState[state]) value.workspace.crossState.evidence[state] = "";
   }

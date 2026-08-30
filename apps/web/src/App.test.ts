@@ -121,7 +121,7 @@ describe("App analysis provenance", () => {
     expect(fetchMock.mock.calls.filter(([input]) => input === "/v1/relationship/evaluate")).toHaveLength(0);
   });
 
-  it("clears hidden reality evidence when switching back to a profile", async () => {
+  it("clears hidden evidence when inputs are removed from the active analysis", async () => {
     installBrowserMocks(makeAnalysisResponse());
     mounted = mountComponent(App, {});
     await flushUi();
@@ -144,6 +144,16 @@ describe("App analysis provenance", () => {
     steadyEvidence.value = "连续三周的日常安排记录";
     steadyEvidence.dispatchEvent(new Event("input", { bubbles: true }));
 
+    const secondaryToggle = mounted.host.querySelector<HTMLInputElement>(".secondary-toggle input")!;
+    secondaryToggle.checked = true;
+    secondaryToggle.dispatchEvent(new Event("change", { bubbles: true }));
+    await flushUi();
+    const secondaryLabel = mounted.host.querySelector<HTMLInputElement>("#secondary-subject-id")!;
+    secondaryLabel.value = "不应保留的另一方";
+    secondaryLabel.dispatchEvent(new Event("input", { bubbles: true }));
+    secondaryToggle.checked = false;
+    secondaryToggle.dispatchEvent(new Event("change", { bubbles: true }));
+
     const profileMode = mounted.host.querySelector<HTMLInputElement>('input[value="profile"]')!;
     profileMode.checked = true;
     profileMode.dispatchEvent(new Event("change", { bubbles: true }));
@@ -156,6 +166,7 @@ describe("App analysis provenance", () => {
     expect(stored.archives[0]?.workspace.crossState).toMatchObject({ steady: false, evidence: { steady: "" } });
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).not.toContain("双方曾明确确认");
     expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).not.toContain("连续三周");
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).not.toContain("不应保留的另一方");
   });
 
   it("downloads the exact response through a connected anchor and then releases the blob URL", async () => {
