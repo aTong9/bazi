@@ -41,7 +41,7 @@ function readArchives(storage: Pick<Storage, "getItem">, failOnInvalid: boolean)
     return envelope.archives.map((archive) => {
       parseAnalysisResponse(archive.workspace.result);
       return normalizeArchive(archive);
-    }).slice(0, MAX_ARCHIVES);
+    });
   } catch {
     if (failOnInvalid) throw new Error("本机档案数据已损坏，已停止写入以避免覆盖；请先导出浏览器存储以便恢复。");
     return [];
@@ -104,7 +104,7 @@ export function serializeArchiveBackup(archives: readonly AnalysisArchive[], now
     containsSensitiveData: true,
     archives: archives.map(cloneJson),
   };
-  if (!backup.archives.every(isArchive)) throw new Error("档案中存在无法导出的无效记录。");
+  if (!isArchiveList(backup.archives)) throw new Error("档案中存在无法导出的无效记录。");
   return `${JSON.stringify(backup, null, 2)}\n`;
 }
 
@@ -187,6 +187,7 @@ function parseBackup(raw: string): AnalysisArchive[] {
     } catch {
       throw new Error(`档案“${archive.title}”的分析结果无效。`);
     }
+    if (!archiveIdentityMatches(archive)) throw new Error(`档案“${archive.title}”的身份无效。`);
   }
   return backup.archives.map(normalizeArchive);
 }
@@ -194,8 +195,15 @@ function parseBackup(raw: string): AnalysisArchive[] {
 function isEnvelope(value: unknown): value is ArchiveEnvelope {
   if (!value || typeof value !== "object") return false;
   const envelope = value as Partial<ArchiveEnvelope>;
-  return envelope.version === 1 && Array.isArray(envelope.archives) && envelope.archives.every(isArchive);
+  return envelope.version === 1 && isArchiveList(envelope.archives);
 }
+
+function isArchiveList(value: unknown): value is AnalysisArchive[] {
+  return Array.isArray(value) && value.length <= MAX_ARCHIVES && value.every((archive) => isArchive(archive) && archiveIdentityMatches(archive))
+    && new Set(value.map((archive) => archive.id)).size === value.length;
+}
+
+function archiveIdentityMatches(archive: AnalysisArchive): boolean { return archive.id === `archive-${archive.workspace.result.requestId}`; }
 
 function isArchive(value: unknown): value is AnalysisArchive {
   if (!value || typeof value !== "object") return false;

@@ -38,6 +38,18 @@ describe("local analysis archive", () => {
       archives: [{ id: "bad", title: "bad", savedAt: new Date().toISOString(), rulesetDigest: "x", workspace: { result: {} } }],
     }));
     expect(loadArchives(invalid)).toEqual([]);
+
+    const validArchive = saveArchive(makeWorkspace(), memoryStorage())[0]!;
+    const duplicated = memoryStorage(JSON.stringify({ version: 1, archives: [validArchive, validArchive] }));
+    expect(loadArchives(duplicated)).toEqual([]);
+    expect(() => saveArchive(makeWorkspace(), duplicated)).toThrow("已停止写入以避免覆盖");
+    const oversized = Array.from({ length: 21 }, (_, index) => {
+      const archive = structuredClone(validArchive);
+      archive.id = `archive-over-${index}`;
+      archive.workspace.result.requestId = `over-${index}`;
+      return archive;
+    });
+    expect(loadArchives(memoryStorage(JSON.stringify({ version: 1, archives: oversized })))).toEqual([]);
   });
 
   it("upgrades legacy v1 subjects to an explicit manual input source", () => {
@@ -136,6 +148,9 @@ describe("local analysis archive", () => {
     const invalidResponse = structuredClone(current[0]!);
     invalidResponse.workspace.result = { rulesetDigest: invalidResponse.rulesetDigest } as typeof invalidResponse.workspace.result;
     expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [invalidResponse] }), storage)).toThrow("分析结果无效");
+    const mismatchedIdentity = structuredClone(current[0]!);
+    mismatchedIdentity.id = "archive-other-request";
+    expect(() => importArchiveBackup(JSON.stringify({ ...valid, archives: [mismatchedIdentity] }), storage)).toThrow("身份无效");
     expect(storage.value()).toBe(before);
   });
 });
