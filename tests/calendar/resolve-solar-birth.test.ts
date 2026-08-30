@@ -33,7 +33,13 @@ test("resolves after the solar-term safety window", () => {
 });
 
 test("stops at disputed Zi-hour and narrow hour boundaries", () => {
-  assert.equal(resolveSolarBirth("2024-06-01T23:30").status, "boundary_unresolved");
+  const ziHour = resolveSolarBirth("2024-06-01T23:30");
+  assert.equal(ziHour.status, "boundary_unresolved");
+  if (ziHour.status === "boundary_unresolved") {
+    assert.equal(ziHour.reason, "zi_hour_convention");
+    assert.match(ziHour.message, /23 时换日与 0 时换日/u);
+    assert.deepEqual(ziHour.candidates.map(formatFourPillars), ["甲辰 己巳 丁酉 庚子", "甲辰 己巳 丙申 庚子"]);
+  }
   const boundary = resolveSolarBirth("2024-06-01T01:01");
   assert.equal(boundary.status, "boundary_unresolved");
   if (boundary.status === "boundary_unresolved") {

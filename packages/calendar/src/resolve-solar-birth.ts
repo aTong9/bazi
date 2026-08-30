@@ -64,9 +64,9 @@ export function resolveSolarBirth(localDateTime: string): SolarBirthResolution {
 
   const inputMinute = localMinuteValue(parsed);
   if (parsed.hour === 23) {
-    return boundary("zi_hour_convention", "23 时涉及换日流派差异，请核对交界前后候选并改用手动四柱。", localDateTime, [
-      pillarsAt({ ...parsed, hour: 22, minute: 59 }),
-      pillarsAt(nextCivilDay(parsed)),
+    return boundary("zi_hour_convention", "23 时涉及换日流派差异；候选依次为 23 时换日与 0 时换日口径，请核对后改用手动四柱。", localDateTime, [
+      pillarsAt(parsed, 1),
+      pillarsAt(parsed, 2),
     ]);
   }
   const minutesIntoDay = parsed.hour * 60 + parsed.minute;
@@ -96,8 +96,9 @@ export function resolveSolarBirth(localDateTime: string): SolarBirthResolution {
   return { status: "resolved", fourPillars: pillarsAt(parsed), localDateTime, provenance: CALENDAR_ADAPTER };
 }
 
-function pillarsAt(input: DateParts): FourPillars {
+function pillarsAt(input: DateParts, sect?: 1 | 2): FourPillars {
   const eightChar = Solar.fromYmdHms(input.year, input.month, input.day, input.hour, input.minute, 0).getLunar().getEightChar();
+  if (sect) eightChar.setSect(sect);
   return {
     year: pillar(eightChar.getYear()), month: pillar(eightChar.getMonth()),
     day: pillar(eightChar.getDay()), hour: pillar(eightChar.getTime()),
@@ -134,8 +135,6 @@ function shiftLocalMinutes(input: DateParts, amount: number): DateParts {
   const date = new Date(Date.UTC(input.year, input.month - 1, input.day, input.hour, input.minute + amount));
   return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate(), hour: date.getUTCHours(), minute: date.getUTCMinutes() };
 }
-
-function nextCivilDay(input: DateParts): DateParts { return shiftLocalMinutes({ ...input, hour: 0, minute: 0 }, 24 * 60); }
 
 function boundary(reason: Extract<SolarBirthResolution, { status: "boundary_unresolved" }>["reason"], message: string, localDateTime: string, candidates: FourPillars[]): SolarBirthResolution {
   const unique = [...new Map(candidates.map((candidate) => [formatFourPillars(candidate), candidate])).values()];
