@@ -71,6 +71,9 @@ describe("local analysis archive", () => {
       adapter: { id: "lunar-typescript-standard-time", version: "1.8.6", civilTimeBasis: "UTC+08:00", trueSolarTimeApplied: false },
     };
     delete archive.workspace.resultInputFingerprint;
+    archive.workspace.gates[0] = { ...archive.workspace.gates[0]!, status: "pass", note: "画像模式不应保留的闸门事实" };
+    archive.workspace.crossState.steady = true;
+    archive.workspace.crossState.evidence.steady = "画像模式不应保留的跨情境事实";
     archive.workspace.crossState.evidence.pressure = "未勾选但遗留的隐藏事实";
     const storage = memoryStorage(JSON.stringify({ version: 1, archives: [archive] }));
     const restored = loadArchives(storage)[0]!;
@@ -78,6 +81,8 @@ describe("local analysis archive", () => {
     expect(restored.workspace.primarySubject.hour).toBe("甲子");
     expect(restored.workspace.secondarySubject).toMatchObject({ subjectId: "另一方", birthInput: { method: "manual_four_pillars" } });
     expect(JSON.stringify(restored)).not.toContain("1991-02-03T04:05");
+    expect(restored.workspace.gates[0]).toMatchObject({ status: "not_assessed", note: "" });
+    expect(restored.workspace.crossState).toMatchObject({ steady: false, evidence: { steady: "", pressure: "" } });
     expect(restored.workspace.crossState.evidence.pressure).toBe("");
     expect(restored.workspace.resultInputFingerprint).toBe(analysisInputFingerprint(restored.workspace));
 

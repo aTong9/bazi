@@ -274,8 +274,10 @@ function normalizeArchive(archive: AnalysisArchive): AnalysisArchive {
   value.workspace.primarySubject = normalizeSubject(value.workspace.primarySubject);
   value.workspace.secondarySubject = value.workspace.hasSecondarySubject ? normalizeSubject(value.workspace.secondarySubject) : inactiveSecondarySubject();
   for (const state of ["steady", "pressure", "repair", "turningPoint", "counterevidenceReviewed"] as const) {
+    if (value.workspace.analysisMode === "profile") value.workspace.crossState[state] = false;
     if (!value.workspace.crossState[state]) value.workspace.crossState.evidence[state] = "";
   }
+  if (value.workspace.analysisMode === "profile") value.workspace.gates = value.workspace.gates.map((gate) => ({ ...gate, status: "not_assessed", note: "" }));
   value.workspace.resultInputFingerprint = analysisInputFingerprint(value.workspace);
   return value;
 }
