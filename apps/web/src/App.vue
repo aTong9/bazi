@@ -335,6 +335,15 @@ function exportArchives(): void {
   }
 }
 
+function exportArchive(archive: AnalysisArchive): void {
+  try {
+    downloadText(serializeArchiveBackup([archive]), "application/json", `bazi-reading-archive-${new Date().toISOString().slice(0, 10)}.json`);
+    archiveNotice.value = `已导出“${archive.title}”；文件未加密，请妥善保管。`;
+  } catch {
+    archiveNotice.value = "档案导出失败，请重试。";
+  }
+}
+
 async function importArchives(file: File): Promise<void> {
   if (file.size > 20_000_000) {
     archiveNotice.value = "备份文件超过 20 MB，未执行导入。";
@@ -561,6 +570,6 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
       <p>关系脉络不是命运判决，也不替代安全、同意和现实决定。</p>
       <span v-if="health">规则快照 {{ health.catalog.rulesetDigest.slice(0, 10) }}</span>
     </footer>
-    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" :return-focus-to="archiveTrigger" @close="archivesOpen = false" @restore="restoreArchive" @rename="renameSavedArchive" @delete="removeArchive" @export="exportArchives" @import="importArchives" />
+    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" :return-focus-to="archiveTrigger" @close="archivesOpen = false" @restore="restoreArchive" @rename="renameSavedArchive" @delete="removeArchive" @export="exportArchives" @export-one="exportArchive" @import="importArchives" />
   </div>
 </template>

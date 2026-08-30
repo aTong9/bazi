@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import type { AnalysisArchive } from "@/types";
 
 const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string; returnFocusTo?: HTMLElement | null }>();
-const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [id: string]; export: []; import: [file: File] }>();
+const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [id: string]; export: []; exportOne: [archive: AnalysisArchive]; import: [file: File] }>();
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const pendingDeleteId = ref<string | null>(null);
@@ -114,6 +114,7 @@ function archiveSearchText(archive: AnalysisArchive): string {
               </div>
               <div class="archive-actions">
                 <button type="button" class="primary-button" @click="emit('restore', archive)">打开档案</button>
+                <button type="button" class="quiet-button" @click="emit('exportOne', archive)">导出此档案</button>
                 <button type="button" class="quiet-button" @click="requestRename(archive)">重命名</button>
                 <template v-if="pendingDeleteId === archive.id">
                   <span class="archive-delete-confirm" role="group" :aria-label="`确认删除 ${archive.title}`">

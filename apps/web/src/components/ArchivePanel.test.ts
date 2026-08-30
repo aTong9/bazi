@@ -72,17 +72,21 @@ describe("ArchivePanel", () => {
 
   it("offers native cancellable archive renaming", async () => {
     const renamed: string[][] = [];
+    const exported: string[] = [];
     const prompt = vi.spyOn(window, "prompt").mockReturnValueOnce("长期观察").mockReturnValueOnce(null);
     const mounted = mountComponent(ArchivePanel, {
       open: true,
       archives: [makeArchive()],
       onRename: (id: string, title: string) => renamed.push([id, title]),
+      onExportOne: (archive: AnalysisArchive) => exported.push(archive.id),
     });
     await nextTick();
 
     findButton("重命名").click();
     findButton("重命名").click();
     expect(renamed).toEqual([["archive-test", "长期观察"]]);
+    findButton("导出此档案").click();
+    expect(exported).toEqual(["archive-test"]);
     prompt.mockRestore();
     mounted.unmount();
   });
