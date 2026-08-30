@@ -4,16 +4,20 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const PAGES_BASE = "/bazi/";
+const PAGES_CSP = "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; form-action 'self'; img-src 'self' data:; object-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'";
 
 export async function finalizePagesDist(distRoot: string): Promise<void> {
   const absoluteRoot = path.resolve(distRoot);
   const indexPath = path.join(absoluteRoot, "index.html");
-  const indexHtml = await readFile(indexPath, "utf8");
+  const sourceHtml = await readFile(indexPath, "utf8");
+  const indexHtml = sourceHtml.replace("</head>", `  <meta http-equiv="Content-Security-Policy" content="${PAGES_CSP}" />\n  <meta name="referrer" content="strict-origin-when-cross-origin" />\n  </head>`);
   if (!indexHtml.includes(PAGES_BASE)) {
     throw new Error(`Pages index does not reference the required ${PAGES_BASE} base`);
   }
+  if (indexHtml === sourceHtml) throw new Error("Pages index is missing </head>");
 
   await mkdir(absoluteRoot, { recursive: true });
+  await writeFile(indexPath, indexHtml);
   await Promise.all([
     copyFile(indexPath, path.join(absoluteRoot, "404.html")),
     writeFile(path.join(absoluteRoot, ".nojekyll"), ""),

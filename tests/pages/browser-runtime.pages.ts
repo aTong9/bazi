@@ -73,6 +73,9 @@ test("Pages artifact has a base-path SPA fallback and no Node external stubs", a
   ]);
   assert.equal(fallback, index);
   assert.match(index, /\/bazi\/assets\//u);
+  assert.match(index, /http-equiv="Content-Security-Policy"/u);
+  assert.match(index, /script-src 'self'; style-src 'self'; worker-src 'self'/u);
+  assert.match(index, /name="referrer" content="strict-origin-when-cross-origin"/u);
   assert.ok(catalogInfo.size < 2_000_000);
   await stat(path.join(dist, ".nojekyll"));
   const scripts = [...index.matchAll(/src="([^"]+\.js)"/gu)].map((match) => path.join(dist, match[1]!.replace(/^\/bazi\//u, "")));

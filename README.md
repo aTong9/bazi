@@ -60,7 +60,7 @@ BAZI_SNAPSHOT_PATH=rulesets/<digest> npm start
 npm run check:pages
 ```
 
-该命令生成浏览器专用的完整运行目录 `apps/web/dist`：包含 10,918 条运行记录、`/bazi/` 基础路径、SPA 的 `404.html` fallback、PWA 清单、内容版本化的离线缓存和 `.nojekyll`。首次成功加载并显示“离线可用”后，界面与同版本规则包可在断网时继续运行；新版本在旧页面关闭后原子接管。`master` 更新后，[部署工作流](./.github/workflows/deploy-pages.yml)会发布该目录。Pages 没有 Node API、自定义服务端安全响应头或服务端持久化；需要验证 API 托管契约时仍应使用 `npm run preview`。
+该命令生成浏览器专用的完整运行目录 `apps/web/dist`：包含 10,918 条运行记录、`/bazi/` 基础路径、SPA 的 `404.html` fallback、PWA 清单、内容版本化的离线缓存、页面内 CSP/referrer 策略和 `.nojekyll`。首次成功加载并显示“离线可用”后，界面与同版本规则包可在断网时继续运行；新版本在旧页面关闭后原子接管。`master` 更新后，[部署工作流](./.github/workflows/deploy-pages.yml)会发布该目录。Pages 没有 Node API、自定义服务端安全响应头或服务端持久化；需要验证完整 API 托管契约时仍应使用 `npm run preview`。
 
 ## 验证与测试
 
