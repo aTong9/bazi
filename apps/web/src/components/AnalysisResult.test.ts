@@ -38,8 +38,9 @@ describe("AnalysisResult", () => {
 
   it("shows the reviewed input summary and emits a print request", () => {
     let printRequests = 0;
+    const result = makeAnalysisResponse();
     const mounted = mountComponent(AnalysisResult, {
-      result: makeAnalysisResponse(),
+      result,
       analysisMode: "evaluate",
       primarySubject: {
         subjectId: "小林", year: "丙寅", month: "癸巳", day: "癸酉", hour: "戊午", birthTimeStatus: "exact", dataQuality: "high",
@@ -54,6 +55,8 @@ describe("AnalysisResult", () => {
     expect(mounted.host.querySelector(".result-context")?.textContent).toContain("小林");
     expect(mounted.host.querySelector(".result-context")?.textContent).toContain("现实评估");
     expect(mounted.host.querySelector(".result-context")?.textContent).toContain("1986-05-29 12:00 · UTC+08:00 · lunar-typescript-standard-time 1.8.6");
+    expect(mounted.host.querySelector(".result-context")?.textContent).toContain(result.requestId);
+    expect(mounted.host.querySelector(".result-context")?.textContent).toContain(result.rulesetDigest);
     [...mounted.host.querySelectorAll<HTMLButtonElement>("button")].find((button) => button.textContent?.includes("打印 / 存 PDF"))!.click();
     expect(printRequests).toBe(1);
     mounted.unmount();

@@ -83,6 +83,8 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
         <div v-if="primarySubject"><dt>主要命盘来源</dt><dd>{{ formatBirthInputSource(primarySubject) }}</dd></div>
         <div v-if="secondaryPillars"><dt>另一方命盘</dt><dd>{{ secondaryLabel }} · {{ secondaryPillars }}</dd></div>
         <div v-if="secondaryPillars && secondarySubject"><dt>另一方命盘来源</dt><dd>{{ formatBirthInputSource(secondarySubject) }}</dd></div>
+        <div><dt>分析 ID</dt><dd>{{ result.requestId }}</dd></div>
+        <div><dt>规则快照</dt><dd>{{ result.rulesetDigest }}</dd></div>
         <div><dt>生成时间</dt><dd>{{ new Date(result.generatedAt).toLocaleString('zh-CN') }}</dd></div>
       </dl>
     </header>
