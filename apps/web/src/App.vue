@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { analyzeRelationship, ApiError, fetchHealth } from "@/api";
-import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
+import { ARCHIVE_STORAGE_KEY, deleteArchive, importArchiveBackup, loadArchives, previewArchiveBackup, recoverableArchiveStorage, renameArchive, saveArchive, serializeArchiveBackup } from "@/archive-store";
 import { REALITY_GATES } from "@/constants";
 import { analysisInputFingerprint, riskCandidateFingerprint, toWireCrossState, toWireObservations, toWireRealityGates, toWireSubject } from "@/domain";
 import AnalysisResult from "@/components/AnalysisResult.vue";
@@ -27,6 +27,7 @@ const isLoading = ref(false);
 const errorMessage = ref("");
 const errorDetails = ref<string[]>([]);
 const archives = ref<AnalysisArchive[]>([]);
+const archiveRecoveryRaw = ref<string | null>(null);
 const archivesOpen = ref(false);
 const archiveTrigger = ref<HTMLButtonElement | null>(null);
 const archiveNotice = ref("");
@@ -120,7 +121,7 @@ watch(hasUnsavedWork, (unsaved) => {
 });
 
 onMounted(() => {
-  archives.value = loadArchives();
+  refreshArchives();
   window.addEventListener("online", updateNetworkState);
   window.addEventListener("offline", updateNetworkState);
   window.addEventListener("bazi-offline-ready", markOfflineReady);
@@ -140,8 +141,14 @@ function updateNetworkState(): void { isOnline.value = navigator.onLine; }
 function markOfflineReady(): void { offlineReady.value = true; }
 function syncArchives(event: StorageEvent): void {
   if (event.key !== ARCHIVE_STORAGE_KEY && event.key !== null) return;
+  refreshArchives();
+  if (archiveRecoveryRaw.value) archiveNotice.value = "检测到无法读取的本机档案；请先导出原始存储，再清理损坏数据。";
+  else if (archivesOpen.value) archiveNotice.value = "档案已从另一标签页同步。";
+}
+function refreshArchives(): void {
   archives.value = loadArchives();
-  if (archivesOpen.value) archiveNotice.value = "档案已从另一标签页同步。";
+  archiveRecoveryRaw.value = recoverableArchiveStorage();
+  if (archiveRecoveryRaw.value) archiveNotice.value = "检测到无法读取的本机档案；请先导出原始存储，再清理损坏数据。";
 }
 function protectUnsavedWork(event: BeforeUnloadEvent): void {
   if (!hasUnsavedWork.value) return;
@@ -388,6 +395,18 @@ function exportArchive(archive: AnalysisArchive): void {
   }
 }
 
+function exportArchiveRecovery(): void {
+  if (!archiveRecoveryRaw.value) return;
+  downloadText(archiveRecoveryRaw.value, "text/plain;charset=utf-8", `bazi-archive-recovery-${new Date().toISOString().slice(0, 10)}.txt`);
+  archiveNotice.value = "原始档案存储已导出；文件未经校验且可能包含敏感资料。";
+}
+
+function clearArchiveRecovery(): void {
+  localStorage.removeItem(ARCHIVE_STORAGE_KEY);
+  refreshArchives();
+  archiveNotice.value = "损坏的本机档案存储已清除，现在可以重新保存或导入备份。";
+}
+
 async function importArchives(file: File): Promise<void> {
   if (file.size > 20_000_000) {
     archiveNotice.value = "备份文件超过 20 MB，未执行导入。";
@@ -615,6 +634,6 @@ function prefersReducedMotion(): boolean { return window.matchMedia("(prefers-re
       <p>关系脉络不是命运判决，也不替代安全、同意和现实决定。</p>
       <span v-if="health">规则快照 {{ health.catalog.rulesetDigest.slice(0, 10) }}</span>
     </footer>
-    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" :return-focus-to="archiveTrigger" @close="archivesOpen = false" @restore="restoreArchive" @rename="renameSavedArchive" @delete="removeArchive" @export="exportArchives" @export-one="exportArchive" @import="importArchives" />
+    <ArchivePanel :open="archivesOpen" :archives="archives" :notice="archiveNotice" :recovery-available="Boolean(archiveRecoveryRaw)" :return-focus-to="archiveTrigger" @close="archivesOpen = false" @restore="restoreArchive" @rename="renameSavedArchive" @delete="removeArchive" @export="exportArchives" @export-one="exportArchive" @export-recovery="exportArchiveRecovery" @clear-recovery="clearArchiveRecovery" @import="importArchives" />
   </div>
 </template>

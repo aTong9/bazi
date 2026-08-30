@@ -25,6 +25,18 @@ export function loadArchives(storage: Pick<Storage, "getItem"> = localStorage): 
   return readArchives(storage, false);
 }
 
+export function recoverableArchiveStorage(storage: Pick<Storage, "getItem"> = localStorage): string | null {
+  let raw: string | null = null;
+  try {
+    raw = storage.getItem(ARCHIVE_STORAGE_KEY);
+    if (!raw) return null;
+    readArchives(storage, true);
+    return null;
+  } catch {
+    return raw ?? null;
+  }
+}
+
 function readArchives(storage: Pick<Storage, "getItem">, failOnInvalid: boolean): AnalysisArchive[] {
   let raw: string | null;
   try {

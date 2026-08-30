@@ -26,6 +26,32 @@ afterEach(() => {
 });
 
 describe("App analysis provenance", () => {
+  it("exports unreadable archive storage before allowing a confirmed reset", async () => {
+    installBrowserMocks(makeAnalysisResponse());
+    localStorage.setItem(ARCHIVE_STORAGE_KEY, "damaged archive bytes");
+    let recoveryBlob: Blob | undefined;
+    Object.defineProperties(URL, {
+      createObjectURL: { configurable: true, value: vi.fn((blob: Blob) => { recoveryBlob = blob; return "blob:archive-recovery"; }) },
+      revokeObjectURL: { configurable: true, value: vi.fn() },
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    mounted = mountComponent(App, {});
+    await flushUi();
+
+    findButton(mounted.host, "看盘档案").click();
+    await flushUi();
+    expect(document.body.textContent).toContain("检测到无法读取的本机档案");
+    findButton(document.body, "导出原始存储").click();
+    expect(await readBlob(recoveryBlob!)).toBe("damaged archive bytes");
+    findButton(document.body, "清除损坏数据").click();
+    await flushUi();
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toBe("damaged archive bytes");
+    findButton(document.body, "确认清除").click();
+    await flushUi();
+    expect(localStorage.getItem(ARCHIVE_STORAGE_KEY)).toBeNull();
+    expect(document.body.textContent).toContain("损坏的本机档案存储已清除");
+  });
+
   it("blocks analysis while a solar assist record is unresolved", async () => {
     const fetchMock = installBrowserMocks(makeAnalysisResponse());
     mounted = mountComponent(App, {});

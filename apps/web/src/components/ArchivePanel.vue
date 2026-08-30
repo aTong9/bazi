@@ -3,11 +3,12 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 import type { AnalysisArchive } from "@/types";
 
-const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string; returnFocusTo?: HTMLElement | null }>();
-const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [id: string]; export: []; exportOne: [archive: AnalysisArchive]; import: [file: File] }>();
+const props = defineProps<{ open: boolean; archives: readonly AnalysisArchive[]; notice?: string; recoveryAvailable?: boolean; returnFocusTo?: HTMLElement | null }>();
+const emit = defineEmits<{ close: []; restore: [archive: AnalysisArchive]; rename: [id: string, title: string]; delete: [id: string]; export: []; exportOne: [archive: AnalysisArchive]; exportRecovery: []; clearRecovery: []; import: [file: File] }>();
 const panel = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const pendingDeleteId = ref<string | null>(null);
+const pendingRecoveryClear = ref(false);
 const query = ref("");
 const filteredArchives = computed(() => {
   const needle = query.value.trim().toLocaleLowerCase("zh-CN");
@@ -18,6 +19,7 @@ let returnFocus: HTMLElement | null = null;
 watch(() => props.open, async (open) => {
   if (!open) {
     pendingDeleteId.value = null;
+    pendingRecoveryClear.value = false;
     const target = returnFocus;
     returnFocus = null;
     await nextTick();
@@ -101,6 +103,14 @@ function archiveSearchText(archive: AnalysisArchive): string {
             <button type="button" class="quiet-button" :disabled="!archives.length" @click="emit('export')">导出全部备份</button>
             <button type="button" class="quiet-button" @click="fileInput?.click()">从备份导入</button>
             <input ref="fileInput" class="visually-hidden" type="file" tabindex="-1" accept="application/json,.json" @change="selectBackup" />
+          </div>
+          <div v-if="recoveryAvailable" class="archive-transfer archive-recovery" role="group" aria-label="损坏档案恢复">
+            <button type="button" class="quiet-button" @click="emit('exportRecovery')">导出原始存储</button>
+            <template v-if="pendingRecoveryClear">
+              <button type="button" class="quiet-button danger-button" @click="emit('clearRecovery'); pendingRecoveryClear = false">确认清除</button>
+              <button type="button" class="quiet-button" @click="pendingRecoveryClear = false">取消</button>
+            </template>
+            <button v-else type="button" class="quiet-button danger-button" @click="pendingRecoveryClear = true">清除损坏数据</button>
           </div>
           <label v-if="archives.length" class="archive-search">
             <span>搜索档案</span>
