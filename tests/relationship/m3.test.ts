@@ -20,6 +20,8 @@ test("M3 closes BASE, EXPR, CARE, BOUND, CONFLICT, STATE, REPAIR, and SYNTH with
   assert.ok(result.state.activeState === "steady" || result.state.activeState === "pressure");
   assert.ok(result.repair.steps.length >= 4);
   assert.ok(result.synthesis.primaryChannels.length > 0);
+  assert.ok(result.synthesis.statements.every((statement) => !/^(模型三|这一部分关注|这里描述的是)/u.test(statement)), "M3 synthesis must prefer chart-anchored findings over section boilerplate");
+  assert.ok(result.synthesis.statements.every((statement) => statement.includes("你")));
   assert.deepEqual(result.dependencyFlags, []);
   assert.ok(result.boundaries.includes("不推断人格或依恋类型"));
   assert.ok(result.ruleTrace.every((id) => /^M3-/u.test(id)));
