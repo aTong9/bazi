@@ -343,7 +343,7 @@ describe("App analysis provenance", () => {
 
   it("downloads adjudicated reality gates and cross-state evidence in the readable summary", async () => {
     const response = makeAnalysisResponse();
-    response.relationship.m5.crossStateEvidence = [{ state: "pressure", note: "高压期仍能暂停并协商", evidenceIds: ["event-02"] }];
+    response.relationship.m5.crossStateEvidence = [{ state: "counterevidenceReviewed", note: "已核对一项相反事实", evidenceIds: ["event-02"] }];
     response.relationship.m5.fit.residualRisks = ["CORE_REALITY_GATE_UNKNOWN"];
     response.relationship.m5.fit.decisionCodes = ["EVIDENCE_CAP_FG2"];
     response.report.trace.eventIds.push("event-02");
@@ -376,7 +376,10 @@ describe("App analysis provenance", () => {
     expect(summary).toContain("## 现实闸门");
     expect(summary).toContain("RG01 安全、同意与尊重：通过｜事实依据：双方能自由表达并撤回同意");
     expect(summary).toContain("## 跨情境核验");
-    expect(summary).toContain("压力态：高压期仍能暂停并协商");
+    expect(summary).toContain("反例复核：已核对一项相反事实");
+    expect(summary).toContain("报告状态：受限");
+    expect(summary).not.toContain("counterevidenceReviewed");
+    expect(summary).not.toContain("报告状态：limited");
     expect(summary).toContain("## 独立现实观察");
     expect(summary).toContain("M4-C01 · 观察 1 · 本人观察 · 支持候选：两次压力情境中都能在暂停后恢复协商");
     expect(summary).toContain("## 当前裁决依据");

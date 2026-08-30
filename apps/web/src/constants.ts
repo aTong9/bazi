@@ -1,4 +1,12 @@
-import type { RealityGateDraft } from "./types";
+import type { CrossStateKey, RealityGateDraft } from "./types";
+
+export const CROSS_STATE_LABELS: Readonly<Record<CrossStateKey, string>> = {
+  steady: "日常状态",
+  pressure: "压力状态",
+  repair: "修复之后",
+  turningPoint: "关系转折",
+  counterevidenceReviewed: "反例复核",
+};
 
 export const REALITY_GATES: readonly Omit<RealityGateDraft, "status" | "note">[] = [
   { id: "RG01", label: "安全、同意与尊重" },

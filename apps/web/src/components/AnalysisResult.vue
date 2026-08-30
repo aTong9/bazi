@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-import { GRADE_COPY, m5ReasonLabel, STATUS_LABELS } from "@/constants";
+import { CROSS_STATE_LABELS, GRADE_COPY, m5ReasonLabel, STATUS_LABELS } from "@/constants";
 import { formatBirthInputSource, formatSubjectPillars, resultValue, shortDigest } from "@/domain";
 import type { AnalysisMode, AnalysisResponse, ObservationDraft, ResultItem, SubjectDraft } from "@/types";
 import ModuleRail from "./ModuleRail.vue";
@@ -55,7 +55,6 @@ const secondaryPillars = computed(() => props.hasSecondarySubject && props.secon
 const primaryLabel = computed(() => props.primarySubject?.subjectId.trim() || "主要命盘");
 const secondaryLabel = computed(() => props.secondarySubject?.subjectId.trim() || "另一方命盘");
 const saveLabel = computed(() => props.saveState === "saved" ? "已保存到档案" : props.saveState === "dirty" ? "更新档案" : "保存到档案");
-const crossStateLabels = { steady: "日常状态", pressure: "压力状态", repair: "修复之后", turningPoint: "关系转折", counterevidenceReviewed: "反例复核" } as const;
 const observationSourceLabels = { self_report: "本人观察", partner_report: "另一方观察", joint_record: "双方共同记录", third_party_record: "第三方事实记录" } as const;
 const adjudicationReasons = computed(() => [
   ...props.result.relationship.m5.fit.residualRisks.map((code) => ({ code, type: "限制" })),
@@ -234,7 +233,7 @@ function list(values: readonly string[] | undefined, fallback = "当前没有形
           <div v-if="result.relationship.m5.crossStateEvidence.length" class="observation-plan cross-state-results">
             <p class="subheading">跨情境核验</p>
             <p v-for="evidence in result.relationship.m5.crossStateEvidence" :key="evidence.state">
-              <strong>{{ crossStateLabels[evidence.state] }}</strong>{{ evidence.note }}
+              <strong>{{ CROSS_STATE_LABELS[evidence.state] }}</strong>{{ evidence.note }}
             </p>
           </div>
           <div v-if="adjudicationReasons.length" class="observation-plan adjudication-reasons">
